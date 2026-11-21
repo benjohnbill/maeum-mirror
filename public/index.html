@@ -77,10 +77,12 @@
         <h2>대화</h2>
         <span class="turns" id="turnCount"></span>
       </div>
+      <p class="fine disclose">AI와 나누는 대화예요. 진단하지 않아요. 대화는 이 사이트에 저장하지 않고, 답을 만들 때만 Google Gemini API로 보내요.</p>
       <ol class="chat" id="chat" aria-live="polite"></ol>
+      <div class="slash-menu" id="slashMenu" role="menu" hidden></div>
       <form class="composer" id="composer">
         <label class="sr-only" for="msg">메시지</label>
-        <textarea id="msg" rows="2" placeholder="편하게 답해 주세요. 말하기 싫은 건 넘어가도 돼요." required></textarea>
+        <textarea id="msg" rows="2" placeholder="편하게 답해 주세요. 말하기 싫은 건 넘어가도 돼요. (/ 를 치면 짧은 검사 목록)" required></textarea>
         <button class="btn primary send" type="submit" aria-label="보내기">
           <svg aria-hidden="true" viewBox="0 0 20 20"><path d="M4 10h11m0 0-4-4m4 4-4 4"/></svg>
         </button>
@@ -88,6 +90,10 @@
       <button class="btn ghost-btn" id="finishBtn" type="button" hidden>여기까지 하고 리포트 보기</button>
     </section>
   </main>
+
+  <dialog class="sheet" id="testSheet" aria-label="짧은 검사">
+    <form id="testForm" method="dialog"></form>
+  </dialog>
 
   <script type="module" src="js/app.js"></script>
 </body>

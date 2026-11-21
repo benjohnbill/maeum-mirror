@@ -128,7 +128,7 @@ export function computeSummary(data) {
     ...lines,
   ].join('\n');
 
-  return { last, metrics, recentNights, normal, text };
+  return { last, recentFrom: shift(last, -(RECENT - 1)), metrics, recentNights, normal, text };
 }
 
 export { hhmm, hm };
