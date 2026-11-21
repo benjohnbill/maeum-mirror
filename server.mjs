@@ -16,10 +16,13 @@ if (existsSync(envFile)) {
     if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, '');
   }
 }
-const KEY = process.env.GEMINI_API_KEY;
-const MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+// Extra keys are tried when one key's quota runs out (429).
+const KEYS = ['GEMINI_API_KEY', 'GEMINI_API_KEY_1', 'GEMINI_API_KEY_2'].map((k) => process.env[k]).filter(Boolean);
+const KEY = KEYS[0];
+const MODEL = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+const TIMEOUT = +process.env.GEMINI_TIMEOUT_MS || 45000;
 // Tried in order when a model is overloaded (503) or rate-limited (429).
-const MODELS = [MODEL, ...(process.env.GEMINI_FALLBACK || 'gemini-2.5-flash-lite').split(',').map((m) => m.trim())].filter((m, i, a) => m && a.indexOf(m) === i);
+const MODELS = [MODEL, ...(process.env.GEMINI_FALLBACK || 'gemini-2.5-flash,gemini-2.5-flash-lite').split(',').map((m) => m.trim())].filter((m, i, a) => m && a.indexOf(m) === i);
 const PORT = +process.env.PORT || 8787;
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.xml': 'application/xml', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon' };
 
@@ -28,29 +31,37 @@ async function gemini(system, history, schema) {
     ? history.map((h) => ({ role: h.role === 'user' ? 'user' : 'model', parts: [{ text: h.text }] }))
     : [{ role: 'user', parts: [{ text: '(대화 시작: 데이터 요약에서 가장 눈에 띄는 변화로 첫 인사와 첫 질문을 해 주세요)' }] }];
   if (contents[0].role !== 'user') contents.unshift({ role: 'user', parts: [{ text: '(대화 시작)' }] });
-  const body = JSON.stringify({
+  const bodyFor = (model) => JSON.stringify({
     systemInstruction: { parts: [{ text: system }] },
     contents,
-    generationConfig: { responseMimeType: 'application/json', responseSchema: schema, temperature: 0.7 },
+    generationConfig: {
+      responseMimeType: 'application/json', responseSchema: schema, temperature: 0.7,
+      // Gemini 3 models think by default; minimal thinking measured 19s vs ~30s on 2026-11-22.
+      ...(model.startsWith('gemini-3') ? { thinkingConfig: { thinkingLevel: 'minimal' } } : {}),
+    },
   });
   let last;
   for (const model of MODELS) {
-    for (let attempt = 0; attempt < 2; attempt++) {
+    for (const [ki, key] of KEYS.entries()) {
+      const t0 = Date.now();
       const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
         method: 'POST',
-        headers: { 'content-type': 'application/json', 'x-goog-api-key': KEY },
-        body,
-        signal: AbortSignal.timeout(20000),
+        headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
+        body: bodyFor(model),
+        signal: AbortSignal.timeout(TIMEOUT),
       }).catch((e) => ({ ok: false, status: 0, text: async () => String(e) }));
+      const secs = ((Date.now() - t0) / 1000).toFixed(1);
       if (res.ok) {
         const out = await res.json();
-        const text = out.candidates?.[0]?.content?.parts?.map((p) => p.text).join('') || '';
+        const text = out.candidates?.[0]?.content?.parts?.filter((p) => !p.thought).map((p) => p.text).join('') || '';
+        console.log(`${new Date().toLocaleTimeString('ko-KR')} ${model} key${ki} ${secs}s`);
         return { ...JSON.parse(text), model };
       }
-      last = `Gemini ${model} ${res.status}: ${(await res.text()).slice(0, 200)}`;
+      last = `Gemini ${model} key${ki} ${res.status} after ${secs}s: ${(await res.text()).replace(/\s+/g, ' ').slice(0, 120)}`;
       console.error(last);
       if (![0, 429, 500, 503].includes(res.status)) throw new Error(last);
-      if (attempt === 0) await new Promise((r) => setTimeout(r, 800));
+      // Only a quota error is about the key; a timeout or overload is about the model.
+      if (res.status !== 429) break;
     }
   }
   throw new Error(last);
