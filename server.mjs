@@ -22,7 +22,7 @@ const KEY = KEYS[0];
 const MODEL = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
 const TIMEOUT = +process.env.GEMINI_TIMEOUT_MS || 45000;
 // Tried in order when a model is overloaded (503) or rate-limited (429).
-const MODELS = [MODEL, ...(process.env.GEMINI_FALLBACK || 'gemini-2.5-flash,gemini-2.5-flash-lite').split(',').map((m) => m.trim())].filter((m, i, a) => m && a.indexOf(m) === i);
+const MODELS = [MODEL, ...(process.env.GEMINI_FALLBACK || 'gemini-2.5-flash-lite,gemini-2.5-flash').split(',').map((m) => m.trim())].filter((m, i, a) => m && a.indexOf(m) === i);
 const PORT = +process.env.PORT || 8787;
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.xml': 'application/xml', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon' };
 
