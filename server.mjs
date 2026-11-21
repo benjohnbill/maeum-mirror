@@ -59,9 +59,9 @@ async function gemini(system, history, schema) {
       }
       last = `Gemini ${model} key${ki} ${res.status} after ${secs}s: ${(await res.text()).replace(/\s+/g, ' ').slice(0, 120)}`;
       console.error(last);
-      if (![0, 429, 500, 503].includes(res.status)) throw new Error(last);
-      // Only a quota error is about the key; a timeout or overload is about the model.
-      if (res.status !== 429) break;
+      if (![0, 404, 429, 500, 503].includes(res.status)) throw new Error(last);
+      // Quota (429) and model access (404) depend on the key; a timeout or overload is about the model.
+      if (res.status !== 429 && res.status !== 404) break;
     }
   }
   throw new Error(last);
