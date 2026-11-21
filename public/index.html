@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>마음 시간표</title>
+  <meta name="description" content="Apple 건강 데이터로 지난 2주의 리듬을 읽고, 짧은 대화로 지금의 나를 알아보는 서비스">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="bar">
+    <a class="wordmark" href="./">마음 시간표</a>
+    <span class="bar-tag" id="sampleTag" hidden>가상 사용자 데이터</span>
+  </header>
+
+  <main id="intro" class="intro">
+    <section class="intro-copy">
+      <h1>몸이 먼저 적어 둔 지난 2주,<br>같이 읽어 볼까요?</h1>
+      <p class="lede">Apple 건강 데이터에서 수면, 걸음, 심박을 평소의 나와 비교하고, 그 변화로 짧은 대화를 시작해요. 마지막에는 지금의 리듬을 정리한 리포트를 받아요.</p>
+      <div class="actions">
+        <button class="btn primary" id="sampleBtn" type="button">샘플 데이터로 시작</button>
+        <label class="btn" for="fileInput">
+          <svg aria-hidden="true" viewBox="0 0 20 20"><path d="M10 13V3m0 0L6 7m4-4 4 4M3 12v4a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-4"/></svg>
+          내 건강 데이터 올리기
+        </label>
+        <input id="fileInput" type="file" accept=".zip,.xml,application/zip,text/xml" hidden>
+      </div>
+      <div class="progress" id="progress" hidden>
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        <p class="progress-text" id="progressText">기록을 읽는 중</p>
+      </div>
+      <p class="error" id="introError" role="alert" hidden></p>
+      <details class="note">
+        <summary>파일은 이 브라우저 밖으로 나가지 않아요</summary>
+        <p>올린 파일은 이 화면 안에서만 읽어요. AI에게는 브라우저가 계산한 요약 숫자 몇 줄과 대화 내용만 가요. 기기 이름, 생년월일, 위치, 날짜별 원본 기록은 보내지 않아요.</p>
+        <p>내 파일 만드는 법: iPhone 건강 앱 → 오른쪽 위 프로필 → 모든 건강 데이터 내보내기 → 생긴 export.zip을 여기에 올려요.</p>
+      </details>
+      <p class="fine">진단 도구가 아니에요. 지금의 나를 비춰 보는 거울이에요.</p>
+    </section>
+    <section class="intro-table" aria-hidden="true">
+      <div class="tt" id="introTable"></div>
+    </section>
+  </main>
+
+  <main id="session" class="session" hidden>
+    <section class="panel data-panel" aria-label="내 데이터">
+      <div class="panel-head">
+        <h2>지난 7일 밤</h2>
+        <div class="legend">
+          <span><i class="sw sw-ghost"></i>평소 이 요일</span>
+          <span><i class="sw sw-ink"></i>이번 주</span>
+        </div>
+      </div>
+      <div class="tt" id="sessionTable"></div>
+      <h2 class="sub">평소의 나와 비교</h2>
+      <table class="metrics">
+        <thead><tr><th scope="col">지표</th><th scope="col">평소</th><th scope="col">최근 2주</th><th scope="col">변화</th></tr></thead>
+        <tbody id="metricsBody"></tbody>
+      </table>
+      <details class="note sent" id="sentPanel">
+        <summary>AI에게 가는 내용</summary>
+        <h3>1. 데이터 요약 (이 브라우저가 계산)</h3>
+        <pre id="sentSummary"></pre>
+        <h3>2. 대화 내용</h3>
+        <p>아래 대화창에 쓴 글이 그대로 가요.</p>
+        <h3>3. 고정 지시문</h3>
+        <pre id="sentPrompt"></pre>
+        <h3>보내지 않는 것</h3>
+        <p>날짜별 원본 기록, 기기 이름, 생년월일, 성별, 위치(GPS)</p>
+      </details>
+    </section>
+
+    <section class="panel chat-panel" aria-label="대화">
+      <div class="panel-head">
+        <h2>대화</h2>
+        <span class="turns" id="turnCount"></span>
+      </div>
+      <ol class="chat" id="chat" aria-live="polite"></ol>
+      <form class="composer" id="composer">
+        <label class="sr-only" for="msg">메시지</label>
+        <textarea id="msg" rows="2" placeholder="편하게 답해 주세요. 말하기 싫은 건 넘어가도 돼요." required></textarea>
+        <button class="btn primary send" type="submit" aria-label="보내기">
+          <svg aria-hidden="true" viewBox="0 0 20 20"><path d="M4 10h11m0 0-4-4m4 4-4 4"/></svg>
+        </button>
+      </form>
+      <button class="btn ghost-btn" id="finishBtn" type="button" hidden>여기까지 하고 리포트 보기</button>
+    </section>
+  </main>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

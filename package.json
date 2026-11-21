@@ -1,0 +1,7 @@
+{
+  "name": "maeum-timetable",
+  "private": true,
+  "type": "module",
+  "scripts": { "start": "node server.mjs", "sample": "node scripts/make-sample.mjs" },
+  "engines": { "node": ">=18" }
+}
