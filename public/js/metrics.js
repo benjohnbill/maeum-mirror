@@ -1,6 +1,8 @@
 // Turns parsed records into the comparison the AI sees:
 // the user's own normal (days 15 to 90 back) versus the last 14 days.
 
+import { isQuiet } from '../spec/metrics.js';
+
 const DAY = 1440;
 const RECENT = 14;
 const BASELINE_FROM = 90;
@@ -119,7 +121,8 @@ export function computeSummary(data) {
   }
   const normal = ghost.map((g) => (g.on.length ? { onset: mean(g.on), wake: mean(g.off) } : null));
 
-  const lines = metrics.map((m) => `${m.label}: 평소 ${m.baseText} → 최근 2주 ${m.recentText}${m.change ? ` (${m.change})` : ''}`);
+  for (const m of metrics) m.quiet = isQuiet(m.id, m.base, m.recent);
+  const lines = metrics.map((m) => `${m.label}: 평소 ${m.baseText} → 최근 2주 ${m.recentText}${m.change ? ` (${m.change})` : ''}${m.quiet ? ' (작은 변화)' : ''}`);
   const text = [
     `기간: 최근 2주(${shift(last, -(RECENT - 1))}~${last})를 그 이전 약 11주와 비교`,
     ...lines,
