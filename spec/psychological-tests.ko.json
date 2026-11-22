@@ -205,15 +205,7 @@
         "https://www.phqscreeners.com/images/sites/g/files/g10016261/f/201412/instructions.pdf",
         "https://pubmed.ncbi.nlm.nih.gov/37794667/"
       ],
-      "attribution": "Pfizer Inc.로부터 교육용 지원금을 받아 Robert L. Spitzer 박사, Janet B.W. Williams 박사, Kurt Kroenke 박사와 동료들에 의해 개발된 것임.",
-      "on_answer": {
-        "item": "phq9.9",
-        "at_least": 1,
-        "action": "show_crisis_panel",
-        "before": "completion_or_result",
-        "call_ai": false,
-        "meaning": "9번에서 죽음 또는 자해 관련 생각을 보고했다. 다른 응답이 비어 있어도 총점 계산 전에 지원 안내를 표시한다. 이 응답 하나로 현재 위험의 긴급성은 판단할 수 없다."
-      }
+      "attribution": "Pfizer Inc.로부터 교육용 지원금을 받아 Robert L. Spitzer 박사, Janet B.W. Williams 박사, Kurt Kroenke 박사와 동료들에 의해 개발된 것임."
     },
     {
       "id": "gad2",

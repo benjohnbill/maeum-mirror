@@ -24,7 +24,7 @@ const TIMEOUT = +process.env.GEMINI_TIMEOUT_MS || 45000;
 // Tried in order when a model is overloaded (503) or rate-limited (429).
 const MODELS = [MODEL, ...(process.env.GEMINI_FALLBACK || 'gemini-2.5-flash-lite,gemini-2.5-flash').split(',').map((m) => m.trim())].filter((m, i, a) => m && a.indexOf(m) === i);
 const PORT = +process.env.PORT || 8787;
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.xml': 'application/xml', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.xml': 'application/xml', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.ico': 'image/x-icon' };
 
 async function gemini(system, history, schema) {
   const contents = history.length
@@ -78,15 +78,25 @@ async function readJson(req) {
 
 async function handleChat(req, res) {
   try {
-    const { kind, summary, history = [] } = await readJson(req);
+    const { kind, summary, history = [], screeningAvailable = true } = await readJson(req);
     if (typeof summary !== 'string' || summary.length > 4000) throw new Error('summary가 올바르지 않아요');
     const clean = history.slice(-40).map((h) => ({ role: h.role, text: String(h.text).slice(0, 2000) }));
     let out;
-    if (!KEY) out = kind === 'report' ? mockReport(clean) : mockTurn(clean);
+    if (!KEY) out = kind === 'report' ? mockReport(clean) : mockTurn(clean, undefined, screeningAvailable);
     else if (kind === 'report') {
       const transcript = clean.map((h) => `${h.role === 'user' ? '사용자' : 'AI'}: ${h.text}`).join('\n');
       out = await gemini(`${REPORT_PROMPT}\n\n[데이터 요약]\n${summary}`, [{ role: 'user', text: `[대화 기록]\n${transcript}` }], REPORT_SCHEMA);
-    } else out = await gemini(`${SYSTEM_PROMPT}\n\n[데이터 요약]\n${summary}`, clean, TURN_SCHEMA);
+    } else {
+      const screeningRule = screeningAvailable ? '' : '\n이 세션에서는 검사 제안을 이미 다뤘어요. 다시 권하지 말고 원래 대화를 이어가요. screening은 none이에요.';
+      out = await gemini(`${SYSTEM_PROMPT}${screeningRule}\n\n[데이터 요약]\n${summary}`, clean, TURN_SCHEMA);
+      if (out.screening && out.screening !== 'none') {
+        const quote = out.screeningEvidence?.trim();
+        const grounded = quote && clean.slice(-5).some((turn) => turn.role === 'user' && turn.text.includes(quote));
+        if (!grounded || !screeningAvailable) {
+          out = { reply: '방금 이야기한 장면에서 조금 더 들려주고 싶은 게 있나요?', focus: 'none', choices: [], screening: 'none', done: false };
+        }
+      }
+    }
     res.writeHead(200, { 'content-type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify({ ...out, mode: KEY ? 'gemini' : 'demo' }));
   } catch (err) {

@@ -41,7 +41,7 @@ PHQ-4 총점이 같은 두 사람도 경로가 달라진다. **불안 3점·우�
 - **GAD-2와 GAD-7**은 지난 2주의 빈도를 0–3점으로 받는다. 앞의 두 항목에 과도한 걱정, 이완 곤란, 안절부절못함, 과민함, 두려움이 이어진다. GAD-7 합계 0–4 / 5–9 / 10–14 / 15–21은 최소 / 경도 / 중등도 / 고도다. 한국 성인 연구에서 범불안장애를 선별하는 데 적합했던 점수는 GAD-2 ≥3, GAD-7 ≥8이었다. 후자의 8점은 국내 연구의 선별점이고, 증상 구간의 중등도 시작점은 10점이다. [한국어 GAD-7 전체 문항](https://www.phqscreeners.com/images/sites/g/files/g10060481/f/201412/GAD7_Korean%20for%20Korea.pdf) · [채점 매뉴얼](https://www.phqscreeners.com/images/sites/g/files/g10016261/f/201412/instructions.pdf) · [국내 검증, 표 2](https://doi.org/10.3389/fpsyt.2019.00127)
 - **PHQ-9**는 흥미, 기분, 수면, 기력, 식욕, 자기 평가, 집중, 행동 속도·초조, 죽음·자해에 관한 생각의 빈도를 묻는다. 합계 0–4 / 5–9 / 10–14 / 15–19 / 20–27은 최소 / 경도 / 중등도 / 중등도보다 심함 / 고도다. 양식 끝의 생활 지장 질문은 별도 참고값이다. 한국 일반 인구 6,022명에서 주요우울장애 선별점은 PHQ-2 ≥2, PHQ-9 ≥5였고 PHQ-9 ≥5의 양성예측도는 12.6%였다. 이 수치는 해당 표본에서 얻은 값이다. 화면에는 사용자가 보고한 증상 수준으로 표현한다. [한국어 PHQ-9 전체 문항](https://www.phqscreeners.com/images/sites/g/files/g10060481/f/201412/PHQ9_Korean%20for%20Korea.pdf) · [채점 매뉴얼](https://www.phqscreeners.com/images/sites/g/files/g10016261/f/201412/instructions.pdf) · [국내 일반 인구 검증](https://pubmed.ncbi.nlm.nih.gov/37794667/)
 
-PHQ-9 **9번이 1점 이상이면 그 답이 들어오는 즉시** 기존 위기 지원 화면을 제시하는 것이 프로젝트 규칙이다. 총점이 낮거나 다른 문항을 건너뛰어도 같다. 이 이벤트에서는 AI를 호출하지 않는다. 9번을 묻지 않은 짧은 검사, 무응답, 또는 0점으로 현재의 안전 여부를 판정할 수 없다. [프로젝트 결정](../../docs/decisions-2026-11-22.md) · [개발자 매뉴얼, 2쪽](https://www.phqscreeners.com/images/sites/g/files/g10016261/f/201412/instructions.pdf)
+PHQ-9은 9번 응답으로 마친다. 응답은 기기 안에서 처리하며 9번에서 1점 이상이면 최종 리포트에서 원하는 때 도움 정보를 펼쳐 볼 수 있다. [프로젝트 결정](../../docs/decisions-2026-11-22.md) · [개발자 매뉴얼, 2쪽](https://www.phqscreeners.com/images/sites/g/files/g10016261/f/201412/instructions.pdf)
 
 ### PSS-4 · 지난 한 달에 느낀 스트레스
 

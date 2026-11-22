@@ -1,6 +1,7 @@
 // Generates a synthetic Apple Health export.xml for the demo persona.
 // Every value is invented. Run: node scripts/make-sample.mjs
-import { writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { createCollector } from '../public/js/parse.js';
 
 let seed = 20261122;
 const rand = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 2 ** 32);
@@ -81,4 +82,14 @@ for (let i = DAYS - 1; i >= 0; i--) {
 }
 out.push('</HealthData>');
 writeFileSync(new URL('../public/sample/export.xml', import.meta.url), out.join('\n'));
+// The phone preview requests only the sample categories the visitor grants.
+const collector = createCollector();
+collector.feed(out.join('\n'));
+const { sleep, steps, rhr, hrv, workouts } = collector.data;
+const categories = { sleep, steps: [...steps].map(([day, sources]) => [day, [...sources]]), rhr: [...rhr], hrv: [...hrv], workouts };
+const readDir = new URL('../public/sample/read/', import.meta.url);
+mkdirSync(readDir, { recursive: true });
+for (const [name, values] of Object.entries(categories)) {
+  writeFileSync(new URL(name + '.json', readDir), JSON.stringify({ through: end.toISOString().slice(0, 10), values }) + '\n');
+}
 console.log('records:', out.length);

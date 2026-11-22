@@ -1,0 +1,152 @@
+.phone-preview body > .bar,
+.phone-preview #intro { display: none; }
+
+.phone-stage {
+  position: relative;
+  /* iPhone 16: body in mm, portrait display in pixels at 460 ppi.
+     https://support.apple.com/ko-kr/121029 */
+  --body-width-mm: 71.6;
+  --body-height-mm: 147.6;
+  --display-width-px: 1179;
+  --display-height-px: 2556;
+  --stage-gutter: 12px;
+  --body-ratio: calc(var(--body-width-mm) / var(--body-height-mm));
+  --display-ratio: calc(var(--display-width-px) / var(--display-height-px));
+  --display-share: calc(var(--display-width-px) * 25.4 / 460 / var(--body-width-mm));
+  /* Use the 3x display's logical width (393pt in portrait) at full size. */
+  --full-body-width: calc(var(--display-width-px) / 3 / var(--display-share) * 1px);
+  display: grid;
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+  place-items: center;
+  height: 100vh;
+  height: 100dvh;
+  padding: var(--stage-gutter);
+  background: linear-gradient(rgb(16 13 11 / 82%), rgb(12 11 10 / 94%)),
+    #171513 url('late-night-wide.webp') center / cover;
+}
+.preview-exit { display: none; }
+@media (min-width: 760px) and (min-height: 551px) {
+  .preview-exit {
+    position: absolute; top: 16px; right: 24px; display: grid; place-items: center;
+    min-height: 44px; padding: 0 8px; color: #eee; font-size: .9rem; text-underline-offset: 4px;
+  }
+}
+.phone-frame {
+  display: grid;
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+  place-items: center;
+  width: min(100%, var(--full-body-width), calc((100dvh - 2 * var(--stage-gutter)) * var(--body-ratio)));
+  aspect-ratio: var(--body-ratio);
+  min-height: 0;
+  border-radius: 15% / calc(15% * var(--body-ratio));
+  background: #111210;
+  box-shadow: inset 0 0 0 2px #777570, inset 3px 0 1px #a6a59f, inset -4px 0 1px #393a36, 0 18px 52px rgb(0 0 0 / 36%);
+}
+.phone-screen {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  width: calc(100% * var(--display-share));
+  aspect-ratio: var(--display-ratio);
+  min-width: 0;
+  min-height: 0;
+  /* Keep the hardware rigid and lift the controls above a real software keyboard. */
+  padding-bottom: max(0px, calc(100dvh - var(--phone-visible-height, 100dvh)));
+  overflow: hidden;
+  border-radius: 13% / calc(13% * var(--display-ratio));
+  background: var(--surface);
+}
+.phone-status {
+  display: grid;
+  grid-template-columns: 1fr 33% 1fr;
+  align-items: center;
+  padding: 9px 26px 3px;
+  font-size: .875rem;
+  line-height: 1;
+  font-weight: 700;
+}
+.phone-status svg { width: 38px; justify-self: end; }
+.phone-camera { width: 100%; aspect-ratio: 3.6; border-radius: 32px; background: #101110; }
+.phone-nav button {
+  display: grid;
+  place-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  color: var(--ink);
+}
+.phone-nav svg {
+  width: 20px; height: 20px; margin-inline: auto;
+  fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round;
+}
+.phone-viewport { grid-row: 2; min-height: 0; min-width: 0; position: relative; }
+.phone-screen .session { display: block; height: 100%; padding: 0; }
+.phone-screen .panel {
+  height: 100%;
+  padding: 18px;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+.phone-overview { padding: 2px 0 18px; border-bottom: 1px solid var(--line); }
+.phone-overview h1 { font-size: 1rem; font-weight: 650; letter-spacing: -.02em; }
+.phone-overview strong { display: block; margin-block: 4px; font-size: 2.5rem; line-height: 1.2; letter-spacing: -.035em; }
+.phone-overview p { margin: 0; color: var(--ink-2); font-size: .9rem; }
+.phone-screen .data-panel > * { flex-shrink: 0; }
+.phone-screen .data-panel .panel-head { display: grid; gap: 5px; }
+.phone-screen .tt { --hour: 12px; grid-template-columns: 28px repeat(7, minmax(0, 1fr)); }
+.phone-screen .tt-head { height: 38px; }
+.phone-screen .blk-ink { left: 5px; right: 5px; font-size: 0; padding: 0; }
+.phone-screen .tt-hours span { right: 3px; }
+.phone-screen .metrics { font-size: .875rem; }
+.phone-screen .metrics th, .phone-screen .metrics td { padding-inline: 4px; }
+.phone-screen .chat-panel { position: static; overflow: hidden; gap: 10px; }
+.phone-screen .chat-panel > .panel-head h2 { font-size: 1.5rem; }
+.phone-screen .chat { flex: 1 1 0; min-height: 0; max-height: none; padding: 2px 2px 8px; overscroll-behavior: contain; }
+.phone-screen .msg.ai p { padding: 10px 13px; background: var(--ground); border-radius: 4px 14px 14px; }
+.phone-screen .msg.user { color: var(--ink); background: var(--accent-soft); border: 0; border-radius: 14px 14px 4px; }
+.phone-screen .msg.ai .who { color: var(--ink-2); }
+.phone-screen .composer { flex: none; }
+.phone-screen .composer textarea { border-color: var(--line); }
+.phone-screen .composer textarea:focus { border-color: var(--ink); }
+.phone-screen .evidence li { grid-template-columns: 1fr; gap: 4px; }
+.phone-nav {
+  grid-row: 3;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  padding: 4px 12px 0;
+  border-top: 1px solid var(--line);
+}
+.phone-nav button { gap: 2px; font: inherit; font-size: .875rem; color: var(--ink-2); background: none; border: 0; cursor: pointer; }
+.phone-nav button[aria-pressed="true"] { color: var(--accent-text); font-weight: 750; }
+.phone-nav button:hover { background: var(--ground); }
+.phone-home { grid-row: 4; justify-self: center; width: min(34%, 134px); height: 4px; margin: 7px 0; border-radius: 2px; background: var(--ink); }
+
+@media (max-width: 560px) and (orientation: portrait) {
+  .phone-stage { --stage-gutter: 2px; }
+  .phone-status { padding-top: max(8px, env(safe-area-inset-top)); }
+  .phone-home { margin-bottom: max(7px, env(safe-area-inset-bottom)); }
+}
+@media (max-height: 550px) and (orientation: landscape) {
+  .phone-stage {
+    --body-width-mm: 147.6;
+    --body-height-mm: 71.6;
+    --display-width-px: 2556;
+    --display-height-px: 1179;
+    --stage-gutter: 4px;
+  }
+  .phone-frame { border-radius: calc(15% / var(--body-ratio)) / 15%; }
+  .phone-screen {
+    border-radius: calc(13% / var(--display-ratio)) / 13%;
+    padding-inline: 5.5%;
+  }
+  .phone-status {
+    position: absolute; left: 1.5%; top: 50%; transform: translateY(-50%);
+    width: 3.5%; height: 31%; display: block; padding: 0;
+  }
+  .phone-status time, .phone-status svg { display: none; }
+  .phone-status .phone-camera { display: block; width: 100%; height: 100%; }
+  .phone-screen .panel { padding-block: 8px; }
+  .phone-screen .composer textarea { height: 46px; min-height: 44px; }
+  .phone-home { margin: 3px 0; }
+}

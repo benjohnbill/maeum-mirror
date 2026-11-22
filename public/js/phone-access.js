@@ -1,0 +1,108 @@
+import { createCollector } from './parse.js';
+import { computeSummary } from './metrics.js';
+
+// Each approved type has its own fixture, so the browser never requests the others.
+export async function readPreviewHealth(types) {
+  if (!types.length) throw new Error('읽도록 허용한 기록이 없어요.');
+  const data = createCollector().data;
+  const files = await Promise.all(types.map(async (type) => {
+    const response = await fetch('sample/read/' + type + '.json');
+    if (!response.ok) throw new Error('기록을 불러오지 못했어요.');
+    return response.json();
+  }));
+  types.forEach((type, i) => {
+    const values = files[i].values;
+    if (type === 'steps') data.steps = new Map(values.map(([day, sources]) => [day, new Map(sources)]));
+    else if (type === 'hrv' || type === 'rhr') data[type] = new Map(values);
+    else data[type] = values;
+  });
+  const summary = computeSummary(data, files[0].through);
+  if (!summary?.metrics.length) throw new Error('비교할 수 있는 기록이 없어요.');
+  return summary;
+}
+
+export function setupPhoneAccess(onConnected) {
+  const $ = (id) => document.getElementById(id);
+  const health = $('healthSheet');
+  const switches = [...health.querySelectorAll('input[name="healthType"]')];
+  const viewport = $('phoneViewport');
+  let granted = [];
+  let loading = false;
+
+  function fitSheet() {
+    const rect = viewport.getBoundingClientRect();
+    const top = rect.top + 5;
+    health.style.left = rect.left + 'px';
+    health.style.top = top + 'px';
+    health.style.width = rect.width + 'px';
+    health.style.height = (rect.bottom - top) + 'px';
+  }
+  new ResizeObserver(fitSheet).observe(viewport);
+  window.addEventListener('resize', fitSheet);
+
+  function reflectSelection() {
+    const selected = switches.filter((input) => input.checked);
+    $('toggleHealth').textContent = selected.length === switches.length ? '모두 끄기' : '모두 켜기';
+    $('confirmHealth').disabled = !selected.length;
+  }
+  function requestHealth() {
+    if (loading) return;
+    for (const input of switches) input.checked = granted.includes(input.value);
+    reflectSelection();
+    fitSheet();
+    health.showModal();
+    $('accessTitle').focus();
+  }
+  function cancelHealth() {
+    health.close();
+    granted = [];
+    $('requestHealth').hidden = true;
+    $('retryHealth').hidden = true;
+    $('connectStatus').textContent = '읽을 수 있는 건강 기록이 없어요.';
+    $('restartHealth').hidden = false;
+    $('connectTitle').focus();
+  }
+  async function readGranted() {
+    if (loading || !granted.length) return;
+    loading = true;
+    $('requestHealth').hidden = true;
+    $('retryHealth').hidden = true;
+    $('connectStatus').textContent = '허용한 건강 기록을 불러오는 중이에요…';
+    let summary;
+    try {
+      summary = await readPreviewHealth(granted);
+    } catch {
+      $('connectStatus').textContent = '기록을 불러오지 못했어요. 다시 시도하거나 읽을 항목을 바꿔 주세요.';
+      $('requestHealth').hidden = false;
+      $('retryHealth').hidden = false;
+      $('retryHealth').focus();
+      return;
+    } finally {
+      loading = false;
+    }
+    $('connectStep').hidden = true;
+    onConnected(summary);
+  }
+
+  $('appleContinue').addEventListener('click', () => {
+    $('signupStep').hidden = true;
+    $('connectStep').hidden = false;
+    $('connectTitle').focus();
+  });
+  $('requestHealth').addEventListener('click', requestHealth);
+  $('cancelHealth').addEventListener('click', cancelHealth);
+  health.addEventListener('cancel', (event) => { event.preventDefault(); cancelHealth(); });
+  health.addEventListener('change', reflectSelection);
+  $('toggleHealth').addEventListener('click', () => {
+    const enable = switches.some((input) => !input.checked);
+    for (const input of switches) input.checked = enable;
+    reflectSelection();
+  });
+  $('confirmHealth').addEventListener('click', () => {
+    granted = switches.filter((input) => input.checked).map((input) => input.value);
+    if (!granted.length) return;
+    health.close();
+    readGranted();
+  });
+  $('retryHealth').addEventListener('click', readGranted);
+}

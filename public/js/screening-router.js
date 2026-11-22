@@ -1,0 +1,47 @@
+export const screeners = {
+  phq9: { name: 'PHQ-9', topic: '우울', length: 9 },
+  gad2: { name: 'GAD-2', topic: '간단 불안', length: 2 },
+  gad7: { name: 'GAD-7', topic: '불안', length: 7 },
+  phq4: { name: 'PHQ-4', topic: '우울·불안', length: 4 },
+};
+
+export function screeningCommand(text, defaultId = 'phq9') {
+  const value = text.trim().replace(/[.!~ ]+$/u, '');
+  const named = value.match(/^(phq?[- ]?9|phq[- ]?4|gad[- ]?[27])(?:\s*검사(?:를)?)?(?:\s*(?:시작(?:해\s*줘(?:요)?|해\s*주세요|할게요|할래요|하기)?|받을게요|할게요))?$/iu);
+  if (named) return named[1].replace(/[- ]/g, '').toLowerCase().replace(/^ph9$/, 'phq9');
+  const request = value.match(/^(우울[·과\s]+불안|간단\s*불안|불안|우울(?:증)?(?:\s*선별)?)?\s*검사(?:를)?\s*(?:시작(?:해\s*줘(?:요)?|해\s*주세요|할게요|할래요|하기)?|받을게요|할게요)$/u);
+  if (!request) return null;
+  if (!request[1]) return defaultId;
+  if (request[1].includes('간단')) return 'gad2';
+  if (request[1].includes('우울') && request[1].includes('불안')) return 'phq4';
+  return request[1] === '불안' ? 'gad7' : 'phq9';
+}
+
+export function offlineScreeningOffer(text) {
+  const otherSubject = /(?:친구|가족|동생|엄마|아이|그 사람)(?:가|이|는|은)|(?:영화|책|기사|이야기)에서|(?:날씨|분위기|영화|드라마|소설)(?:가|이|는|은)/u;
+  const declined = /하지\s*마|싫어요.*검사|검사.{0,18}(?:싫|거부|안\s*할|않을|싶지\s*않|필요\s*없)/u;
+  const negated = /(?:우울하|불안하|걱정하|없|가라앉)지(?:는)?\s*않|아니|아닌|안\s*(?:우울|불안)|나아졌|괜찮아졌/u;
+  if (otherSubject.test(text) || declined.test(text) || negated.test(text)) return null;
+
+  const explicit = text.match(/(phq[- ]?[49]|gad[- ]?[27]|우울(?:과\s*|[·ㆍ/]\s*)불안\s*검사|간단\s*불안\s*검사|우울(?:증|감)?\s*(?:선별\s*)?검사|불안\s*검사|마음\s*(?:상태\s*)?검사).{0,15}(?:싶|받|해|할|원|볼|부탁)/iu);
+  const repeated = /요즘|계속|자꾸|매일|내내|최근|몇\s*주|[12한두]\s*주|며칠째/u.test(text);
+  const lowMood = /우울(?:해|하|했)|기분이?\s*(?:자꾸\s*)?가라앉/u.test(text);
+  const worry = /불안(?:해|하|했)|걱정(?:이|을|돼|되|해|하).{0,12}(?:계속|멈추|끊|조절|많|자꾸)|(?:자꾸|계속|매일)\s*걱정/u.test(text);
+  let id;
+  if (explicit) {
+    const term = explicit[1].replace(/[- ]/g, '').toLowerCase();
+    if (Object.hasOwn(screeners, term)) id = term;
+    else if (term.startsWith('마음') || (term.includes('우울') && term.includes('불안'))) id = 'phq4';
+    else if (term.startsWith('간단')) id = 'gad2';
+    else id = term.startsWith('불안') ? 'gad7' : 'phq9';
+  } else if (repeated && worry) {
+    id = lowMood ? 'phq4' : 'gad2';
+  } else {
+    const loss = /(?:재미|의욕|흥미|즐거움|낙)(?:이|가|도)?\s*(?:별로\s*)?없|즐겁지\s*않/u.test(text)
+      && /좋아하던|즐기던|뭘\s*해도|아무|무엇|모든|어떤\s*일|매사|다\s*재미|의욕|사는\s*낙/u.test(text);
+    if (/(?:제가|내가|저는|나는)\s*우울증(?:인|이\s*온|이\s*있는)/u.test(text) || (repeated && (lowMood || loss))) id = 'phq9';
+  }
+  if (!id) return null;
+  const test = screeners[id];
+  return { screening: id, reply: test.name + ' 검사는 지난 2주 동안 느낀 ' + (id.startsWith('gad') ? '불안' : id === 'phq4' ? '우울감과 불안' : '우울감') + '을 살펴봐요. ' + test.length + '문항으로 확인해 볼까요?' };
+}

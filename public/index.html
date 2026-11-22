@@ -3,49 +3,92 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>마음 시간표</title>
-  <meta name="description" content="Apple 건강 데이터로 지난 2주의 리듬을 읽고, 짧은 대화로 지금의 나를 알아보는 서비스">
+  <title>내 심리 점수는 몇 등일까? · 마음 시간표</title>
+  <meta name="description" content="짧은 대화로 미루는 습관, 눈치 등 여섯 가지 심리 성향의 순위를 알아보세요. 리포트에서 내 답변이 순위에 어떻게 반영됐는지 보고, 궁금한 항목은 직접 테스트해 볼 수 있어요.">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="phone.css">
+  <link rel="stylesheet" href="phone-flow.css">
+  <script>
+    if (new URLSearchParams(location.search).get('view') === 'phone') document.documentElement.classList.add('phone-preview');
+  </script>
 </head>
 <body>
   <header class="bar">
-    <a class="wordmark" href="./">마음 시간표</a>
+    <a class="wordmark" href="./"><img src="favicon.svg" alt="" width="28" height="28">마음 시간표</a>
+    <nav class="intro-nav" id="introNav" aria-label="페이지 안내">
+      <a href="#example">결과 예시</a><a href="#guide">이용 안내</a>
+    </nav>
     <span class="bar-tag" id="sampleTag" hidden>가상 사용자 데이터</span>
   </header>
 
   <main id="intro" class="intro">
-    <section class="intro-copy">
-      <h1>몸이 먼저 적어 둔 지난 2주,<br>같이 읽어 볼까요?</h1>
-      <p class="lede">Apple 건강 데이터에서 수면, 걸음, 심박을 평소의 나와 비교하고, 그 변화로 짧은 대화를 시작해요. 마지막에는 지금의 리듬을 정리한 리포트를 받아요.</p>
-      <div class="actions">
-        <button class="btn primary" id="sampleBtn" type="button">샘플 데이터로 시작</button>
-        <label class="btn" for="fileInput">
-          <svg aria-hidden="true" viewBox="0 0 20 20"><path d="M10 13V3m0 0L6 7m4-4 4 4M3 12v4a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-4"/></svg>
-          내 건강 데이터 올리기
-        </label>
-        <input id="fileInput" type="file" accept=".zip,.xml,application/zip,text/xml" hidden>
+    <section class="intro-hero" aria-labelledby="heroTitle">
+      <div class="intro-copy">
+        <p class="test-type"><span aria-hidden="true"></span>대화형 심리 테스트</p>
+        <h1 id="heroTitle">내 심리 점수는<br><em>몇 등</em>일까?</h1>
+        <p class="lede">AI와 일상 이야기를 나누면, 눈치와 미루는 습관 등 여섯 가지 심리 성향이 각각 1~100등으로 나와요.</p>
+        <div class="hero-start">
+          <a class="btn primary" id="experienceBtn" href="?view=phone">내 심리 순위 알아보기 <span aria-hidden="true">→</span></a>
+          <span class="start-info"><i aria-hidden="true"></i>약 5~10분</span>
+        </div>
       </div>
-      <div class="progress" id="progress" hidden>
-        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
-        <p class="progress-text" id="progressText">기록을 읽는 중</p>
+      <div class="preview-stage" aria-label="답변을 골라 보는 리포트 미리보기" role="region">
+        <div class="preview-paper">
+          <div class="preview-masthead"><span><img src="favicon.svg" alt="" width="20" height="20">마음 프로필</span>결과 미리보기</div>
+          <div id="heroResult" aria-live="polite" aria-atomic="true"></div>
+          <fieldset class="preview-replies" id="previewReplies">
+            <legend>짧은 답장이 오면 어떤 생각이 들어요?</legend>
+          </fieldset>
+        </div>
       </div>
-      <p class="error" id="introError" role="alert" hidden></p>
-      <details class="note">
-        <summary>파일은 이 브라우저 밖으로 나가지 않아요</summary>
-        <p>올린 파일은 이 화면 안에서만 읽어요. AI에게는 브라우저가 계산한 요약 숫자 몇 줄과 대화 내용만 가요. 기기 이름, 생년월일, 위치, 날짜별 원본 기록은 보내지 않아요.</p>
-        <p>내 파일 만드는 법: iPhone 건강 앱 → 오른쪽 위 프로필 → 모든 건강 데이터 내보내기 → 생긴 export.zip을 여기에 올려요.</p>
-      </details>
-      <p class="fine">진단 도구가 아니에요. 지금의 나를 비춰 보는 거울이에요.</p>
     </section>
-    <section class="intro-table" aria-hidden="true">
-      <div class="tt" id="introTable"></div>
+
+    <section class="example-section" id="example" aria-labelledby="exampleTitle" tabindex="-1">
+      <header class="example-intro">
+        <h2 id="exampleTitle">내 리포트에 담기는<br>여섯 가지 심리 순위</h2>
+        <p class="example-caption">예시 대화를 바탕으로 만든 리포트예요. 각 카드에서 등수에 반영된 답변을 볼 수 있어요. 더 궁금한 성향은 리포트에서 직접 테스트해 보세요.</p>
+      </header>
+      <div class="case-grid" id="landingCases"></div>
+      <div class="example-actions">
+        <a class="btn primary" href="?view=phone&amp;case=again">이 사람의 리포트 보기</a>
+        <a class="case-link" href="?view=phone&amp;case=interest&amp;test=phq9">PHQ-9를 마친 사례 보기</a>
+      </div>
     </section>
+
+    <section class="guide-section" id="guide" aria-labelledby="guideTitle">
+      <h2 id="guideTitle">시작하기 전에</h2>
+      <div class="guide-list">
+        <details class="note"><summary>내 등수는 어떻게 정하나요?</summary>
+          <p>각 성향은 50점에서 시작해요. 답변에서 그 성향이 드러날 때마다 점수를 조정하고, 성향이 강할수록 1등에 가깝게 표시해요. 등수는 앱 내부 기준이에요. 결과가 내 얘기와 다르거나 더 궁금하다면 리포트에서 그 항목만 골라 직접 테스트해 보세요.</p>
+        </details>
+        <details class="note"><summary>내 파일 없이 써 볼 수 있나요?</summary>
+          <p>네. ‘내 심리 순위 알아보기’를 누르면 파일 없이 진행할 수 있어요. 예시 답장을 고르거나 내 이야기로 답해 보세요.</p>
+        </details>
+        <details class="note"><summary>건강 기록을 보면서 대화할 수 있나요?</summary>
+          <p>샘플 기록으로 시작하거나 내 Apple 건강 기록을 불러올 수 있어요. iPhone 건강 앱에서 프로필을 열고 ‘모든 건강 데이터 내보내기’를 누른 뒤 export.zip 또는 export.xml을 선택하세요.</p>
+          <div class="actions">
+            <button class="btn" id="sampleBtn" type="button">샘플로 대화하기</button>
+            <button class="btn" id="uploadBtn" type="button">내 기록으로 시작</button>
+            <input id="fileInput" type="file" accept=".zip,.xml,application/zip,text/xml" hidden>
+          </div>
+          <div class="progress" id="progress" role="status" hidden>
+            <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+            <p class="progress-text" id="progressText">기록을 읽는 중</p>
+          </div>
+          <p class="error" id="introError" role="alert" hidden></p>
+        </details>
+        <details class="note"><summary>AI에게 어떤 내용이 전달되나요?</summary>
+          <p>원본 파일은 이 브라우저에서만 읽어요. AI에는 수면·걸음 등에서 계산한 요약과 대화 내용이 전달돼요. 대화 화면의 ‘AI에게 가는 내용’에서 요약을 직접 확인할 수 있어요.</p>
+        </details>
+      </div>
+    </section>
+    <footer class="intro-footer">마음 시간표는 일상을 돌아보기 위한 서비스예요. 의학적 진단을 제공하지 않아요.</footer>
   </main>
 
   <main id="session" class="session" hidden>
-    <section class="panel data-panel" aria-label="내 데이터">
+    <section class="panel data-panel" id="recordPanel" aria-label="내 데이터">
       <div class="panel-head">
         <h2>지난 7일 밤</h2>
         <div class="legend">
@@ -64,7 +107,7 @@
         <h3>1. 데이터 요약 (이 브라우저가 계산)</h3>
         <pre id="sentSummary"></pre>
         <h3>2. 대화 내용</h3>
-        <p>아래 대화창에 쓴 글이 그대로 가요.</p>
+        <p>대화창에 쓴 글도 함께 전달돼요.</p>
         <h3>3. 고정 지시문</h3>
         <pre id="sentPrompt"></pre>
         <h3>보내지 않는 것</h3>
@@ -72,10 +115,11 @@
       </details>
     </section>
 
-    <section class="panel chat-panel" aria-label="대화">
+    <section class="panel chat-panel" id="chatPanel" aria-label="대화">
       <div class="panel-head">
         <h2>대화</h2>
         <span class="turns" id="turnCount"></span>
+        <button class="btn chat-finish" id="finishBtn" type="button" hidden>최종 리포트 보기</button>
       </div>
       <ol class="chat" id="chat" aria-live="polite"></ol>
       <form class="composer" id="composer">
@@ -85,10 +129,103 @@
           <svg aria-hidden="true" viewBox="0 0 20 20"><path d="M4 10h11m0 0-4-4m4 4-4 4"/></svg>
         </button>
       </form>
-      <button class="btn ghost-btn" id="finishBtn" type="button" hidden>여기까지 하고 리포트 보기</button>
     </section>
   </main>
 
+  <dialog id="screeningSheet" class="screening-sheet" aria-labelledby="screeningTitle">
+    <header class="screening-head">
+      <h2 id="screeningTitle">검사</h2>
+      <button type="button" id="leaveScreening">그만하기</button>
+    </header>
+    <div class="screening-body">
+      <p id="screeningPosition" role="status"></p>
+      <button id="retryScreening" class="btn" type="button" hidden>문항 다시 불러오기</button>
+      <fieldset>
+        <legend id="screeningQuestion" tabindex="-1" aria-describedby="screeningPosition screeningInstruction"></legend>
+        <p id="screeningInstruction"></p>
+        <div id="screeningAnswers"></div>
+      </fieldset>
+      <div class="fine" id="screeningCredit"></div>
+    </div>
+    <footer class="screening-actions">
+      <button class="btn" id="previousItem" type="button" disabled>이전 문항</button>
+    </footer>
+  </dialog>
+
+  <template id="phoneTemplate">
+    <div class="phone-stage">
+      <a class="preview-exit" href="./">체험 나가기</a>
+      <div class="phone-frame">
+        <div class="phone-screen">
+          <div class="phone-status" aria-hidden="true">
+            <time id="phoneClock"></time><span class="phone-camera"></span>
+            <svg viewBox="0 0 46 14" fill="currentColor"><path d="M0 10h3v3H0zm5-3h3v6H5zm5-3h3v9h-3zm5-3h3v12h-3z"/><rect x="23" y="2" width="19" height="10" rx="3" fill="none" stroke="currentColor"/><rect x="25" y="4" width="14" height="6" rx="1"/><path d="M44 5h2v4h-2z"/></svg>
+          </div>
+          <div class="phone-viewport" id="phoneViewport">
+            <section class="phone-step signup-step" id="signupStep" aria-labelledby="signupTitle">
+              <h1 id="signupTitle">마음 시간표</h1>
+              <div class="signup-actions">
+                <p id="signupError" role="alert"></p>
+                <button class="apple-sign-in" type="button" id="appleContinue">
+                  <img src="assets/apple-sign-in-ko-white.png" width="300" height="50" alt="Apple로 로그인">
+                </button>
+              </div>
+            </section>
+            <section class="phone-step connect-step" id="connectStep" aria-labelledby="connectTitle" hidden>
+              <div>
+                <img src="assets/apple-health.png" width="60" height="60" alt="">
+                <h1 id="connectTitle" tabindex="-1">Apple 건강 연결</h1>
+                <p class="step-description" id="connectStatus" role="status">체험에 사용할 샘플 기록을 골라 주세요. ‘운동’을 켜면 운동 기록에서 대화를 시작해요.</p>
+              </div>
+              <div class="connect-actions">
+                <button class="btn primary" type="button" id="requestHealth">Apple 건강 연결하기</button>
+                <button class="btn" type="button" id="retryHealth" hidden>다시 불러오기</button>
+                <a class="btn restart-health" id="restartHealth" href="?view=phone" hidden>체험 다시 시작</a>
+              </div>
+            </section>
+            <dialog class="access-sheet" id="healthSheet" aria-labelledby="accessTitle" aria-describedby="healthPurpose">
+              <div class="sheet-bar">
+                <button type="button" id="cancelHealth">허용 안 함</button>
+                <h2 id="accessTitle" tabindex="-1">건강 접근</h2><button type="button" id="confirmHealth" disabled>허용</button>
+              </div>
+              <div class="sheet-content">
+                <img class="health-icon" src="assets/apple-health.png" width="68" height="68" alt="">
+                <h3>건강</h3>
+                <p id="healthPurpose">‘마음 시간표’에서 사용자의 건강 데이터에 접근하려고 합니다.</p>
+                <button type="button" id="toggleHealth">모두 켜기</button>
+                <fieldset class="health-types"><legend>‘마음 시간표’의 읽기 허용</legend>
+                  <label><i class="health-glyph activity" aria-hidden="true"></i>걸음<input type="checkbox" role="switch" name="healthType" value="steps"></label>
+                  <label><i class="health-glyph sleep" aria-hidden="true"></i>수면<input type="checkbox" role="switch" name="healthType" value="sleep"></label>
+                  <label><i class="health-glyph heart" aria-hidden="true"></i>심박 변이<input type="checkbox" role="switch" name="healthType" value="hrv"></label>
+                  <label><i class="health-glyph activity" aria-hidden="true"></i>운동<input type="checkbox" role="switch" name="healthType" value="workouts"></label>
+                  <label><i class="health-glyph heart" aria-hidden="true"></i>휴식기 심박수<input type="checkbox" role="switch" name="healthType" value="rhr"></label>
+                </fieldset>
+                <p class="sheet-note">앱 설명: 마음 시간표는 최근 2주의 건강 기록을 평소와 비교하기 위해 선택한 항목을 읽습니다.</p>
+              </div>
+            </dialog>
+            <section class="panel phone-result" id="resultPanel" aria-labelledby="resultTitle" hidden>
+              <h1 id="resultTitle" tabindex="-1">마음 프로필</h1>
+              <article class="case-report" id="phoneReport"></article>
+              <button class="flow-link" id="viewRecord" type="button">기록 다시 보기</button>
+              <a class="btn primary flow-action" href="./">체험 마치기</a>
+            </section>
+          </div>
+          <nav class="phone-nav" id="phoneNav" aria-label="체험 화면" hidden>
+            <button type="button" id="resultButton" aria-controls="resultPanel" aria-pressed="false" hidden>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h10l4 4v14H5V3Z"/><path d="M9 11h6m-6 4h6"/></svg>리포트
+            </button>
+            <button type="button" id="chatButton" aria-controls="chatPanel" aria-pressed="false">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v12H9l-5 4V5Z"/><path d="M8 9h8m-8 4h5"/></svg>대화
+            </button>
+            <button type="button" id="recordsButton" aria-controls="recordPanel" aria-pressed="false">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16M6 15V9m6 6V4m6 11v-5"/></svg>기록
+            </button>
+          </nav>
+          <div class="phone-home" aria-hidden="true"></div>
+        </div>
+      </div>
+    </div>
+  </template>
   <script type="module" src="js/app.js"></script>
 </body>
 </html>

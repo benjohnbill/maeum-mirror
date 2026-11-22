@@ -50,12 +50,12 @@ const hhmm = (minAfterMidnight) => {
 };
 const hm = (min) => `${Math.floor(min / 60)}시간 ${Math.round(min % 60)}분`;
 
-export function computeSummary(data) {
+export function computeSummary(data, through) {
   const sleepNights = nights(data.sleep);
   const stepDays = new Map([...data.steps].map(([k, m]) => [k, Math.max(...m.values())]));
   const allKeys = [...sleepNights.keys(), ...stepDays.keys(), ...data.rhr.keys()].sort();
-  if (!allKeys.length) return null;
-  const last = allKeys[allKeys.length - 1];
+  const last = through ?? allKeys.at(-1);
+  if (!last) return null;
 
   const windowed = (map, valueOf) => {
     const base = [], recent = [];
