@@ -23,7 +23,14 @@ globalThis.fetch = async (url, init = {}) => {
   const m = u.match(/generativelanguage\.googleapis\.com\/v1beta\/models\/([^:]+):generateContent/);
   if (!m || !LOG) return realFetch(url, init);
   const key = init.headers?.['x-goog-api-key'];
-  const slot = ['GEMINI_API_KEY', 'GEMINI_API_KEY_1', 'GEMINI_API_KEY_2'].find((n) => process.env[n] === key) ?? 'other';
+  // product.mjs gives a worker one key and fills the other slots with ' ' so lib/chat.mjs does not load
+  // them from .env. A blank slot is not a key: answer 429 locally (no network, no Attempt), so the
+  // server moves on exactly as if the slot were absent.
+  if (!String(key ?? '').trim()) {
+    return new Response(JSON.stringify({ error: { code: 429, message: 'blank key slot skipped by runner' } }), { status: 429, headers: { 'content-type': 'application/json' } });
+  }
+  // RUNNER_KEY_NAME: the .env name of the one key a product.mjs worker holds (it sits in slot 0).
+  const slot = process.env.RUNNER_KEY_NAME ?? ['GEMINI_API_KEY', 'GEMINI_API_KEY_1', 'GEMINI_API_KEY_2'].find((n) => process.env[n] === key) ?? 'other';
   const t0 = Date.now();
   const rec = { at: new Date().toISOString(), requested_model: m[1], key: slot, body_sha: createHash('sha256').update(String(init.body)).digest('hex').slice(0, 16) };
   try {

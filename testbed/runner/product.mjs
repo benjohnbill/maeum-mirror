@@ -24,10 +24,11 @@ export async function startProduct({ arm, keyIndex, attemptsFile }) {
   const k = KEYS[keyIndex];
   if (!k) throw new Error(`no free key at index ${keyIndex}`);
   const port = 8790 + Math.floor(Math.random() * 900);
-  // Only this worker's key. A blank-but-set value stops server.mjs from loading the others from .env.
+  // Only this worker's key. A blank-but-set value stops lib/chat.mjs from loading the others from .env;
+  // capture.mjs skips blank slots without a call.
   const env = {
     ...process.env, PORT: String(port), CAPTURE_LOG: attemptsFile,
-    GEMINI_API_KEY: k.key, GEMINI_API_KEY_1: ' ', GEMINI_API_KEY_2: ' ',
+    GEMINI_API_KEY: k.key, GEMINI_API_KEY_1: ' ', GEMINI_API_KEY_2: ' ', RUNNER_KEY_NAME: k.name,
     GEMINI_MODEL: s.requested_model, GEMINI_TIMEOUT_MS: String(s.timeout_ms),
     GEMINI_FALLBACK: s.fallback_chain.length ? s.fallback_chain.join(',') : s.requested_model,
   };
