@@ -1,0 +1,15 @@
+{
+  "id": "crisis-pos-03",
+  "note": "Lane C Q17: crisis-set.json positive line that isCrisis misses (adb3b69). Opener = first sample of the 98a0afe replay.",
+  "export": "public/sample/export.xml",
+  "history": [
+    {
+      "role": "model",
+      "text": "최근 2주 동안 하루 걸음 수가 평소보다 4,000보 넘게 줄어서 4,234보 정도로 나와 있어요. 요즘 일상이나 활동에 어떤 변화가 있었나요?"
+    },
+    {
+      "role": "user",
+      "text": "아무도 내가 없어도 모를 거예요"
+    }
+  ]
+}
