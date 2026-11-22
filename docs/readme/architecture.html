@@ -1,151 +1,49 @@
-<title>Herz Architecture</title>
-<meta name="claude:viewport-fit-sides" content="cover">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
-<style>
-/* Layout: one wide system diagram, three clusters left to right, the absent DB below the server. */
-:root {
-  --bg: #ffffff;
-  --fg: #1f2937;
-  --muted: #64748b;
-  --panel: #e8f4fb;
-  --panel-stroke: #b6d9ea;
-  --edge: #8a97a8;
-  --ok: #15803d;
-  --no: #c2410c;
-  --chip: #111827;
-  --font: "Inter", "Noto Sans KR", system-ui, sans-serif;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #0f1419; --fg: #e5e7eb; --muted: #94a3b8; --panel: #15232e; --panel-stroke: #2c4a5c;
-    --edge: #7c8a9c; --ok: #4ade80; --no: #fb923c; --chip: #0b0f14; color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #0f1419; --fg: #e5e7eb; --muted: #94a3b8; --panel: #15232e; --panel-stroke: #2c4a5c;
-  --edge: #7c8a9c; --ok: #4ade80; --no: #fb923c; --chip: #0b0f14; color-scheme: dark;
-}
-body { background: var(--bg); color: var(--fg); font-family: var(--font); }
-main { max-width: 1180px; margin: 0 auto; padding-block: 28px 40px;
-  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
-h1 { font-size: 22px; font-weight: 700; margin: 0 0 4px; letter-spacing: -0.01em; }
-.lead { margin: 0 0 20px; color: var(--muted); font-size: 14px; }
-figure { margin: 0; }
-.scroll { overflow-x: auto; }
-svg.arch { display: block; width: 100%; height: auto; color: var(--fg); }
-figcaption { margin-top: 14px; color: var(--muted); font-size: 13px; text-align: center; }
-.grp { fill: var(--panel); stroke: var(--panel-stroke); stroke-width: 1.2; }
-.gt { fill: var(--fg); font-size: 13px; font-weight: 600; }
-.lbl { fill: var(--fg); font-size: 15px; font-weight: 700; text-anchor: middle; }
-.sub { fill: var(--muted); font-size: 12px; text-anchor: middle; }
-.el { fill: var(--muted); font-size: 12px; }
-.edge { stroke: var(--edge); stroke-width: 1.6; fill: none; }
-.dash { stroke-dasharray: 5 5; }
-.head { fill: var(--edge); }
-.fg { fill: var(--fg); }
-.ok { fill: var(--ok); font-size: 12.5px; font-weight: 600; }
-.no { stroke: var(--no); stroke-width: 2.4; fill: none; stroke-linecap: round; }
-.noTxt { fill: var(--no); font-size: 15px; font-weight: 700; }
-.nobox { fill: none; stroke: var(--edge); stroke-width: 1.4; stroke-dasharray: 6 5; }
-.card { fill: var(--bg); stroke: var(--panel-stroke); }
-.chip { fill: var(--chip); }
-</style>
+<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#fff}</style></head><body><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 380" width="640" height="380">
+<defs>
+<marker id="r" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#E5322D"/></marker>
+<marker id="g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#8A8A8A"/></marker>
+<linearGradient id="gem" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4285F4"/><stop offset=".55" stop-color="#9B72CB"/><stop offset="1" stop-color="#D96570"/></linearGradient>
+<style>.t{font:800 12.5px 'NanumSquare Neo','NanumBarunGothic',sans-serif;fill:#141414;letter-spacing:-.3px}.s{font:400 9.5px 'NanumSquare Neo','NanumBarunGothic',sans-serif;fill:#777;letter-spacing:-.2px}.gl{font:800 10.5px 'NanumSquare Neo','NanumBarunGothic',sans-serif;fill:#555}.al{font:700 9.5px 'NanumSquare Neo','NanumBarunGothic',sans-serif;fill:#333}.ok{font:800 9.5px 'NanumSquare Neo','NanumBarunGothic',sans-serif;fill:#A8231F}</style>
+</defs>
+<rect x="8" y="30" width="176" height="342" rx="12" fill="#F7F6F4" stroke="#D2D0CC" stroke-dasharray="5 4"/>
+<text x="22" y="22" class="gl">내 폰 · 브라우저</text>
+<rect x="232" y="30" width="176" height="342" rx="12" fill="#F7F6F4" stroke="#D2D0CC" stroke-dasharray="5 4"/>
+<svg x="232" y="11" width="13" height="13" viewBox="0 0 24 24"><path fill="#141414" d="M24 22.525H0l12-21.05 12 21.05z"/></svg><text x="250" y="22" class="gl">Vercel</text>
+<rect x="456" y="150" width="176" height="150" rx="12" fill="#F7F6F4" stroke="#D2D0CC" stroke-dasharray="5 4"/>
+<text x="456" y="142" class="gl">Google AI</text>
 
-<main>
-  <h1>Herz MVP 서비스 아키텍처</h1>
-  <p class="lead">Vercel 하나로 화면과 API를 함께 배포해요. 별도 DB와 로그인은 없어요.</p>
+<image href="icons/apple-health.png" x="66" y="52" width="60" height="60" clip-path="inset(0 round 14px)"/>
+<rect x="66" y="52" width="60" height="60" rx="14" fill="none" stroke="#E2E0DC"/>
+<text x="96" y="130" text-anchor="middle" class="t">Apple 건강</text><text x="96" y="144" text-anchor="middle" class="s">export.xml</text>
 
-  <figure>
-    <div class="scroll">
-    <svg class="arch" viewBox="20 56 1080 534" role="img"
-      aria-label="브라우저가 건강 기록을 기기 안에서 분석하고, 대화와 지표 요약만 Vercel 함수로 보내며, 함수가 Gemini API를 호출한다. DB는 없다.">
-      <defs>
-        <marker id="arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-          <path class="head" d="M0 0 10 5 0 10z"/>
-        </marker>
-        <linearGradient id="gem" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#4285F4"/>
-          <stop offset=".55" stop-color="#9B72CB"/>
-          <stop offset="1" stop-color="#D96570"/>
-        </linearGradient>
-      </defs>
+<path d="M96 152 V196" stroke="#E5322D" stroke-width="2" fill="none" marker-end="url(#r)"/>
+<text x="102" y="178" class="al">기기에서 읽기</text>
 
-      <!-- clusters -->
-      <rect class="grp" x="40" y="70" width="340" height="380" rx="14"/>
-      <text class="gt" x="58" y="96">사용자 기기 · 브라우저</text>
+<svg x="47" y="206" width="32" height="32" viewBox="0 0 24 24"><path fill="#E34F26" d="M1.5 0h21l-1.91 21.563L11.977 24l-8.564-2.438L1.5 0zm7.031 9.75l-.232-2.718 10.059.003.23-2.622L5.412 4.41l.698 8.01h9.126l-.326 3.426-2.91.804-2.955-.81-.188-2.11H6.248l.33 4.171L12 19.351l5.379-1.443.744-8.157H8.531z"/></svg><svg x="81" y="206" width="32" height="32" viewBox="0 0 24 24"><path fill="#1572B6" d="M1.5 0h21l-1.91 21.563L11.977 24l-8.565-2.438L1.5 0zm17.09 4.413L5.41 4.41l.213 2.622 10.125.002-.255 2.716h-6.64l.24 2.573h6.182l-.366 3.523-2.91.804-2.956-.81-.188-2.11h-2.61l.29 3.855L12 19.288l5.373-1.53L18.59 4.414z"/></svg><rect x="117" y="208" width="28" height="28" fill="#141414"/><svg x="115" y="206" width="32" height="32" viewBox="0 0 24 24"><path fill="#F7DF1E" d="M0 0h24v24H0V0zm22.034 18.276c-.175-1.095-.888-2.015-3.003-2.873-.736-.345-1.554-.585-1.797-1.14-.091-.33-.105-.51-.046-.705.15-.646.915-.84 1.515-.66.39.12.75.42.976.9 1.034-.676 1.034-.676 1.755-1.125-.27-.42-.404-.601-.586-.78-.63-.705-1.469-1.065-2.834-1.034l-.705.089c-.676.165-1.32.525-1.71 1.005-1.14 1.291-.811 3.541.569 4.471 1.365 1.02 3.361 1.244 3.616 2.205.24 1.17-.87 1.545-1.966 1.41-.811-.18-1.26-.586-1.755-1.336l-1.83 1.051c.21.48.45.689.81 1.109 1.74 1.756 6.09 1.666 6.871-1.004.029-.09.24-.705.074-1.65l.046.067zm-8.983-7.245h-2.248c0 1.938-.009 3.864-.009 5.805 0 1.232.063 2.363-.138 2.711-.33.689-1.18.601-1.566.48-.396-.196-.597-.466-.83-.855-.063-.105-.11-.196-.127-.196l-1.825 1.125c.305.63.75 1.172 1.324 1.517.855.51 2.004.675 3.207.405.783-.226 1.458-.691 1.811-1.411.51-.93.402-2.07.397-3.346.012-2.054 0-4.109 0-6.179l.004-.056z"/></svg>
+<text x="96" y="258" text-anchor="middle" class="t">화면 · 분석</text><text x="96" y="272" text-anchor="middle" class="s">HTML · CSS · JS 모바일 웹</text>
+<text x="96" y="304" text-anchor="middle" class="ok">✓ 건강 기록 원본은</text>
+<text x="96" y="317" text-anchor="middle" class="ok">서버로 보내지 않아요</text>
 
-      <rect class="grp" x="440" y="70" width="320" height="380" rx="14"/>
-      <svg x="458" y="83" width="16" height="16" viewBox="0 0 24 24"><path class="fg" d="M24 22.525H0l12-21.05 12 21.05z"/></svg>
-      <text class="gt" x="482" y="96">Vercel</text>
+<g transform="translate(296,52)"><rect x="4" y="0" width="40" height="52" rx="5" fill="#fff" stroke="#141414" stroke-width="2"/><path d="M14 16 H34 M14 26 H34 M14 36 H28" stroke="#141414" stroke-width="2.4" stroke-linecap="round"/><rect x="12" y="-6" width="40" height="52" rx="5" fill="none" stroke="#BDBDBD" stroke-width="1.6"/></g>
+<text x="320" y="130" text-anchor="middle" class="t">정적 호스팅</text><text x="320" y="144" text-anchor="middle" class="s">화면 · 검사지 파일</text>
+<path d="M290 96 C230 110 200 170 152 206" stroke="#8A8A8A" stroke-width="1.5" stroke-dasharray="5 4" fill="none" marker-end="url(#g)"/>
+<text x="208" y="92" text-anchor="middle" class="al" fill="#666">화면 배포</text>
 
-      <rect class="grp" x="820" y="250" width="260" height="200" rx="14"/>
-      <text class="gt" x="838" y="276">Google AI</text>
+<svg x="292" y="192" width="56" height="56" viewBox="0 0 24 24"><path fill="#5FA04E" d="M11.998,24c-0.321,0-0.641-0.084-0.922-0.247l-2.936-1.737c-0.438-0.245-0.224-0.332-0.08-0.383 c0.585-0.203,0.703-0.25,1.328-0.604c0.065-0.037,0.151-0.023,0.218,0.017l2.256,1.339c0.082,0.045,0.197,0.045,0.272,0l8.795-5.076 c0.082-0.047,0.134-0.141,0.134-0.238V6.921c0-0.099-0.053-0.192-0.137-0.242l-8.791-5.072c-0.081-0.047-0.189-0.047-0.271,0 L3.075,6.68C2.99,6.729,2.936,6.825,2.936,6.921v10.15c0,0.097,0.054,0.189,0.139,0.235l2.409,1.392 c1.307,0.654,2.108-0.116,2.108-0.89V7.787c0-0.142,0.114-0.253,0.256-0.253h1.115c0.139,0,0.255,0.112,0.255,0.253v10.021 c0,1.745-0.95,2.745-2.604,2.745c-0.508,0-0.909,0-2.026-0.551L2.28,18.675c-0.57-0.329-0.922-0.945-0.922-1.604V6.921 c0-0.659,0.353-1.275,0.922-1.603l8.795-5.082c0.557-0.315,1.296-0.315,1.848,0l8.794,5.082c0.57,0.329,0.924,0.944,0.924,1.603 v10.15c0,0.659-0.354,1.273-0.924,1.604l-8.794,5.078C12.643,23.916,12.324,24,11.998,24z M19.099,13.993 c0-1.9-1.284-2.406-3.987-2.763c-2.731-0.361-3.009-0.548-3.009-1.187c0-0.528,0.235-1.233,2.258-1.233 c1.807,0,2.473,0.389,2.747,1.607c0.024,0.115,0.129,0.199,0.247,0.199h1.141c0.071,0,0.138-0.031,0.186-0.081 c0.048-0.054,0.074-0.123,0.067-0.196c-0.177-2.098-1.571-3.076-4.388-3.076c-2.508,0-4.004,1.058-4.004,2.833 c0,1.925,1.488,2.457,3.895,2.695c2.88,0.282,3.103,0.703,3.103,1.269c0,0.983-0.789,1.402-2.642,1.402 c-2.327,0-2.839-0.584-3.011-1.742c-0.02-0.124-0.126-0.215-0.253-0.215h-1.137c-0.141,0-0.254,0.112-0.254,0.253 c0,1.482,0.806,3.248,4.655,3.248C17.501,17.007,19.099,15.91,19.099,13.993z"/></svg>
+<text x="320" y="265" text-anchor="middle" class="t">서버 함수</text><text x="320" y="279" text-anchor="middle" class="s">/api/chat · AI 키 보관</text>
 
-      <!-- A: Apple Health export -->
-      <svg x="122" y="118" width="56" height="56" viewBox="0 0 24 24"><path class="fg" d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>
-      <text class="lbl" x="150" y="198">Apple Health</text>
-      <text class="sub" x="150" y="215">export.xml</text>
+<g transform="translate(262,300)" opacity=".75"><ellipse cx="20" cy="6" rx="18" ry="6" fill="none" stroke="#AAA" stroke-width="1.6" stroke-dasharray="4 3"/><path d="M2 6 V30 A18 6 0 0 0 38 30 V6" fill="none" stroke="#AAA" stroke-width="1.6" stroke-dasharray="4 3"/></g>
+<text x="308" y="316" class="t" style="fill:#9C9C9C;font-weight:700">DB 없음</text><text x="308" y="330" class="s" style="fill:#AAA">기록을 저장하지 않아요</text>
 
-      <!-- B: Frontend -->
-      <svg x="145" y="318" width="40" height="40" viewBox="0 0 24 24"><path fill="#E34F26" d="M1.5 0h21l-1.91 21.563L11.977 24l-8.564-2.438L1.5 0zm7.031 9.75l-.232-2.718 10.059.003.23-2.622L5.412 4.41l.698 8.01h9.126l-.326 3.426-2.91.804-2.955-.81-.188-2.11H6.248l.33 4.171L12 19.351l5.379-1.443.744-8.157H8.531z"/></svg>
-      <svg x="190" y="318" width="40" height="40" viewBox="0 0 24 24"><path fill="#1572B6" d="M1.5 0h21l-1.91 21.563L11.977 24l-8.565-2.438L1.5 0zm17.09 4.413L5.41 4.41l.213 2.622 10.125.002-.255 2.716h-6.64l.24 2.573h6.182l-.366 3.523-2.91.804-2.956-.81-.188-2.11h-2.61l.29 3.855L12 19.288l5.373-1.53L18.59 4.414z"/></svg>
-      <rect x="235" y="318" width="40" height="40" fill="#111"/>
-      <svg x="235" y="318" width="40" height="40" viewBox="0 0 24 24"><path fill="#F7DF1E" d="M0 0h24v24H0V0zm22.034 18.276c-.175-1.095-.888-2.015-3.003-2.873-.736-.345-1.554-.585-1.797-1.14-.091-.33-.105-.51-.046-.705.15-.646.915-.84 1.515-.66.39.12.75.42.976.9 1.034-.676 1.034-.676 1.755-1.125-.27-.42-.404-.601-.586-.78-.63-.705-1.469-1.065-2.834-1.034l-.705.089c-.676.165-1.32.525-1.71 1.005-1.14 1.291-.811 3.541.569 4.471 1.365 1.02 3.361 1.244 3.616 2.205.24 1.17-.87 1.545-1.966 1.41-.811-.18-1.26-.586-1.755-1.336l-1.83 1.051c.21.48.45.689.81 1.109 1.74 1.756 6.09 1.666 6.871-1.004.029-.09.24-.705.074-1.65l.046.067zm-8.983-7.245h-2.248c0 1.938-.009 3.864-.009 5.805 0 1.232.063 2.363-.138 2.711-.33.689-1.18.601-1.566.48-.396-.196-.597-.466-.83-.855-.063-.105-.11-.196-.127-.196l-1.825 1.125c.305.63.75 1.172 1.324 1.517.855.51 2.004.675 3.207.405.783-.226 1.458-.691 1.811-1.411.51-.93.402-2.07.397-3.346.012-2.054 0-4.109 0-6.179l.004-.056z"/></svg>
-      <text class="lbl" x="210" y="392">Frontend</text>
-      <text class="sub" x="210" y="409">HTML · CSS · JS, 프레임워크 없음</text>
-      <text class="ok" x="210" y="434" text-anchor="middle">✓ 건강 기록 원본은 서버로 안 보냄</text>
+<path d="M156 214 H284" stroke="#E5322D" stroke-width="2" fill="none" marker-end="url(#r)"/>
+<text x="220" y="206" text-anchor="middle" class="al">대화 · 지표 요약</text>
+<path d="M284 236 H160" stroke="#8A8A8A" stroke-width="1.4" fill="none" marker-end="url(#g)"/>
+<text x="220" y="250" text-anchor="middle" class="al" style="fill:#666">응답</text>
 
-      <!-- C: static hosting -->
-      <g transform="translate(572 118)">
-        <rect class="card" x="10" y="0" width="38" height="48" rx="4"/>
-        <rect class="card" x="4" y="5" width="38" height="48" rx="4"/>
-        <rect class="card" x="-2" y="10" width="38" height="46" rx="4" stroke-width="1.4"/>
-        <path class="edge" d="M6 24h22M6 32h22M6 40h14"/>
-      </g>
-      <text class="lbl" x="600" y="198">Static Hosting</text>
-      <text class="sub" x="600" y="215">public/ · 화면 · 검사지 JSON</text>
-
-      <!-- D: serverless function -->
-      <svg x="572" y="312" width="56" height="56" viewBox="0 0 24 24"><path fill="#5FA04E" d="M11.998,24c-0.321,0-0.641-0.084-0.922-0.247l-2.936-1.737c-0.438-0.245-0.224-0.332-0.08-0.383 c0.585-0.203,0.703-0.25,1.328-0.604c0.065-0.037,0.151-0.023,0.218,0.017l2.256,1.339c0.082,0.045,0.197,0.045,0.272,0l8.795-5.076 c0.082-0.047,0.134-0.141,0.134-0.238V6.921c0-0.099-0.053-0.192-0.137-0.242l-8.791-5.072c-0.081-0.047-0.189-0.047-0.271,0 L3.075,6.68C2.99,6.729,2.936,6.825,2.936,6.921v10.150c0,0.097,0.054,0.189,0.139,0.235l2.409,1.392 c1.307,0.654,2.108-0.116,2.108-0.89V7.787c0-0.142,0.114-0.253,0.256-0.253h1.115c0.139,0,0.255,0.112,0.255,0.253v10.021 c0,1.745-0.95,2.745-2.604,2.745c-0.508,0-0.909,0-2.026-0.551L2.28,18.675c-0.57-0.329-0.922-0.945-0.922-1.604V6.921 c0-0.659,0.353-1.275,0.922-1.603l8.795-5.082c0.557-0.315,1.296-0.315,1.848,0l8.794,5.082c0.57,0.329,0.924,0.944,0.924,1.603 v10.15c0,0.659-0.354,1.273-0.924,1.604l-8.794,5.078C12.643,23.916,12.324,24,11.998,24z M19.099,13.993 c0-1.9-1.284-2.406-3.987-2.763c-2.731-0.361-3.009-0.548-3.009-1.187c0-0.528,0.235-1.233,2.258-1.233 c1.807,0,2.473,0.389,2.747,1.607c0.024,0.115,0.129,0.199,0.247,0.199h1.141c0.071,0,0.138-0.031,0.186-0.081 c0.048-0.054,0.074-0.123,0.067-0.196c-0.177-2.098-1.571-3.076-4.388-3.076c-2.508,0-4.004,1.058-4.004,2.833 c0,1.925,1.488,2.457,3.895,2.695c2.88,0.282,3.103,0.703,3.103,1.269c0,0.983-0.789,1.402-2.642,1.402 c-2.327,0-2.839-0.584-3.011-1.742c-0.02-0.124-0.126-0.215-0.253-0.215h-1.137c-0.141,0-0.254,0.112-0.254,0.253 c0,1.482,0.806,3.248,4.655,3.248C17.501,17.007,19.099,15.91,19.099,13.993z"/></svg>
-      <text class="lbl" x="600" y="392">Serverless Function</text>
-      <text class="sub" x="600" y="409">/api/chat · Node.js</text>
-
-      <!-- E: Gemini -->
-      <svg x="922" y="312" width="56" height="56" viewBox="0 0 24 24"><path fill="url(#gem)" d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81"/></svg>
-      <text class="lbl" x="950" y="392">Gemini API</text>
-      <text class="sub" x="950" y="409">gemini-3-flash · 폴백 모델</text>
-
-      <!-- edges -->
-      <path class="edge" d="M150 230V306" marker-end="url(#arw)"/>
-      <text class="el" x="140" y="272" text-anchor="end">기기에서 파싱</text>
-
-      <path class="edge" d="M562 146H262V306" marker-end="url(#arw)"/>
-      <text class="el" x="412" y="137" text-anchor="middle">화면 · 검사지 파일</text>
-
-      <path class="edge" d="M290 330H556" marker-end="url(#arw)"/>
-      <text class="el" x="423" y="320" text-anchor="middle">대화 + 지표 요약</text>
-      <path class="edge" d="M556 352H290" marker-end="url(#arw)"/>
-      <text class="el" x="423" y="372" text-anchor="middle">AI 응답</text>
-
-      <path class="edge" d="M644 330H906" marker-end="url(#arw)"/>
-      <text class="el" x="775" y="320" text-anchor="middle">프롬프트 · API 키</text>
-      <path class="edge" d="M906 352H644" marker-end="url(#arw)"/>
-      <text class="el" x="775" y="372" text-anchor="middle">응답</text>
-
-      <!-- absent DB -->
-      <path class="edge dash" d="M600 420V496"/>
-      <g transform="translate(600 462)"><circle r="11" fill="var(--bg)" stroke="var(--no)" stroke-width="2"/><path class="no" d="M-5 -5 5 5M5 -5 -5 5"/></g>
-      <rect class="nobox" x="440" y="498" width="320" height="76" rx="12"/>
-      <g transform="translate(470 514)" opacity=".55">
-        <ellipse cx="20" cy="6" rx="20" ry="6" class="card" stroke-width="1.4"/>
-        <path d="M0 6v32c0 3.3 9 6 20 6s20-2.7 20-6V6" class="card" stroke-width="1.4"/>
-        <path d="M0 18c0 3.3 9 6 20 6s20-2.7 20-6M0 28c0 3.3 9 6 20 6s20-2.7 20-6" class="edge"/>
-      </g>
-      <text class="noTxt" x="532" y="530">DB 없음</text>
-      <text class="el" x="532" y="550">대화와 건강 기록을 저장하지 않아요</text>
-    </svg>
-    </div>
-    <figcaption>원본 건강 기록은 기기 안에서만 분석되고, 서버는 Gemini 호출을 중계만 해요.</figcaption>
-  </figure>
-</main>
+<svg x="516" y="186" width="58" height="58" viewBox="0 0 24 24"><path fill="url(#gem)" d="M11.04 19.32Q12 21.51 12 24q0-2.49.93-4.68.96-2.19 2.58-3.81t3.81-2.55Q21.51 12 24 12q-2.49 0-4.68-.93a12.3 12.3 0 0 1-3.81-2.58 12.3 12.3 0 0 1-2.58-3.81Q12 2.49 12 0q0 2.49-.96 4.68-.93 2.19-2.55 3.81a12.3 12.3 0 0 1-3.81 2.58Q2.49 12 0 12q2.49 0 4.68.96 2.19.93 3.81 2.55t2.55 3.81"/></svg>
+<text x="545" y="265" text-anchor="middle" class="t">Gemini 3 Flash</text><text x="545" y="279" text-anchor="middle" class="s">질문 만들기 · 단서 찾기</text>
+<path d="M356 214 H508" stroke="#E5322D" stroke-width="2" fill="none" marker-end="url(#r)"/>
+<text x="432" y="206" text-anchor="middle" class="al">프롬프트</text>
+<path d="M508 236 H360" stroke="#8A8A8A" stroke-width="1.4" fill="none" marker-end="url(#g)"/>
+<text x="432" y="250" text-anchor="middle" class="al" style="fill:#666">응답</text>
+</svg></body></html>
