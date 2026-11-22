@@ -1,4 +1,4 @@
-import { createCollector } from './parse.js';
+import { createCollector, parseHealthFile } from './parse.js';
 import { computeSummary } from './metrics.js';
 
 // Each approved type has its own fixture, so the browser never requests the others.
@@ -16,10 +16,20 @@ export async function readPreviewHealth(types) {
     else if (data[type] instanceof Map) data[type] = new Map(values);
     else data[type] = values;
   });
-  const summary = computeSummary(data, files[0].through);
+  return summaryFor(data, files[0].through);
+}
+
+// A real export.zip or export.xml, parsed on the device into the same summary.
+export async function readHealthFile(file, onProgress) {
+  return summaryFor(await parseHealthFile(file, onProgress));
+}
+
+// `through` defaults to the last day with records.
+function summaryFor(data, through) {
+  const summary = computeSummary(data, through);
   if (!summary?.metrics.length) throw new Error('비교할 수 있는 기록이 없어요.');
   // The rapport quiz reads the granted records directly, up to a year back.
-  return Object.assign(summary, { data, through: files[0].through });
+  return Object.assign(summary, { data, through: through ?? summary.last });
 }
 
 export function setupPhoneAccess(onConnected) {
@@ -68,6 +78,7 @@ export function setupPhoneAccess(onConnected) {
     loading = true;
     $('requestHealth').hidden = true;
     $('retryHealth').hidden = true;
+    $('uploadHealth').hidden = true;
     $('connectStatus').textContent = '허용한 건강 기록을 불러오는 중이에요…';
     let summary;
     try {
@@ -76,10 +87,37 @@ export function setupPhoneAccess(onConnected) {
       $('connectStatus').textContent = '기록을 불러오지 못했어요. 다시 시도하거나 읽을 항목을 바꿔 주세요.';
       $('requestHealth').hidden = false;
       $('retryHealth').hidden = false;
+      $('uploadHealth').hidden = false;
       $('retryHealth').focus();
       return;
     } finally {
       loading = false;
+    }
+    $('connectStep').hidden = true;
+    onConnected(summary);
+  }
+
+  // The user's own Apple Health export, read in the browser. Nothing is uploaded to the server.
+  async function readFile(file) {
+    if (loading || !file) return;
+    loading = true;
+    const buttons = ['requestHealth', 'retryHealth', 'uploadHealth', 'restartHealth'].map($);
+    const shown = buttons.filter((button) => !button.hidden);
+    for (const button of buttons) button.hidden = true;
+    $('connectStatus').textContent = '내보낸 파일을 읽는 중이에요…';
+    let summary;
+    try {
+      summary = await readHealthFile(file, (p) => {
+        $('connectStatus').textContent = `내보낸 파일을 읽는 중 · ${Math.round(p * 100)}%`;
+      });
+    } catch (err) {
+      $('connectStatus').textContent = err.message || '파일을 읽지 못했어요. 건강 앱에서 내보낸 export.zip 또는 export.xml인지 확인해 주세요.';
+      for (const button of shown) button.hidden = false;
+      $('uploadHealth').focus();
+      return;
+    } finally {
+      loading = false;
+      $('healthFile').value = '';
     }
     $('connectStep').hidden = true;
     onConnected(summary);
@@ -106,4 +144,6 @@ export function setupPhoneAccess(onConnected) {
     readGranted();
   });
   $('retryHealth').addEventListener('click', readGranted);
+  $('uploadHealth').addEventListener('click', () => $('healthFile').click());
+  $('healthFile').addEventListener('change', (event) => readFile(event.target.files[0]));
 }
