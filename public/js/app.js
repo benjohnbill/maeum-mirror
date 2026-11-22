@@ -136,18 +136,16 @@ function setFocus(metric, { scroll = true } = {}) {
 
 /* ---------- Start ---------- */
 
-async function start(file, isSample) {
+async function start() {
   $('introError').hidden = true;
   $('progressFill').style.width = '0%';
-  $('progressText').textContent = isSample ? '샘플 기록을 여는 중' : '기록을 읽는 중';
+  $('progressText').textContent = '샘플 기록을 여는 중';
   $('progress').hidden = false;
   for (const b of document.querySelectorAll('.actions button.btn')) b.setAttribute('disabled', '');
   try {
-    if (isSample) {
-      const res = await fetch('sample/export.xml');
-      if (!res.ok) throw new Error('샘플을 열 수 없어요. 잠시 뒤 다시 시도해 주세요.');
-      file = new File([await res.blob()], 'export.xml', { type: 'text/xml' });
-    }
+    const res = await fetch('sample/export.xml');
+    if (!res.ok) throw new Error('샘플을 열 수 없어요. 잠시 뒤 다시 시도해 주세요.');
+    const file = new File([await res.blob()], 'export.xml', { type: 'text/xml' });
     const data = await parseHealthFile(file, (p) => {
       $('progressFill').style.width = `${Math.round(p * 100)}%`;
       $('progressText').textContent = `기록을 읽는 중 · ${Math.round(p * 100)}%`;
@@ -156,12 +154,11 @@ async function start(file, isSample) {
     const summary = computeSummary(data);
     if (!summary || summary.metrics.length < 2) throw new Error('비교할 만큼의 기록이 없어요. 최근 3개월 동안 수면이나 걸음 기록이 있어야 해요.');
     state.summary = summary;
-    openSession(isSample);
+    openSession(true);
   } catch (err) {
-    $('introError').textContent = err.message || '파일을 읽지 못했어요.';
+    $('introError').textContent = err.message || '샘플을 열 수 없어요.';
     $('introError').hidden = false;
     $('progress').hidden = true;
-    $('fileInput').value = '';
     for (const b of document.querySelectorAll('.actions button.btn')) b.removeAttribute('disabled');
   }
 }
@@ -959,6 +956,4 @@ hero.addEventListener('lostpointercapture', () => hero.classList.remove('is-drag
 
 if (phonePreview) openPhone();
 else showLandingExamples();
-$('uploadBtn').addEventListener('click', () => $('fileInput').click());
-$('fileInput').addEventListener('change', (e) => { const f = e.target.files[0]; if (f) start(f, false); });
-$('sampleBtn').addEventListener('click', () => start(null, true));
+$('sampleBtn').addEventListener('click', start);

@@ -67,11 +67,9 @@
           <p>네. ‘내 심리 순위 알아보기’를 누르면 파일 없이 진행할 수 있어요. 예시 답장을 고르거나 내 이야기로 답해 보세요.</p>
         </details>
         <details class="note"><summary>건강 기록을 보면서 대화할 수 있나요?</summary>
-          <p>샘플 기록으로 시작하거나 내 Apple 건강 기록을 불러올 수 있어요. iPhone 건강 앱에서 프로필을 열고 ‘모든 건강 데이터 내보내기’를 누른 뒤 export.zip 또는 export.xml을 선택하세요.</p>
+          <p>지금은 MVP 단계라 실제 건강 기록 대신 샘플 기록으로 대화해요.</p>
           <div class="actions">
             <button class="btn" id="sampleBtn" type="button">샘플로 대화하기</button>
-            <button class="btn" id="uploadBtn" type="button">내 기록으로 시작</button>
-            <input id="fileInput" type="file" accept=".zip,.xml,application/zip,text/xml" hidden>
           </div>
           <div class="progress" id="progress" role="status" hidden>
             <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
@@ -80,7 +78,7 @@
           <p class="error" id="introError" role="alert" hidden></p>
         </details>
         <details class="note"><summary>AI에게 어떤 내용이 전달되나요?</summary>
-          <p>원본 파일은 이 브라우저에서만 읽어요. AI에는 수면·걸음 등에서 계산한 요약과 대화 내용이 전달돼요. 대화 화면의 ‘AI에게 가는 내용’에서 요약을 직접 확인할 수 있어요.</p>
+          <p>건강 기록은 이 브라우저에서만 읽어요. AI에는 수면·걸음 등에서 계산한 요약과 대화 내용이 전달돼요. 대화 화면의 ‘AI에게 가는 내용’에서 요약을 직접 확인할 수 있어요.</p>
         </details>
       </div>
     </section>
@@ -180,8 +178,6 @@
               <div class="connect-actions">
                 <button class="btn primary" type="button" id="requestHealth">Apple 건강 연결하기</button>
                 <button class="btn" type="button" id="retryHealth" hidden>다시 불러오기</button>
-                <button class="btn" type="button" id="uploadHealth">내보낸 건강 파일 올리기</button>
-                <input id="healthFile" type="file" accept=".zip,.xml,application/zip,text/xml" hidden>
                 <a class="btn restart-health" id="restartHealth" href="?view=phone" hidden>체험 다시 시작</a>
               </div>
             </section>
