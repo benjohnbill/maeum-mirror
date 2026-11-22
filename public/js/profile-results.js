@@ -1,10 +1,5 @@
-// Published whole-sample percentiles. PHQ-2 and GAD-2 already use midranks (Löwe et al., Table 5).
-const shortFormSource = 'https://pubmed.ncbi.nlm.nih.gov/19616305/';
-const shortForms = {
-  phq2: [25.6, 60.8, 80.7, 93.4, 97.2, 99.0, 99.7],
-  gad2: [26.3, 64.5, 84.8, 95.2, 98.0, 99.2, 99.8],
-};
-const gad7Cumulative = [47.8, 60.5, 70.1, 76.7, 81.3, 85.9, 89.4, 93.2, 94.7, 95.7, 96.7, 97.5, 98, 98.5, 99, 99.2, 99.4, 99.6, 99.7, 99.8, 99.8, 100];
+import { indicatorById } from './indicators.js';
+import { testManifest } from './screening-router.js';
 
 export function midPercentile(cumulative, score) {
   return ((cumulative[score - 1] ?? 0) + cumulative[score]) / 2;
@@ -14,41 +9,35 @@ function rankFromPercentile(percentile) {
   return Math.max(1, Math.min(100, Math.round(100.5 - percentile)));
 }
 
-// One measurement per topic. The longer matching instrument takes precedence over a short form.
-const instrumentsByTopic = {
-  mood: ['phq9', 'phq2'],
-  worry: ['gad7', 'gad2'],
-};
+const testName = (id) => testManifest[id]?.name ?? id.toUpperCase();
 
-export function clinicalResult(topic, completed, age) {
-  if (!Object.hasOwn(instrumentsByTopic, topic)) return null;
-  const ids = instrumentsByTopic[topic];
-  const related = [...ids, 'phq4'].map(id => completed.get(id)).filter(Boolean);
+// The measured value for one profile card. The row's own test comes first, then its alt forms
+// in the order indicators.js lists them. A combined form (PHQ-4) supplies the part whose key
+// names one of the row's forms (phq2, gad2); a multi-trait form supplies the row's subscore.
+// Only PHQ-9 has a Korean population table, so only PHQ-9 gets a rank ('등'). Every other
+// test shows its raw score (or mean) and its band when the source publishes bands.
+export function testResult(row, completed, age) {
+  const forms = [row.test, ...(row.alt || [])].filter(Boolean);
+  const related = forms.map((id) => completed.get(id)).filter(Boolean);
   const [test] = related;
   if (!test) return null;
-  const combined = test.id === 'phq4';
-  const id = combined ? ids[1] : test.id;
-  const name = id.toUpperCase().replace(/(\d)/, '-$1');
-  const score = combined ? test.subscores[id] : test.score;
-  const max = combined ? 6 : test.max;
-  let percentile, group, source, label, minAge, maxAge;
-  if (id === 'phq9') {
-    percentile = test.populationPercentile;
-    group = '국내 성인'; source = test.source; label = test.sourceLabel; minAge = 19;
-  } else if (id === 'gad7') {
-    percentile = midPercentile(gad7Cumulative, score);
-    group = '독일 조사'; minAge = 16;
-    source = 'https://doi.org/10.3389/fpsyg.2025.1526181';
-    label = '독일 일반 인구 GAD-7 분포 · 표 3';
-  } else {
-    percentile = shortForms[id][score];
-    group = '독일 조사'; minAge = 14; maxAge = 92;
-    source = shortFormSource; label = '독일 일반 인구 PHQ-2·GAD-2 백분위 · 표 5';
+  const key = test.id === row.test ? row.subscore : forms.find((id) => Object.hasOwn(test.subscores || {}, id));
+  const score = key ? test.subscores[key] : test.score;
+  const [min, max] = key ? test.subscoreRanges[key] : [test.min ?? 0, test.max];
+  const instrument = key && key !== row.subscore ? testName(test.id) + ' 중 ' + testName(key) : testName(test.id);
+  const measured = { test, related, instrument, score, min, max, method: (key ? test.subscoreMethods?.[key] : test.method) || 'sum', band: key ? null : test.band, rank: null };
+  if (test.id === 'phq9' && !key) {
+    const inRange = age == null || age >= 19;
+    if (inRange && Number.isFinite(test.populationPercentile)) measured.rank = rankFromPercentile(test.populationPercentile);
+    Object.assign(measured, { group: '국내 성인', source: test.source, label: test.sourceLabel });
   }
-  const inRange = age == null || (age >= minAge && (maxAge == null || age <= maxAge));
-  const rank = inRange && Number.isFinite(percentile) ? rankFromPercentile(percentile) : null;
-  const instrument = combined ? 'PHQ-4 중 ' + name : name;
-  return { test, related, instrument, score, max, rank, group, source, label };
+  return measured;
+}
+
+// Kept for callers that name a card by its indicator id.
+export function clinicalResult(topic, completed, age) {
+  const row = indicatorById.get(topic);
+  return row ? testResult(row, completed, age) : null;
 }
 
 // This comparison group exists only in the prototype. Its 100 example scores are

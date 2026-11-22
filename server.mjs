@@ -5,8 +5,9 @@ import { readFile, stat } from 'node:fs/promises';
 import { existsSync, readFileSync } from 'node:fs';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { SYSTEM_PROMPT, REPORT_PROMPT, TURN_SCHEMA, REPORT_SCHEMA } from './public/js/prompt.js';
-import { mockTurn, mockReport } from './mock.mjs';
+import { SYSTEM_PROMPT, REPORT_PROMPT, SIGNALS_PROMPT, TURN_SCHEMA, REPORT_SCHEMA, SIGNALS_SCHEMA } from './public/js/prompt.js';
+import { groundedSignals } from './public/js/trait-estimates.js';
+import { mockTurn, mockReport, mockSignals } from './mock.mjs';
 
 const root = fileURLToPath(new URL('./public/', import.meta.url));
 const envFile = fileURLToPath(new URL('./.env', import.meta.url));
@@ -23,10 +24,12 @@ const MODEL = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
 const TIMEOUT = +process.env.GEMINI_TIMEOUT_MS || 45000;
 // Tried in order when a model is overloaded (503) or rate-limited (429).
 const MODELS = [MODEL, ...(process.env.GEMINI_FALLBACK || 'gemini-2.5-flash-lite,gemini-2.5-flash').split(',').map((m) => m.trim())].filter((m, i, a) => m && a.indexOf(m) === i);
+// Clue reading runs mid-conversation. Measured 2026-11-23: gemini-3.5-flash 34s, gemini-2.5-flash-lite about 1.1s (3 runs).
+const SIGNALS_MODELS = [process.env.GEMINI_SIGNALS_MODEL || 'gemini-2.5-flash-lite', ...MODELS].filter((m, i, a) => a.indexOf(m) === i);
 const PORT = +process.env.PORT || 8787;
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.xml': 'application/xml', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.ico': 'image/x-icon' };
 
-async function gemini(system, history, schema) {
+async function gemini(system, history, schema, temperature = 0.7, models = MODELS) {
   const contents = history.length
     ? history.map((h) => ({ role: h.role === 'user' ? 'user' : 'model', parts: [{ text: h.text }] }))
     : [{ role: 'user', parts: [{ text: '(대화 시작: 데이터 요약에서 가장 눈에 띄는 변화로 첫 인사와 첫 질문을 해 주세요)' }] }];
@@ -35,13 +38,13 @@ async function gemini(system, history, schema) {
     systemInstruction: { parts: [{ text: system }] },
     contents,
     generationConfig: {
-      responseMimeType: 'application/json', responseSchema: schema, temperature: 0.7,
+      responseMimeType: 'application/json', responseSchema: schema, temperature,
       // Gemini 3 models think by default; minimal thinking measured 19s vs ~30s on 2026-11-22.
       ...(model.startsWith('gemini-3') ? { thinkingConfig: { thinkingLevel: 'minimal' } } : {}),
     },
   });
   let last;
-  for (const model of MODELS) {
+  for (const model of models) {
     for (const [ki, key] of KEYS.entries()) {
       const t0 = Date.now();
       const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
@@ -79,10 +82,18 @@ async function readJson(req) {
 async function handleChat(req, res) {
   try {
     const { kind, summary, history = [], screeningAvailable = true } = await readJson(req);
-    if (typeof summary !== 'string' || summary.length > 4000) throw new Error('summary가 올바르지 않아요');
+    if (kind !== 'signals' && (typeof summary !== 'string' || summary.length > 4000)) throw new Error('summary가 올바르지 않아요');
     const clean = history.slice(-40).map((h) => ({ role: h.role, text: String(h.text).slice(0, 2000) }));
     let out;
-    if (!KEY) out = kind === 'report' ? mockReport(clean) : mockTurn(clean, undefined, screeningAvailable);
+    if (kind === 'signals') {
+      // Clues for the last user message only. The browser grounds them again before recording.
+      const last = clean.at(-1);
+      if (!KEY || last?.role !== 'user') out = mockSignals();
+      else {
+        const read = await gemini(SIGNALS_PROMPT, clean, SIGNALS_SCHEMA, 0.2, SIGNALS_MODELS);
+        out = { signals: groundedSignals(last.text, read.traitSignals), model: read.model };
+      }
+    } else if (!KEY) out = kind === 'report' ? mockReport(clean) : mockTurn(clean, undefined, screeningAvailable);
     else if (kind === 'report') {
       const transcript = clean.map((h) => `${h.role === 'user' ? '사용자' : 'AI'}: ${h.text}`).join('\n');
       out = await gemini(`${REPORT_PROMPT}\n\n[데이터 요약]\n${summary}`, [{ role: 'user', text: `[대화 기록]\n${transcript}` }], REPORT_SCHEMA);

@@ -1,5 +1,10 @@
 export { mockTurn } from './public/js/sample-chat.js';
 
+// Demo mode reads no clues on the server; the browser falls back to its offline classifier.
+export function mockSignals() {
+  return { signals: [] };
+}
+
 export function mockReport() {
   return {
     type_name: '최근 2주의 수면과 낮 피로',

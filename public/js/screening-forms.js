@@ -1,44 +1,118 @@
 import { midPercentile } from './profile-results.js';
-import { screeners } from './screening-router.js';
-
-const definitions = new Map();
-
-async function readDefinition(id, signal) {
-  if (!Object.hasOwn(screeners, id)) throw new Error('지원하지 않는 검사예요.');
-  if (definitions.has(id)) return definitions.get(id);
-  const response = await fetch(new URL('../tests/' + id + '.json', import.meta.url), { signal });
-  if (!response.ok) throw new Error('문항 파일을 열 수 없어요.');
-  const data = await response.json();
-  if (data.id !== id) throw new Error('문항 파일을 확인해 주세요.');
-  definitions.set(id, data);
-  return data;
-}
+import { readForm, screeners } from './screening-router.js';
 
 export async function loadForm(id, signal) {
-  const form = await readDefinition(id, signal);
-  const sections = form.sections || [{ source: id, items: form.items.map((item) => item.id) }];
-  const groups = await Promise.all(sections.map(async (section) => {
-    const original = await readDefinition(section.source, signal);
-    return section.items.map((key) => {
-      const item = original.items.find((entry) => entry.id === key);
-      if (!item) throw new Error('검사 문항을 찾을 수 없어요.');
-      return { ...item, options: original.options, instruction: original.instruction, attribution: original.attribution };
-    });
-  }));
-  return { ...form, items: groups.flat() };
+  if (!Object.hasOwn(screeners, id)) throw new Error('지원하지 않는 검사예요.');
+  signal?.throwIfAborted();
+  const form = await readForm(id);
+  if (!form || form.id !== id) throw new Error('문항 파일을 열 수 없어요.');
+  const items = form.items.map(({ form: original, source, missing, ...item }) => {
+    if (missing || !item.text) throw new Error('검사 문항을 찾을 수 없어요.');
+    // Some Korean forms print only the end labels; a middle option shows its number.
+    const options = item.options.map((option) => ({ ...option, label: option.label ?? String(option.value) }));
+    return { ...item, options, instruction: original.instruction ?? '', attribution: original.attribution };
+  });
+  return { ...form, items };
+}
+
+function bounds(item) {
+  const values = item.options.map((option) => option.value);
+  return [Math.min(...values), Math.max(...values)];
+}
+
+const round = (value) => Math.round(value * 100) / 100;
+
+// A derived subscore as signed terms: "positive − negative" (subscore_rules.<key>.formula),
+// ["positive", "-negative"], { difference: ['positive', 'negative'] } or { op, of: [...] }.
+export function ruleTerms(rule) {
+  const parse = (text) => [...String(text).matchAll(/([+\-−])?\s*([A-Za-z0-9_.]+)/gu)].map(([, sign, key]) => [sign === '-' || sign === '−' ? -1 : 1, key]);
+  if (typeof rule === 'string') return parse(rule);
+  if (Array.isArray(rule)) return rule.flatMap(parse);
+  if (!rule || typeof rule !== 'object') return [];
+  if (rule.formula || rule.expr) return parse(rule.formula || rule.expr);
+  const op = rule.op || rule.operation || Object.keys(rule).find((key) => ['difference', 'minus', 'subtract', 'sum', 'add', 'plus'].includes(key));
+  const list = rule.of || rule.terms || rule.args || rule[op];
+  if (!Array.isArray(list)) return [];
+  const minus = ['difference', 'minus', 'subtract'].includes(op);
+  return list.map((key, i) => [minus && i > 0 ? -1 : 1, key]);
+}
+
+// subscore_rules holds either one rule for every subscore ({ method, range, note }) or one
+// rule per subscore key ({ positive: { method, range }, balance: { method: 'difference', formula } }).
+export function subscoreRule(form, key) {
+  const rules = form.subscore_rules || {};
+  if (rules[key] && typeof rules[key] === 'object' && !Array.isArray(rules[key])) return rules[key];
+  if (typeof rules[key] === 'string' || Array.isArray(rules[key])) return { formula: rules[key] };
+  return typeof rules.method === 'string' ? rules : {};
+}
+
+const derived = (rule) => Boolean(rule.formula || rule.expr || ['difference', 'minus', 'subtract'].includes(rule.method) || rule.op);
+
+function fillSummary(template, values) {
+  if (typeof template !== 'string') return '';
+  return template.replace(/\{(\w+)\}/gu, (whole, key) => values[key] == null ? whole : String(values[key]));
 }
 
 export function scoreForm(form, answers) {
-  const sum = (keys) => keys.reduce((n, key) => n + answers[key], 0);
   for (const item of form.items) {
     if (!item.options.some((option) => option.value === answers[item.id])) throw new Error('모든 문항에 답해 주세요.');
   }
-  const score = sum(form.items.map((item) => item.id));
-  const subscores = Object.fromEntries(Object.entries(form.subscores || {}).map(([sub, keys]) => [sub, sum(keys)]));
-  const band = form.bands.find(({ min, max }) => min <= score && score <= max);
+  const byId = new Map(form.items.map((item) => [item.id, item]));
+  const reverse = new Set(form.scoring?.reverse_items || []);
+  const mean = form.scoring?.method === 'mean';
+  const value = (key) => {
+    if (!reverse.has(key)) return answers[key];
+    const [low, high] = bounds(byId.get(key));
+    return low + high - answers[key];
+  };
+  const combine = (keys) => {
+    const total = keys.reduce((n, key) => n + value(key), 0);
+    return mean ? round(total / keys.length) : total;
+  };
+  const span = (keys) => {
+    const [low, high] = keys.map((key) => bounds(byId.get(key))).reduce(([a, b], [c, d]) => [a + c, b + d], [0, 0]);
+    return mean ? [low / keys.length, high / keys.length] : [low, high];
+  };
+  const ids = form.items.map((item) => item.id);
+  const score = combine(ids);
+  const [min, max] = form.scoring?.range || span(ids);
+  const subscores = {}, subscoreRanges = {}, subscoreMethods = {};
+  const keys = Object.keys(form.subscores || {});
+  // Plain subscores first (sum or mean of their items), then subscores derived from them.
+  for (const key of keys) {
+    const rule = subscoreRule(form, key);
+    if (derived(rule)) continue;
+    const average = (rule.method || form.scoring?.method) === 'mean';
+    const items = form.subscores[key];
+    const total = items.reduce((n, id) => n + value(id), 0);
+    const [low, high] = items.map((id) => bounds(byId.get(id))).reduce(([a, b], [c, d]) => [a + c, b + d], [0, 0]);
+    subscores[key] = average ? round(total / items.length) : total;
+    subscoreRanges[key] = average ? [low / items.length, high / items.length] : [low, high];
+    subscoreMethods[key] = average ? 'mean' : 'sum';
+  }
+  for (const key of keys) {
+    const rule = subscoreRule(form, key);
+    if (!derived(rule)) continue;
+    const terms = ruleTerms(rule);
+    if (!terms.length || terms.some(([, term]) => !Object.hasOwn(subscores, term))) continue;
+    let total = 0, low = 0, high = 0;
+    for (const [sign, term] of terms) {
+      const [a, b] = subscoreRanges[term];
+      total += sign * subscores[term];
+      low += sign > 0 ? a : -b;
+      high += sign > 0 ? b : -a;
+    }
+    subscores[key] = round(total);
+    subscoreRanges[key] = [low, high];
+    subscoreMethods[key] = 'sum';
+  }
+  // Bands are optional: a source without published cut-offs has none.
+  const band = (form.bands || []).find((entry) => entry.min <= score && score <= entry.max);
   const followups = (form.offers || []).filter((rule) => (rule.score === 'total' ? score : subscores[rule.score]) >= rule.at_least).map((rule) => rule.offer);
-  const result = { id: form.id, score, max: form.scoring.range[1], band: band.label, bandMin: band.min, bandMax: band.max, subscores, followups,
-    answers: Object.fromEntries(form.items.map((item) => [item.id, answers[item.id]])) };
+  const result = { id: form.id, score, min, max, method: mean ? 'mean' : 'sum', band: band?.label ?? null, bandMin: band?.min, bandMax: band?.max,
+    subscores, subscoreRanges, subscoreMethods, followups, answers: Object.fromEntries(ids.map((key) => [key, answers[key]])) };
+  result.totalMeaningful = form.scoring?.total_meaningful !== false;
+  result.summary = fillSummary(form.summary, { score, band: band?.label, max, ...subscores });
   const reference = form.population_reference;
   if (reference) {
     const distribution = reference.weighted_percent_at_or_below;

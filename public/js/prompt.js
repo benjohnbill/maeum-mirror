@@ -1,7 +1,25 @@
-import { traitAxes } from './trait-estimates.js';
+import { indicators, MAX_SIGNALS_PER_REPLY } from './indicators.js';
+import { cueTable } from './trait-estimates.js';
 
 // The fixed instructions the AI receives. Shared by the server (which sends it)
 // and the browser (which shows it in "AI에게 가는 내용").
+
+// Conversation clues, in the signal contract of indicators.js. The cue table is the only
+// list of items a clue may cite; it holds short paraphrases (cue), not the test item text.
+export const SIGNAL_RULES = `[단서 규칙]
+- traitSignals는 마지막 메시지가 사용자 답변일 때만, 그 답변에 직접 드러난 단서를 {indicator, item, delta, quote} 배열로 적어요. 해당하는 단서가 없으면 빈 배열이에요.
+- 단서는 사용자의 말이 아래 [단서 표]의 한 줄(cue)과 같은 내용을 말할 때만 적어요. 비슷한 분위기나 추측으로는 적지 않아요. item에는 그 줄의 item, indicator에는 그 줄의 indicator를 그대로 적어요.
+- delta는 정수예요. 그 indicator의 + 방향이면 양수, - 방향이면 음수예요. 크기는 지나가는 언급 1~5, 구체적인 장면 하나 6~9, 되물어 확인했거나 여러 번 반복된 내용 10~15예요.
+- 일상 카드 단서(item이 delay.0처럼 지표 id로 시작)는 앱의 질문이나 장면이에요. 사용자의 말이 그 질문에 대한 답이 되고 그 지표의 + 또는 - 방향을 말할 때만 적어요.
+- quote에는 마지막 사용자 답변에서 근거가 되는 연속된 구절을 한 글자도 바꾸지 않고 복사해요.
+- indicator 하나당 한 번만, 한 답변에서 많아야 ${MAX_SIGNALS_PER_REPLY}개예요. 넘치면 가장 분명한 것만 남겨요.
+- AI가 한 말, 건강 기록, 검사 응답, 다른 사람의 경험, 가정, 질문, 건너뛴 답으로는 적지 않아요.
+
+[지표] indicator · 이름 · + 방향 / - 방향
+${indicators.map((row) => row.id + ' · ' + row.title + ' · +' + row.high + ' / -' + row.low).join('\n')}
+
+[단서 표] item · indicator · cue
+${cueTable().map((row) => row.item + ' · ' + row.indicator + ' · ' + row.cue).join('\n')}`;
 
 export const SYSTEM_PROMPT = `당신은 "마음 시간표"의 대화 상대예요. 상담사도 의사도 아니고, 진단하지 않아요.
 사용자는 Apple 건강 데이터를 올렸고, 아래 [데이터 요약]은 사용자 브라우저가 계산한 결과예요. 원본 기록은 받지 않아요.
@@ -36,9 +54,10 @@ export const SYSTEM_PROMPT = `당신은 "마음 시간표"의 대화 상대예�
 - choices: 사용자가 한 장면을 가볍게 돌아볼 때만 제시할 행동 예시 배열. 일반 대화에서는 빈 배열. 건너뛰기 버튼은 화면에서 제공해요.
 - screening: 이번 답장에서 정식 자가점검을 제안할 때 해당 검사 ID, 그 밖에는 none.
 - screeningEvidence: 검사를 제안할 때 그 근거가 된 최근 사용자 발화의 한 구절을 그대로 인용해요. 그 밖에는 빈 문자열이에요.
-- traitSignals: 마지막 메시지가 사용자 답변일 때만 그 답변에 직접 드러난 일상 성향 단서를 배열로 적어요. 아래 항목별 방향을 뒷받침하는 단서는 양수, 반대 방향 단서는 음수로 적어요. 한 번의 약한 단서는 1~5점, 구체적인 한 장면은 6~9점, 반복이나 여러 상황의 일관성이 드러나면 10~15점 안에서 정수로 조정해요. topic 하나당 한 번만, quote에는 마지막 사용자 답변에서 근거가 되는 연속된 구절을 그대로 복사해요. 질문의 맥락은 참고하되 AI가 한 말, 건강 기록, 선별검사 응답, 타인의 경험, 가정, 질문, 건너뛴 답으로는 조정하지 않아요. 해당하는 단서가 없으면 빈 배열이에요. 이 값은 내부 대화 추정용이에요. reply에서는 수치나 순위를 언급하지 않아요.
-${Object.entries(traitAxes).map(([id, axis]) => '  ' + id + ' · ' + axis).join('\n')}
-- done: 한 장면과 그 맥락을 충분히 나눴거나 사용자가 마치고 싶어 하면 true. done이 true면 reply는 짧은 마무리 인사.`;
+- traitSignals: 아래 [단서 규칙]을 따라요. 이 값은 내부 대화 추정용이에요. reply에서는 수치나 순위를 언급하지 않아요.
+- done: 한 장면과 그 맥락을 충분히 나눴거나 사용자가 마치고 싶어 하면 true. done이 true면 reply는 짧은 마무리 인사.
+
+${SIGNAL_RULES}`;
 
 export const REPORT_PROMPT = `지금까지의 대화와 데이터 요약으로 사용자에게 줄 "마음 시간표 리포트"를 만들어요. 진단이 아니라 거울이에요.
 - type_name: 사용자가 말한 경험을 평이한 제목으로 적어요. 성격 유형이나 별명을 붙이지 않아요.
@@ -48,6 +67,25 @@ export const REPORT_PROMPT = `지금까지의 대화와 데이터 요약으로 �
 - small_step: 이번 주에 해 볼 만한 아주 작은 행동 하나.
 - card_line: 공유 카드에 넣을 한 줄. 우울, 불안 같은 민감한 말은 넣지 않아요.`;
 
+const SIGNALS_ARRAY = { type: 'ARRAY', items: {
+  type: 'OBJECT', properties: {
+    indicator: { type: 'STRING', enum: indicators.map((row) => row.id) }, item: { type: 'STRING' },
+    delta: { type: 'INTEGER' }, quote: { type: 'STRING' },
+  }, required: ['indicator', 'item', 'delta', 'quote'],
+} };
+
+// kind 'signals': read clues from the last user message only.
+export const SIGNALS_PROMPT = `"마음 시간표" 대화 기록의 마지막 사용자 답변에서 마음 프로필 단서만 읽어요. 답장은 쓰지 않아요.
+대화의 앞부분은 맥락으로만 참고하고, 단서는 마지막 사용자 답변에서만 찾아요.
+
+${SIGNAL_RULES}`;
+
+export const SIGNALS_SCHEMA = {
+  type: 'OBJECT',
+  properties: { traitSignals: SIGNALS_ARRAY },
+  required: ['traitSignals'],
+};
+
 export const TURN_SCHEMA = {
   type: 'OBJECT',
   properties: {
@@ -56,11 +94,7 @@ export const TURN_SCHEMA = {
     choices: { type: 'ARRAY', items: { type: 'STRING' } },
     screening: { type: 'STRING', enum: ['none', 'phq9', 'gad2', 'gad7', 'phq4'] },
     screeningEvidence: { type: 'STRING' },
-    traitSignals: { type: 'ARRAY', items: {
-      type: 'OBJECT', properties: {
-        topic: { type: 'STRING', enum: Object.keys(traitAxes) }, delta: { type: 'INTEGER' }, quote: { type: 'STRING' },
-      }, required: ['topic', 'delta', 'quote'],
-    } },
+    traitSignals: SIGNALS_ARRAY,
     done: { type: 'BOOLEAN' },
   },
   required: ['reply', 'focus', 'choices', 'screening', 'screeningEvidence', 'traitSignals', 'done'],

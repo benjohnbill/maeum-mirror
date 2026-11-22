@@ -1,15 +1,68 @@
-// The ordinal axes describe what rank 1 means. Each observation belongs to one user reply.
-export const traitAxes = {
-  mood: '기분 저하와 흥미 저하가 두드러지는 순',
-  resilience: '부담이 끝난 뒤 평소 생활로 돌아오기 수월한 순',
-  worry: '걱정이 일상을 자주 방해하는 순',
-  delay: '해야 할 일을 시작하기까지 자주 미루는 순',
-  social: '애매한 반응을 거절로 받아들이기 쉬운 순',
-  rumination: '화났던 일을 오래 곱씹는 순',
-  recognition: '다른 사람의 인정이 중요한 순',
-  recovery: '쉰 뒤 마음의 긴장이 잘 풀리는 순',
-  pressure: '시간이 촉박할 때 집중을 유지하는 순',
-};
+import { indicators, indicatorById, MAX_SIGNALS_PER_REPLY } from './indicators.js';
+import { everydayTopics, resilienceTopic } from './everyday-topics.js';
+import { readForm } from './screening-router.js';
+import { ruleTerms } from './screening-forms.js';
+
+// Conversation clues follow the signal contract in indicators.js:
+//   { indicator, item, delta, quote }. `item` must be a cue id of that indicator.
+
+/* ---------- Cue table ---------- */
+
+const everydayById = new Map([resilienceTopic, ...everydayTopics].map((topic) => [topic.id, topic]));
+const primaryTests = new Set(indicators.map((row) => row.test).filter(Boolean));
+
+// Everyday cues are the app's own questions: '<topic>.<question index>'.
+// The pressure task has no questions, so its single cue is the task prompt ('pressure.0').
+function everydayCues(row) {
+  const topic = everydayById.get(row.everyday);
+  if (!topic) return [];
+  const texts = topic.questions?.length ? topic.questions.map((question) => question.text) : [topic.prompt];
+  return texts.map((cue, index) => ({ item: topic.id + '.' + index, cue }));
+}
+
+// Item ids of a subscore, including subscores derived by subscore_rules (SPANE balance).
+function subscoreItems(form, key) {
+  if (form.subscores?.[key]) return new Set(form.subscores[key]);
+  const rule = form.subscore_rules?.[key];
+  if (!rule) return null;
+  return new Set(ruleTerms(rule).flatMap(([, term]) => form.subscores?.[term] || [term]));
+}
+
+async function testCues(row) {
+  const cues = [];
+  for (const id of [row.test, ...(row.alt || [])].filter(Boolean)) {
+    const form = await readForm(id);
+    if (!form) continue;
+    const only = id === row.test && row.subscore ? subscoreItems(form, row.subscore) : null;
+    for (const item of form.items) {
+      if (item.missing || typeof item.cue !== 'string' || !item.cue.trim()) continue;
+      if (only && !only.has(item.id)) continue;
+      // A combined form also carries another card's items (PHQ-4 holds the GAD-7 items).
+      if (item.source !== row.test && primaryTests.has(item.source)) continue;
+      cues.push({ item: item.id, cue: item.cue.trim() });
+    }
+  }
+  return cues;
+}
+
+const table = [];
+const cuesByIndicator = new Map();
+for (const row of indicators) {
+  const cues = new Map();
+  for (const { item, cue } of [...await testCues(row), ...everydayCues(row)]) if (!cues.has(item)) cues.set(item, cue);
+  cuesByIndicator.set(row.id, cues);
+  for (const [item, cue] of cues) table.push(Object.freeze({ indicator: row.id, title: row.title, item, cue }));
+}
+
+// Every cue the AI may cite: [{ indicator, title, item, cue }] in indicators.js order.
+// Test cues come from public/tests/*.json (fetch in the browser, fs in Node), read once when this module loads.
+export function cueTable() {
+  return table.slice();
+}
+
+export function cueFor(indicator, item) {
+  return cuesByIndicator.get(indicator)?.get(item) ?? '';
+}
 
 // Labelled Korean examples for the offline nearest-neighbour text classifier.
 // Compare both directions of each topic, with neutral examples as counterexamples.
@@ -110,7 +163,24 @@ function classifyClause(quote) {
   if (negated && ![...doc.features].some(f => /않|못|없|아니|^안$/u.test(f))) return null;
   const repeated = /자꾸|계속|자주|매번|언제나|늘|마다|며칠|내내|반복/u.test(quote);
   const delta = doc.sign * Math.round((repeated ? 14 : 9) * Math.min(1, similarity));
-  return { topic: doc.label, delta, quote };
+  return { indicator: doc.label, delta, quote };
+}
+
+// Which cue an offline match points at. Everyday rows default to their own first question;
+// test-only rows use a keyword hint, then the indicator's first cue.
+const itemHints = {
+  mood: [[/흥미|재미|즐거|즐겁|좋아하|기대/u, 'phq9.1'], [/기분|우울/u, 'phq9.2']],
+  worry: [[/불안/u, 'gad7.1'], [/걱정|생각/u, 'gad7.2']],
+  delay: [[/내일/u, 'delay.3'], [/딴짓|마감/u, 'delay.0'], [/시작|미루|미뤄|미룬/u, 'delay.4']],
+};
+function offlineItem(indicator, quote) {
+  const cues = cuesByIndicator.get(indicator);
+  for (const [pattern, item] of itemHints[indicator] || []) {
+    if (pattern.test(quote) && (!cues.size || cues.has(item))) return item;
+  }
+  const row = indicatorById.get(indicator);
+  if (row.everyday) return row.everyday + '.0';
+  return cues.keys().next().value ?? null;
 }
 
 export function localTraitSignals(reply) {
@@ -121,50 +191,76 @@ export function localTraitSignals(reply) {
       const quote = part.trim().replace(/[.!。]$/u, '');
       if (quote.length < 5) continue;
       const signal = classifyClause(quote);
-      if (signal && (!found.has(signal.topic) || Math.abs(signal.delta) >= Math.abs(found.get(signal.topic).delta))) {
-        found.set(signal.topic, signal);
+      if (signal && (!found.has(signal.indicator) || Math.abs(signal.delta) >= Math.abs(found.get(signal.indicator).delta))) {
+        found.set(signal.indicator, signal);
       }
     }
   }
-  return [...found.values()];
+  return strongest([...found.values()].map((signal) => ({ ...signal, item: offlineItem(signal.indicator, signal.quote) })));
 }
 
-export function groundedSignals(text, signals) {
-  const accepted = new Map();
-  if (!Array.isArray(signals)) return [];
+// One signal per indicator (largest |delta|, first on ties), then at most MAX_SIGNALS_PER_REPLY
+// of the largest |delta|, in the order they were given.
+function strongest(signals) {
+  const best = new Map();
   for (const signal of signals) {
-    if (!signal || !Object.hasOwn(traitAxes, signal.topic) || accepted.has(signal.topic)) continue;
+    const kept = best.get(signal.indicator);
+    if (!kept || Math.abs(signal.delta) > Math.abs(kept.delta)) best.set(signal.indicator, signal);
+  }
+  const kept = new Set([...best.values()].sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta)).slice(0, MAX_SIGNALS_PER_REPLY));
+  return signals.filter((signal) => kept.has(signal))
+    .map(({ indicator, item, delta, quote }) => ({ indicator, item, delta, quote }));
+}
+
+// Accept an AI signal only when its indicator and cue exist, its delta is an integer 1..15
+// in size, and its quote is the user's own words.
+export function groundedSignals(text, signals) {
+  if (!Array.isArray(signals) || typeof text !== 'string') return [];
+  const valid = [];
+  for (const signal of signals) {
+    if (!signal || !cuesByIndicator.get(signal.indicator)?.has(signal.item)) continue;
     if (!Number.isInteger(signal.delta) || !signal.delta || Math.abs(signal.delta) > 15 || typeof signal.quote !== 'string') continue;
     const quote = signal.quote.trim();
-    if (quote.length >= 3 && text.includes(quote)) accepted.set(signal.topic, { topic: signal.topic, delta: signal.delta, quote });
+    if (quote.length >= 3 && text.includes(quote)) valid.push({ indicator: signal.indicator, item: signal.item, delta: signal.delta, quote });
   }
-  return [...accepted.values()];
+  return strongest(valid);
 }
 
 export function newEstimates() {
   return { replies: [], last: null };
 }
 
-export function recordTraitReply(ledger, text, correction = false) {
-  const entry = { text, correction, source: '기기 내 문장 분류', signals: localTraitSignals(text) };
+// Record signals that were already grounded (groundedSignals) for one user reply.
+export function recordSignals(ledger, text, signals, source) {
+  const entry = { text, correction: false, source, signals };
   ledger.replies.push(entry);
   ledger.last = entry;
   return entry;
 }
 
-export function estimateFor(ledger, topic) {
+// Offline path: the on-device classifier reads the reply. A correction restarts the
+// indicators it touches.
+export function recordTraitReply(ledger, text, correction = false) {
+  const entry = recordSignals(ledger, text, localTraitSignals(text), '기기 내 문장 분류');
+  entry.correction = correction;
+  return entry;
+}
+
+// direction: -1 toward `low`, 1 toward `high`, 0 when the clues cancel out or none exist.
+export function estimateFor(ledger, indicator) {
   let score = 50;
   let evidence = [];
   const seen = new Set();
   for (const entry of ledger.replies) {
-    const signal = entry.signals.find(s => s.topic === topic);
+    const signal = entry.signals.find((s) => s.indicator === indicator);
     if (!signal) continue;
     if (entry.correction) { score = 50; evidence = []; seen.clear(); }
     const key = signal.quote.replace(/[\s.!?]+/gu, '');
     if (seen.has(key)) continue;
     seen.add(key);
     score = Math.min(100, Math.max(0, score + signal.delta));
-    evidence.push({ ...signal, source: entry.source, correction: entry.correction });
+    evidence.push({ indicator, item: signal.item, cue: cueFor(indicator, signal.item), delta: signal.delta, quote: signal.quote,
+      source: entry.source, correction: entry.correction });
   }
-  return { rank: Math.max(1, 100 - score), score, evidence };
+  return { direction: Math.sign(score - 50), score, count: evidence.length, evidence };
 }
