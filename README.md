@@ -26,10 +26,10 @@
 Herz는 Apple 건강 기록에서 최근 2주와 평소의 나를 비교하고, 달라진 부분을 대화로 함께 짚어 봐요.
 
 1. Apple 건강 `export.xml`을 올리거나 가상 사용자 샘플을 골라요. 파일은 브라우저 안에서만 읽어요.
-2. 수면, 걸음, 안정 시 심박과 심박 변이도, 운동을 평소(15~90일 전)와 최근 14일로 나눠 비교해요.
+2. 수면, 걸음, 안정 시 심박과 심박 변이도, 운동을 평소(15~90일 전)와 최근 14일로 나눠 비교해요. 수면 [[1]](#r1) [[5]](#r5)–[[7]](#r7), 걸음과 운동 [[8]](#r8)–[[10]](#r10), 심박 변이도 [[11]](#r11)–[[13]](#r13)이 기분과 관련된다는 연구를 따라 골랐어요. 웨어러블만으로 우울을 가려내는 힘은 제한적이라서 [[2]](#r2), 판정이 아니라 대화의 실마리로만 써요.
 3. 가벼운 퀴즈로 대화를 열어요.
 4. 평소와 달라진 지표마다 이유를 묻고, 그 답의 이유를 한 번 더 물어요. 자유 답변은 지표를 움직이는 단서가 돼요.
-5. 점수는 검증된 검사지로만 매겨요. 지금 TIPI, SWLS, Flourishing Scale, SPANE, MLQ, CBI, PHQ-9, PHQ-2, PHQ-4, GAD-7, GAD-2 11종이 열려 있어요.
+5. 점수는 검증된 검사지로만 매겨요. 지금 TIPI, SWLS, Flourishing Scale, SPANE, MLQ, CBI, PHQ-9, PHQ-2, PHQ-4, GAD-7, GAD-2 11종이 열려 있어요 [[14]](#r14)–[[26]](#r26).
 6. 대화와 검사 결과를 묶어 마음 프로필 리포트로 보여 줘요.
 
 <p align="center">
@@ -97,19 +97,60 @@ npm run sample         # 가상 사용자 데이터 다시 만들기
 
 ## 근거와 연구
 
-화면과 프롬프트에 쓰는 숫자는 원문에서 확인한 것만 써요. 조사 방식과 출처 표기 규칙은 [`research/README.md`](research/README.md)에 있어요.
+Herz가 지표를 고르고, 대화를 설계하고, 점수를 매길 때 기댄 연구예요. 화면과 프롬프트에 쓰는 숫자는 원문에서 확인한 것만 써요. 항목 끝의 `S04-01` 같은 ID는 [`research/`](research/README.md)의 출처 카드 번호예요. 카드에는 원문 인용과 확인 범위가 적혀 있어요.
 
-| 갈래 | 질문 | 보고서 |
-|---|---|---|
-| 01-youth-mind | 20대와 30대 초반이 실제로 겪는 일 | [검사를 찾는 이유](research/01-youth-mind/test-user-needs.md) · [MBTI와 유전자 검사가 퍼진 이유](research/01-youth-mind/test-popularity-korea.md) |
-| 02-ai-counseling | AI 상담과 가상 에이전트 선행 연구 | [REPORT](research/02-ai-counseling/REPORT.md) |
-| 03-elicitation | 검사와 면담이 마음을 여는 방식 | [REPORT](research/03-elicitation/REPORT.md) |
-| 04-body-to-mind | 웨어러블 데이터로 기분에 대해 말할 수 있는 것과 없는 것 | [REPORT](research/04-body-to-mind/REPORT.md) |
-| 05-report-form | 전문 리포트의 문법 | [REPORT](research/05-report-form/REPORT.md) |
-| 06-screeners | 짧은 심리검사와 응답에 따른 확장 | [REPORT](research/06-screeners/REPORT.md) · [이용 조건](research/06-screeners/sources.md) |
-| 06-screening-practice | 우울, 불안, 회복탄력성 척도의 현장 사용 | [REPORT](research/06-screening-practice/REPORT.md) |
-| 07-walking-sleep | 걸음과 수면으로 대화를 시작하는 근거 | [REPORT](research/07-walking-sleep/REPORT.md) |
-| 08-similar-services | 유사 서비스 15개 비교 | [REPORT](research/08-similar-services/REPORT.md) · [출처](research/08-similar-services/sources.md) |
+### 생활 기록과 마음
+
+<a id="r1"></a>[1] Lyall, L. M., et al. (2018). Association of disrupted circadian rhythmicity with mood disorders, subjective wellbeing, and cognitive function: A cross-sectional study of 91 105 participants from the UK Biobank. *The Lancet Psychiatry*, 5(6), 507–514. https://doi.org/10.1016/S2215-0366(18)30139-1 `S04-01`\
+<a id="r2"></a>[2] Rykov, Y., et al. (2021). Digital biomarkers for depression screening with wearable devices: Cross-sectional study with machine learning modeling. *JMIR mHealth and uHealth*, 9(10), e24872. https://doi.org/10.2196/24872 `S04-02`\
+<a id="r3"></a>[3] Moshe, I., et al. (2021). Predicting symptoms of depression and anxiety using smartphone and wearable data. *Frontiers in Psychiatry*, 12, 625247. https://doi.org/10.3389/fpsyt.2021.625247 `S04-03`\
+<a id="r4"></a>[4] Saeb, S., et al. (2015). Mobile phone sensor correlates of depressive symptom severity in daily-life behavior: An exploratory study. *Journal of Medical Internet Research*, 17(7), e175. https://doi.org/10.2196/jmir.4273 `S04-04`\
+<a id="r5"></a>[5] Zhai, L., Zhang, H., & Zhang, D. (2015). Sleep duration and depression among adults: A meta-analysis of prospective studies. *Depression and Anxiety*, 32(9), 664–670. https://doi.org/10.1002/da.22386 `S04-07`\
+<a id="r6"></a>[6] Li, D. R., et al. (2025). Regular sleep patterns, not just duration, critical for mental health: Association of accelerometer-derived sleep regularity with incident depression and anxiety. *Psychological Medicine*, 55, e239. https://doi.org/10.1017/S0033291725101281 `S04-08`\
+<a id="r7"></a>[7] Fang, Y., et al. (2021). Day-to-day variability in sleep parameters and depression risk: A prospective cohort study of training physicians. *npj Digital Medicine*, 4(1), 28. https://doi.org/10.1038/s41746-021-00400-z `S04-09`\
+<a id="r8"></a>[8] Bizzozero-Peroni, B., et al. (2024). Daily step count and depression in adults: A systematic review and meta-analysis. *JAMA Network Open*, 7(12), e2451208. https://doi.org/10.1001/jamanetworkopen.2024.51208 `S04-11`\
+<a id="r9"></a>[9] Pearce, M., et al. (2022). Association between physical activity and risk of depression: A systematic review and meta-analysis. *JAMA Psychiatry*, 79(6), 550–559. https://doi.org/10.1001/jamapsychiatry.2022.0609 `S04-12`\
+<a id="r10"></a>[10] Chekroud, S. R., et al. (2018). Association between physical exercise and mental health in 1·2 million individuals in the USA between 2011 and 2015: A cross-sectional study. *The Lancet Psychiatry*, 5(9), 739–746. https://doi.org/10.1016/S2215-0366(18)30227-X `S04-13`\
+<a id="r11"></a>[11] Galin, S., et al. (2026). Heart rate variability as a predictor of future depressive symptoms: A systematic review and meta-analysis. *Journal of Affective Disorders*, 403, 121388. https://doi.org/10.1016/j.jad.2026.121388 `S04-17`\
+<a id="r12"></a>[12] Presby, D., et al. (2025). Inter- and intrapersonal associations between physiology and mental health: A longitudinal study using wearables and mental health surveys. *Journal of Medical Internet Research*, 27, e64955. https://doi.org/10.2196/64955 `S04-19`\
+<a id="r13"></a>[13] O'Grady, B., et al. (2024). The validity of Apple Watch Series 9 and Ultra 2 for serial measurements of heart rate variability and resting heart rate. *Sensors*, 24(19), 6220. https://doi.org/10.3390/s24196220 `S04-36`
+
+### 심리검사와 한국어판 검증
+
+<a id="r14"></a>[14] Kroenke, K., Spitzer, R. L., & Williams, J. B. W. (2001). The PHQ-9: Validity of a brief depression severity measure. *Journal of General Internal Medicine*, 16(9), 606–613. https://doi.org/10.1046/j.1525-1497.2001.016009606.x\
+<a id="r15"></a>[15] Spitzer, R. L., Kroenke, K., Williams, J. B. W., & Löwe, B. (2006). A brief measure for assessing generalized anxiety disorder: The GAD-7. *Archives of Internal Medicine*, 166(10), 1092–1097. https://doi.org/10.1001/archinte.166.10.1092\
+<a id="r16"></a>[16] Kroenke, K., Spitzer, R. L., Williams, J. B. W., & Löwe, B. (2009). An ultra-brief screening scale for anxiety and depression: The PHQ-4. *Psychosomatics*, 50(6), 613–621. https://doi.org/10.1176/appi.psy.50.6.613 `S06-04`\
+<a id="r17"></a>[17] Kim, H. W., Shin, C., Lee, S. H., & Han, C. (2021). Standardization of the Korean version of the Patient Health Questionnaire-4 (PHQ-4). *Clinical Psychopharmacology and Neuroscience*, 19(1), 104–111. https://doi.org/10.9758/cpn.2021.19.1.104 `S06-05`\
+<a id="r18"></a>[18] Kim, M., et al. (2023). Validation of the Patient Health Questionnaire-9 and Patient Health Questionnaire-2 in the general Korean population. *Psychiatry Investigation*, 20(9), 853–860. https://doi.org/10.30773/pi.2023.0100 `S06-06`\
+<a id="r19"></a>[19] Shin, C., Ko, Y. H., An, H., Yoon, H. K., & Han, C. (2020). Normative data and psychometric properties of the Patient Health Questionnaire-9 in a nationally representative Korean population. *BMC Psychiatry*, 20, 194. https://doi.org/10.1186/s12888-020-02613-0 `S03-09`\
+<a id="r20"></a>[20] Ahn, J. K., Kim, Y., & Choi, K. H. (2019). The psychometric properties and clinical utility of the Korean version of GAD-7 and GAD-2. *Frontiers in Psychiatry*, 10, 127. https://doi.org/10.3389/fpsyt.2019.00127 `S06-07`\
+<a id="r21"></a>[21] Gosling, S. D., Rentfrow, P. J., & Swann, W. B., Jr. (2003). A very brief measure of the Big-Five personality domains. *Journal of Research in Personality*, 37(6), 504–528. https://doi.org/10.1016/S0092-6566(03)00046-1\
+<a id="r22"></a>[22] Diener, E., Emmons, R. A., Larsen, R. J., & Griffin, S. (1985). The Satisfaction With Life Scale. *Journal of Personality Assessment*, 49(1), 71–75. https://doi.org/10.1207/s15327752jpa4901_13\
+<a id="r23"></a>[23] Diener, E., et al. (2010). New well-being measures: Short scales to assess flourishing and positive and negative feelings. *Social Indicators Research*, 97(2), 143–156. https://doi.org/10.1007/s11205-009-9493-y\
+<a id="r24"></a>[24] Steger, M. F., Frazier, P., Oishi, S., & Kaler, M. (2006). The Meaning in Life Questionnaire: Assessing the presence of and search for meaning in life. *Journal of Counseling Psychology*, 53(1), 80–93. https://doi.org/10.1037/0022-0167.53.1.80\
+<a id="r25"></a>[25] Kristensen, T. S., Borritz, M., Villadsen, E., & Christensen, K. B. (2005). The Copenhagen Burnout Inventory: A new tool for the assessment of burnout. *Work & Stress*, 19(3), 192–207. https://doi.org/10.1080/02678370500297720\
+<a id="r26"></a>[26] Jeon, G. S., You, S. J., Kim, M. G., Kim, Y. M., & Cho, S. I. (2019). Psychometric properties of the Korean version of the Copenhagen Burnout Inventory in Korean homecare workers for older adults. *PLOS ONE*, 14(8), e0221323. https://doi.org/10.1371/journal.pone.0221323
+
+### 일상 주제 카드
+
+<a id="r27"></a>[27] Kim, H., et al. (2020). Assessing procrastination in Korean: A study of the translation and validation of the Pure Procrastination Scale and a reexamination of the Irrational Procrastination Scale in a student and community sample. *Cogent Psychology*, 7(1), 1809844. https://doi.org/10.1080/23311908.2020.1809844\
+<a id="r28"></a>[28] 박명진, 양난미 (2017). 대학생 거부민감성척도 개발 및 타당화. *한국심리학회지: 상담 및 심리치료*, 29(1), 103–127. https://doi.org/10.23844/kjcp.2017.02.29.1.103\
+<a id="r29"></a>[29] 이근배, 조현춘 (2008). 한국판 분노반추척도의 타당화 연구. *정서·행동장애연구*, 24(1), 1–22. https://www.kci.go.kr/kciportal/landing/article.kci?arti_id=ART001241138\
+<a id="r30"></a>[30] Grant, A. M., & Gino, F. (2010). A little thanks goes a long way: Explaining why gratitude expressions motivate prosocial behavior. *Journal of Personality and Social Psychology*, 98(6), 946–955. https://doi.org/10.1037/a0017935\
+<a id="r31"></a>[31] Sonnentag, S., & Bayer, U.-V. (2005). Switching off mentally: Predictors and consequences of psychological detachment from work during off-job time. *Journal of Occupational Health Psychology*, 10(4), 393–414. https://doi.org/10.1037/1076-8998.10.4.393\
+<a id="r32"></a>[32] Katsimpokis, D., Hawkins, G. E., & van Maanen, L. (2020). Not all speed-accuracy trade-off manipulations have the same psychological effect. *Computational Brain & Behavior*, 3(3), 252–268. https://doi.org/10.1007/s42113-020-00074-y
+
+### 팀 조사 보고서
+
+[T1] 청년의 마음과 심리검사를 찾는 이유. [`research/01-youth-mind/`](research/01-youth-mind/test-user-needs.md)\
+[T2] AI 상담과 가상 에이전트 선행 연구. [`research/02-ai-counseling/REPORT.md`](research/02-ai-counseling/REPORT.md)\
+[T3] 검사와 면담이 마음을 여는 방식. [`research/03-elicitation/REPORT.md`](research/03-elicitation/REPORT.md)\
+[T4] 웨어러블 데이터로 기분에 대해 말할 수 있는 것과 없는 것. [`research/04-body-to-mind/REPORT.md`](research/04-body-to-mind/REPORT.md)\
+[T5] 전문 리포트의 문법. [`research/05-report-form/REPORT.md`](research/05-report-form/REPORT.md)\
+[T6] 짧은 심리검사 비교와 한국어판 이용 조건. [`research/06-screeners/REPORT.md`](research/06-screeners/REPORT.md)\
+[T7] 우울, 불안, 회복탄력성 척도의 현장 사용. [`research/06-screening-practice/REPORT.md`](research/06-screening-practice/REPORT.md)\
+[T8] 걸음과 수면으로 대화를 시작하는 근거. [`research/07-walking-sleep/REPORT.md`](research/07-walking-sleep/REPORT.md)\
+[T9] 유사 서비스 15개 비교. [`research/08-similar-services/REPORT.md`](research/08-similar-services/REPORT.md)
 
 ## 안전 장치
 
@@ -121,19 +162,14 @@ npm run sample         # 가상 사용자 데이터 다시 만들기
 
 ## 외부 자원과 출처
 
-기준일 2026-11-23.
+Herz가 쓰는 서비스, 글꼴, 검사지와 그 이용 조건이에요. 모든 항목은 2026-11-23에 확인했어요. 검사별 판본과 이용 근거는 [`research/06-screeners/sources.md`](research/06-screeners/sources.md)에 있어요.
 
-| 구분 | 자원 | 제공처 | 이용 조건 | 용도 |
-|---|---|---|---|---|
-| AI API | Gemini API (`gemini-3-flash-preview`, 폴백 순서는 [`lib/chat.mjs`](lib/chat.mjs)) | Google | [Gemini API 추가 약관](https://ai.google.dev/gemini-api/terms). 무료 쿼터 입출력은 Google 제품 개선에 쓰일 수 있어서, 시연은 가상 사용자 데이터만 써요 | 대화, 단서 읽기, 요약 |
-| 플랫폼 | Vercel (Hobby) | Vercel Inc. | [이용약관](https://vercel.com/legal/terms). Hobby는 비상업 용도 | 배포 |
-| 폰트 | [Pretendard](https://github.com/orioncactus/pretendard) v1.3.9 | 길형진 | SIL OFL 1.1 | 화면 글꼴 |
-| 검사 | PHQ-9, PHQ-2, PHQ-4, GAD-7, GAD-2 한국어판 | Spitzer, Williams, Kroenke 외 | [phqscreeners.com](https://www.phqscreeners.com). 허가 없이 복제와 배포 가능 | 우울과 불안 선별 |
-| 검사 | TIPI 한국어판 | Gosling 외 | 목적 제한 없이 사용 가능 | 성격 |
-| 검사 | SWLS, Flourishing Scale, SPANE 한국어판 | Ed Diener 외 | 비상업 사용만 허용, 저자 표기 필수 | 삶의 만족, 번영, 정서 |
-| 검사 | MLQ 한국판 | Michael F. Steger | 교육, 치료, 학술 목적 무료 | 삶의 의미 |
-| 검사 | CBI 개인 소진 (CBI-K) | Borritz 외, Jeon 외 | 출처 명시 조건으로 무료. CBI-K 논문은 [CC BY 4.0](https://doi.org/10.1371/journal.pone.0221323) | 번아웃 |
-| 데이터 | 한국 일반 인구 PHQ-9 분포 | Kim 외 (2023) | [논문 인용](https://pubmed.ncbi.nlm.nih.gov/37794667) | 상대 위치 표시 |
-| 데이터 | 가상 사용자 건강 기록 | 팀 직접 생성 | 실제 개인정보 없음 | 시연 |
-
-검사별 판본과 이용 근거는 [`research/06-screeners/sources.md`](research/06-screeners/sources.md)에 있어요.
+<a id="R1"></a>[R1] Google. *Gemini API*. 모델 `gemini-3-flash-preview`, 폴백 순서는 [`lib/chat.mjs`](lib/chat.mjs). [Gemini API 추가 약관](https://ai.google.dev/gemini-api/terms). 무료 쿼터의 입력과 출력은 Google 제품 개선에 쓰일 수 있어서, 시연에는 가상 사용자 데이터만 써요. 용도: 대화, 단서 읽기, 요약.\
+<a id="R2"></a>[R2] Vercel Inc. *Vercel* (Hobby). [이용약관](https://vercel.com/legal/terms). Hobby 요금제는 비상업 용도예요. 용도: 화면과 API 배포.\
+<a id="R3"></a>[R3] 길형진. *Pretendard* v1.3.9. SIL Open Font License 1.1. https://github.com/orioncactus/pretendard. 용도: 화면 글꼴.\
+<a id="R4"></a>[R4] Spitzer, Williams, Kroenke 외. *PHQ-9, PHQ-2, PHQ-4, GAD-7, GAD-2 한국어판*. 개발자 매뉴얼에 따라 복제, 번역, 표시, 배포에 허가가 필요 없어요. https://www.phqscreeners.com. 근거 [[14]](#r14)–[[20]](#r20).\
+<a id="R5"></a>[R5] Gosling, S. D. *TIPI* 한국어판 (번역 Shang E. Ha). 목적 제한 없이 사용할 수 있어요. https://gosling.psy.utexas.edu/scales-weve-developed/ten-item-personality-measure-tipi/. 근거 [[21]](#r21).\
+<a id="R6"></a>[R6] Diener, E. *SWLS, Flourishing Scale, SPANE* 한국어판. 비상업 사용만 허용하고 저자를 표기해야 해요. https://eddiener.com. 근거 [[22]](#r22), [[23]](#r23).\
+<a id="R7"></a>[R7] Steger, M. F. *MLQ* 한국판. 교육, 치료, 학술 목적에 무료이고 상업 사용은 사전 서면 허락이 필요해요. https://www.michaelfsteger.com/?page_id=13. 근거 [[24]](#r24).\
+<a id="R8"></a>[R8] National Research Centre for the Working Environment (NFA). *Copenhagen Burnout Inventory* 개인 소진 척도와 CBI-K. 출처를 밝히면 상업과 비상업 모두 무료예요. CBI-K 논문은 CC BY 4.0이에요. 근거 [[25]](#r25), [[26]](#r26).\
+<a id="R9"></a>[R9] Herz 팀. 가상 사용자 건강 기록과 지표 아이콘. 실제 개인정보는 없어요. 생성기: [`scripts/make-sample.mjs`](scripts/make-sample.mjs).
