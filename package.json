@@ -2,6 +2,6 @@
   "name": "maeum-timetable",
   "private": true,
   "type": "module",
-  "scripts": { "start": "node server.mjs", "sample": "node scripts/make-sample.mjs" },
+  "scripts": { "start": "node server.mjs", "sample": "node scripts/make-sample.mjs", "lint": "node scripts/lint.mjs", "test": "npm run lint && node --test test/" },
   "engines": { "node": ">=18" }
 }

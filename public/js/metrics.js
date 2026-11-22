@@ -121,8 +121,9 @@ export function computeSummary(data, through) {
   }
   const normal = ghost.map((g) => (g.on.length ? { onset: mean(g.on), wake: mean(g.off) } : null));
 
+  // quiet is for the testbed oracles only; the AI's summary text stays as the phone demo sends it.
   for (const m of metrics) m.quiet = isQuiet(m.id, m.base, m.recent);
-  const lines = metrics.map((m) => `${m.label}: 평소 ${m.baseText} → 최근 2주 ${m.recentText}${m.change ? ` (${m.change})` : ''}${m.quiet ? ' (작은 변화)' : ''}`);
+  const lines = metrics.map((m) => `${m.label}: 평소 ${m.baseText} → 최근 2주 ${m.recentText}${m.change ? ` (${m.change})` : ''}`);
   const text = [
     `기간: 최근 2주(${shift(last, -(RECENT - 1))}~${last})를 그 이전 약 11주와 비교`,
     ...lines,
