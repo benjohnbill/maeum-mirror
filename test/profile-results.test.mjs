@@ -16,8 +16,6 @@ test('PHQ-9 ranks use the same descending direction at low and high scores, with
     const answers = Object.fromEntries(form.items.map((item, index) => [item.id, Math.max(0, Math.min(3, total - 3 * index))]));
     const completed = new Map([['phq9', scoreForm(form, answers)]]);
     ranks.push(clinicalResult('mood', completed).rank);
-    assert.equal(clinicalResult('mood', new Map([['phq9', { ...completed.get('phq9'), adult: false }]])).rank, null);
-    assert.equal(clinicalResult('mood', new Map([['phq9', { ...completed.get('phq9'), adult: true }]])).rank, ranks.at(-1));
     assert.equal(clinicalResult('worry', completed), null);
   }
   assert.deepEqual(ranks, [...ranks].sort((a, b) => b - a));

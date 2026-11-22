@@ -96,7 +96,7 @@ async function feedXmlStream(stream, total, collector, onProgress) {
 }
 
 async function feedZip(file, collector, onProgress) {
-  const { Unzip, UnzipInflate } = await import('https://cdn.jsdelivr.net/npm/fflate@0.8.2/esm/browser.js');
+  const { Unzip, UnzipInflate } = await import('./vendor/fflate-0.8.2.js');
   const dec = new TextDecoder();
   let found = false;
   const unzip = new Unzip((entry) => {
