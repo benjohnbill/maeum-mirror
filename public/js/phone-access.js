@@ -2,11 +2,12 @@ import { createCollector } from './parse.js';
 import { computeSummary } from './metrics.js';
 
 // Each approved type has its own fixture, so the browser never requests the others.
-export async function readPreviewHealth(types) {
+// `persona` picks one of the sample people in sample/personas.json; without it, the default sample.
+export async function readPreviewHealth(types, persona) {
   if (!types.length) throw new Error('읽도록 허용한 기록이 없어요.');
   const data = createCollector().data;
   const files = await Promise.all(types.map(async (type) => {
-    const response = await fetch('sample/read/' + type + '.json');
+    const response = await fetch(`sample/${persona ? persona + '/' : ''}read/${type}.json`);
     if (!response.ok) throw new Error('기록을 불러오지 못했어요.');
     return response.json();
   }));
@@ -32,7 +33,9 @@ export function setupPhoneAccess(onConnected) {
   const health = $('healthSheet');
   const switches = [...health.querySelectorAll('input[name="healthType"]')];
   const viewport = $('phoneViewport');
+  const overlay = $('personaOverlay');
   let granted = [];
+  let persona = null;
   let loading = false;
 
   function fitSheet() {
@@ -76,7 +79,7 @@ export function setupPhoneAccess(onConnected) {
     $('connectStatus').textContent = '허용한 건강 기록을 불러오는 중이에요…';
     let summary;
     try {
-      summary = await readPreviewHealth(granted);
+      summary = await readPreviewHealth(granted, persona);
     } catch {
       $('connectStatus').textContent = '기록을 불러오지 못했어요. 다시 시도하거나 읽을 항목을 바꿔 주세요.';
       $('requestHealth').hidden = false;
@@ -88,6 +91,37 @@ export function setupPhoneAccess(onConnected) {
     }
     $('connectStep').hidden = true;
     onConnected(summary);
+  }
+
+  // MVP: no real records yet, so the granted categories come from a sample person the user picks.
+  let personas;
+  async function showPersonas() {
+    try {
+      personas ??= await fetch('sample/personas.json').then((response) => {
+        if (!response.ok) throw new Error();
+        return response.json();
+      });
+    } catch {
+      $('connectStatus').textContent = '샘플 기록 목록을 불러오지 못했어요. 다시 연결해 주세요.';
+      $('requestHealth').focus();
+      return;
+    }
+    const legend = $('personaChoices').querySelector('legend');
+    $('personaChoices').replaceChildren(legend, ...personas.map(({ id, name, age, line }) => {
+      const label = document.createElement('label');
+      const input = Object.assign(document.createElement('input'), { type: 'radio', name: 'persona', value: id, checked: id === persona });
+      const title = Object.assign(document.createElement('strong'), { textContent: `${name} · ${age}세` });
+      label.append(input, title, Object.assign(document.createElement('span'), { textContent: line }));
+      return label;
+    }));
+    $('personaStart').disabled = !persona;
+    $('connectStep').inert = true;
+    overlay.hidden = false;
+    $('personaTitle').focus();
+  }
+  function closePersonas() {
+    overlay.hidden = true;
+    $('connectStep').inert = false;
   }
 
   $('appleContinue').addEventListener('click', () => {
@@ -108,7 +142,21 @@ export function setupPhoneAccess(onConnected) {
     granted = switches.filter((input) => input.checked).map((input) => input.value);
     if (!granted.length) return;
     health.close();
+    showPersonas();
+  });
+  overlay.addEventListener('change', () => {
+    persona = overlay.querySelector('input[name="persona"]:checked')?.value ?? null;
+    $('personaStart').disabled = !persona;
+  });
+  $('personaStart').addEventListener('click', () => {
+    if (!persona) return;
+    closePersonas();
     readGranted();
+  });
+  overlay.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    closePersonas();
+    $('requestHealth').focus();
   });
   $('retryHealth').addEventListener('click', readGranted);
 }

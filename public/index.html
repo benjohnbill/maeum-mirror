@@ -173,12 +173,20 @@
               <div>
                 <img src="assets/apple-health.png" width="60" height="60" alt="">
                 <h1 id="connectTitle" tabindex="-1">Apple 건강 연결</h1>
-                <p class="step-description" id="connectStatus" role="status">체험에 사용할 샘플 기록을 골라 주세요. ‘운동’을 켜면 운동 기록에서 대화를 시작해요.</p>
+                <p class="step-description" id="connectStatus" role="status">대화에 쓸 건강 기록 항목을 골라 주세요.</p>
               </div>
               <div class="connect-actions">
                 <button class="btn primary" type="button" id="requestHealth">Apple 건강 연결하기</button>
                 <button class="btn" type="button" id="retryHealth" hidden>다시 불러오기</button>
                 <a class="btn restart-health" id="restartHealth" href="?view=phone" hidden>체험 다시 시작</a>
+              </div>
+            </section>
+            <section class="persona-overlay" id="personaOverlay" role="dialog" aria-modal="true" aria-labelledby="personaTitle" aria-describedby="personaNote" hidden>
+              <div class="persona-card">
+                <h2 id="personaTitle" tabindex="-1">샘플 기록으로 진행해요</h2>
+                <p id="personaNote">지금은 MVP 단계라 실제 건강 기록 대신 샘플 기록으로 진행해요. 허용한 항목만 불러와요.</p>
+                <fieldset class="persona-choices" id="personaChoices"><legend>누구의 기록으로 할까요?</legend></fieldset>
+                <button class="btn primary" type="button" id="personaStart" disabled>이 기록으로 시작</button>
               </div>
             </section>
             <dialog class="access-sheet" id="healthSheet" aria-labelledby="accessTitle" aria-describedby="healthPurpose">

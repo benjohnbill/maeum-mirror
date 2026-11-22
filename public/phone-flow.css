@@ -30,6 +30,30 @@
 .connect-step img { display: block; margin-bottom: 18px; }
 .connect-actions { display: grid; gap: 8px; margin-top: auto; }
 .restart-health { text-decoration: none; }
+/* MVP: after 허용, a blurred layer over the phone screen picks whose sample records to read. */
+.persona-overlay {
+  position: absolute; inset: 0; z-index: 2; display: flex; align-items: flex-end; padding: 12px;
+  background: rgb(60 60 67 / 34%); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+}
+.persona-overlay[hidden] { display: none; }
+.persona-card {
+  width: 100%; max-height: 100%; overflow-y: auto; overscroll-behavior: contain;
+  padding: 20px 16px 16px; color: var(--ink); background: var(--surface); border-radius: 16px;
+}
+.persona-card h2 { margin: 0; font-size: 1.25rem; letter-spacing: -.03em; }
+.persona-card h2:focus { outline: none; }
+#personaNote { margin: 6px 0 16px; color: var(--ink-2); font-size: .9rem; line-height: 1.5; }
+.persona-choices { display: grid; gap: 6px; margin: 0 0 14px; padding: 0; min-width: 0; border: 0; }
+.persona-choices legend { margin-bottom: 8px; padding: 0; font-size: .85rem; font-weight: 650; }
+.persona-choices label {
+  display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; align-items: baseline;
+  min-height: 44px; padding: 10px 12px; border: 1px solid var(--ghost-edge); border-radius: var(--radius); cursor: pointer;
+}
+.persona-choices label:has(:checked) { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.persona-choices input { grid-row: span 2; margin: 0; accent-color: var(--ink); }
+.persona-choices strong { font-size: .95rem; }
+.persona-choices span { color: var(--ink-2); font-size: .85rem; line-height: 1.45; word-break: keep-all; }
+#personaStart { width: 100%; }
 /* Layout reference: Pokémon Sleep's Korean iPhone Health Access screenshots (steps 4–5). */
 .access-sheet {
   --sheet-surface: #fff; --sheet-group: #f2f2f7; --sheet-ink: #101014;
