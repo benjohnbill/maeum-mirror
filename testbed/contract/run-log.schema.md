@@ -17,7 +17,7 @@ One run = one JSONL file in `testbed/runs/`. Line 1 is the header. Then one line
 | `arm` | string | the experiment arm, for example `head`, `model:<id>`, `context:no-summary` |
 | `prefix_id` | string or null | set when `mode` is `replay` |
 | `commit` | string | git commit of the product code |
-| `product` | object | `{ requested_model, fallback_chain: [..], timeout_ms }`. Default experiments use the deploy settings: `timeout_ms` 20000, fallback chain unchanged (lane D, confirmed at the 11-23 14:00 smoke). |
+| `product` | object | `{ requested_model, fallback_chain: [..], timeout_ms }`. Deploy settings (user, 2026-11-22): `timeout_ms` 45000, fallback chain unchanged, the 3 free keys. Model and context arms use a one-model chain. |
 | `simulator` | object or null | `{ model, prompt_version }`; `model` must differ from `product.requested_model` (J9). null for a human control run (`human: true`). |
 | `human` | boolean | true for a human-typed control run |
 | `call_budget` | object | `{ key_pool: "free" or "paid", planned_calls, demo_reserve_calls }` (J21) |
