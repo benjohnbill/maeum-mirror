@@ -1,13 +1,30 @@
 <!doctype html><meta charset="utf-8">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
 <style>
-html,body{margin:0;width:1280px;height:400px;overflow:hidden;background:#141416}
-.b{position:relative;width:1280px;height:400px;background:url(../../public/late-night-wide.webp) center 38%/cover}
-.b::before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(14,12,12,.92) 0%,rgba(14,12,12,.72) 34%,rgba(14,12,12,0) 62%)}
-.t{position:absolute;left:84px;top:50%;transform:translateY(-50%);font-family:'Pretendard Variable',Pretendard,sans-serif;color:#f1f0ec}
+html,body{margin:0;width:1280px;height:400px;overflow:hidden;background:#faf9f6}
+/* Same ground as the app's sign-up screen: a faint red glow behind the line. */
+.b{position:relative;width:1280px;height:400px;background:radial-gradient(70% 70% at 62% 36%,#fdeeea 0%,#faf9f6 70%)}
+.pulse{position:absolute;left:0;top:0;width:1280px;height:400px;overflow:visible}
+.pulse path{fill:none;stroke:#e0322b;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 7px rgb(224 50 43 / 35%))}
+.t{position:absolute;left:84px;bottom:54px;font-family:'Pretendard Variable',Pretendard,sans-serif;color:#17171a}
 .m{display:flex;align-items:center;gap:22px}
 .m svg{width:76px;height:76px}
 h1{margin:0;font-size:96px;font-weight:800;letter-spacing:-.04em;line-height:1}
-p{margin:22px 0 0;font-size:25px;font-weight:500;color:#e9d9cc;letter-spacing:-.01em}
+p{margin:18px 0 0;font-size:25px;font-weight:500;color:#55555a;letter-spacing:-.01em}
 </style>
-<div class="b"><div class="t"><div class="m"><svg viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="#f3f2ee"/><rect x="7" y="8" width="5" height="12" rx="1" fill="#17171a"/><rect x="13.5" y="10" width="5" height="10" rx="1" fill="#17171a"/><rect x="20" y="14" width="5" height="11" rx="1" fill="#d9481c"/></svg><h1>Herz</h1></div><p>흩어진 생활 기록에서 마음의 변화를 읽어요</p></div></div>
+<div class="b">
+<svg class="pulse" viewBox="0 0 1280 400" aria-hidden="true"><path id="beat"/></svg>
+<div class="t"><div class="m"><svg viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#17171a"/><path d="M4 18h5l2-3 2 3 2.5 3.5L18.5 7l2.5 14 1.5-3h5.5" fill="none" stroke="#e0322b" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><h1>Herz</h1></div><p>검사 없이, 생활 기록으로 보는 내 마음</p></div>
+</div>
+<script>
+// One beat per day, as in the sign-up screen: the R peak height stands for that day's record.
+const base = 160, k = 2.6, pk = 1.9, w = 60 * k, peaks = [34, 50, 28, 62, 42, 58, 30, 54, 46];
+let d = `M-20 ${base}`;
+peaks.forEach((h, i) => {
+  const x = 10 + i * w, y = v => base + v * k;
+  d += ` L${x} ${y(0)} Q${x + 4 * k} ${y(-8)} ${x + 8 * k} ${y(0)} L${x + 13 * k} ${y(0)} L${x + 15 * k} ${y(7)}`
+     + ` L${x + 18 * k} ${base - h * pk} L${x + 21 * k} ${y(13)} L${x + 24 * k} ${y(0)} L${x + 30 * k} ${y(0)}`
+     + ` Q${x + 36 * k} ${y(-11)} ${x + 42 * k} ${y(0)}`;
+});
+document.getElementById('beat').setAttribute('d', d + ` L1300 ${base}`);
+</script>
