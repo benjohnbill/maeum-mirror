@@ -51,16 +51,18 @@ const everydayById = new Map([resilienceTopic, ...everydayTopics].map(topic => [
 // Conversation clues give a direction and the clues behind it, never a rank.
 export function estimateModel(topic, estimates) {
   const row = indicatorById.get(topic.id) || topic;
-  const { direction, count, evidence } = estimateFor(estimates, row.id);
+  const { direction, score, count, evidence } = estimateFor(estimates, row.id);
   if (!count) return { value: { main: '단서 부족' }, meta: '대화로 추정',
     description: '아직 이 항목을 추정할 만한 이야기가 없어요.' };
-  const side = direction > 0 ? row.high + ' 쪽' : direction < 0 ? row.low + ' 쪽' : '양쪽 단서가 비슷해요';
-  const items = [];
+  // The big slot holds only the number. Direction and the clues stay in the evidence.
+  const rank = Math.max(1, Math.min(100, 100 - score));
+  const side = direction > 0 ? row.high : direction < 0 ? row.low : '양쪽 단서가 비슷해요';
+  const items = [el('p', '', '대화 단서 ' + count + '개 · ' + side + (direction ? ' 쪽으로 읽었어요.' : '.'))];
   for (const signal of evidence) {
     items.push(el('blockquote', '', signal.quote));
     items.push(el('p', '', '→ ' + (signal.cue || signal.item) + ' → ' + row.title + ' · ' + (signal.delta > 0 ? row.high : row.low)));
   }
-  return { value: { main: '대화 단서 ' + count + '개 · ' + side }, meta: '대화로 추정 · 순위 없음',
+  return { ...rankMetric(rank, '1등에 가까울수록 ' + row.high + '이에요.'), meta: '대화로 추정한 앱 내 순위 · 단서 ' + count + '개',
     evidence: { label: '어떤 답변이 반영됐나요?', items } };
 }
 

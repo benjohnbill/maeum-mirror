@@ -25,8 +25,8 @@ function appendInterpretation(container, description, scale) {
   }
 }
 
-export function resultCard({ label, value, description, scale, evidence }) {
-  const card = el('section', 'result-card');
+export function resultCard({ label, value, description, scale, evidence, empty }) {
+  const card = el('section', empty ? 'result-card is-empty' : 'result-card');
   const header = el('header', 'result-card-head');
   header.append(el('h3', '', label));
   card.append(header, resultValue(value));

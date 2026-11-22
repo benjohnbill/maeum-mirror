@@ -105,17 +105,21 @@ function showLandingExamples() {
     choice.addEventListener('change', showReplyResult);
     if (choice.checked) showReplyResult();
   }
-  // All 24 indicators, in the registry order. A card without a clue says how to find out instead.
+  // All 24 indicators. Cards with a result come first, then the ones to find out by a test, then pending ones.
+  const cards = [];
   for (const row of indicators) {
     let model = estimateModel(row, scenes[0]);
     const test = testManifest[row.test];
     if (model.value.main === '단서 부족' && !row.everyday) {
       model = test?.status === 'available'
-        ? { value: { main: '검사로 확인' }, description: test.name + ' · ' + test.length + '문항으로 알아볼 수 있어요.' }
+        ? { ...model, description: test.name + ' ' + test.length + '문항으로 확인해 볼 수 있어요.' }
         : { value: { main: '준비 중' }, description: '공식 한국어 문항을 확인하고 있어요.' };
     }
-    $('landingCases').append(resultCard({ ...model, label: row.title }));
+    const order = model.scale ? 0 : model.value.main === '준비 중' ? 2 : 1;
+    cards.push({ order, card: resultCard({ ...model, label: row.title, empty: order > 0 }) });
   }
+  cards.sort((a, b) => a.order - b.order);
+  $('landingCases').append(...cards.map(({ card }) => card));
 }
 
 /* ---------- Focus: the conversation points at the data ---------- */
