@@ -1,0 +1,6 @@
+.env
+.env.*
+testbed/
+research/
+docs/
+scripts/
