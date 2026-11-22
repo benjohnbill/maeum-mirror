@@ -1,16 +1,32 @@
+import { el, resultCard, resultDetails } from './report-elements.js';
+import { appendProfileReport, estimateModel } from './everyday-cards.js';
+import { everydayTopics } from './everyday-topics.js';
+import { newEstimates, recordTraitReply, recordSignals, groundedSignals, estimateFor, cueSignals, localCues, groundedCues, closestReason } from './trait-estimates.js';
 import { parseHealthFile } from './parse.js';
 import { computeSummary, hhmm } from './metrics.js';
 import { SYSTEM_PROMPT } from './prompt.js';
-import { isCrisis, checkReply, CRISIS_LINES } from './safety.js';
-import { METRICS, STRENGTH_LABEL } from '../spec/metrics.js';
-import { TESTS, scoreOf } from '../spec/tests/index.js';
+import { isCrisis, isImmediateDanger, CRISIS_LINES, checkReply, hasBanned } from './safety.js';
+import { runScreening } from './phq9-sheet.js';
+import { loadForm, scoreForm } from './screening-forms.js';
+import { demoRank } from './profile-results.js';
+import { screeningCommand, screeners, offlineScreeningOffer } from './screening-router.js';
+import { readPreviewHealth, setupPhoneAccess } from './phone-access.js';
+import { buildQuiz } from './rapport-quiz.js';
+import { detectChanges, firstQuestion, whyQuestion, whyKeyFor, recordLine } from './change-talk.js';
 
+import { workoutConcern, workoutStories, exampleTestAnswers, caseAnswers, previewSession, previewTurn, previewResult, recordText } from './preview-report.js';
+
+const caseLinks = ['again', 'interest'];
 const MAX_TURNS = 10;
 const START = -180; // timetable starts at 21:00 (minutes from midnight)
 const SPAN = 14 * 60; // to 11:00
 const $ = (id) => document.getElementById(id);
+const phonePreview = document.documentElement.classList.contains('phone-preview');
 
-const state = { summary: null, history: [], items: new Map(), turns: 0, busy: false, finished: false, test: null, crisis: false, offered: false };
+const state = { mode: 'demo', summary: null, history: [], turns: 0, busy: false, finished: false, supportRelevant: false, example: null, talk: null, pendingReply: null, editing: false, traitResults: new Map(), estimates: newEstimates(), prior: null };
+const profile = { step: null };
+const quiz = { questions: [], at: 0, correct: 0 };
+const screening = { status: 'available', offered: [], results: new Map() };
 
 /* ---------- Timetable ---------- */
 
@@ -59,39 +75,96 @@ function block(cls, from, to) {
   return b;
 }
 
-function introTable() {
-  const wd = ['월', '화', '수', '목', '금', '토', '일'];
-  const normal = [];
-  const nights = wd.map((label, i) => {
-    const w = (i + 1) % 7;
-    const weekend = label === '금' || label === '토';
-    normal[w] = { onset: weekend ? 40 : 10, wake: weekend ? 500 : 430 };
-    const late = [20, 95, 150, 30, 160, 210, 70][i];
-    return { label, wd: w, key: '', onset: late, wake: late + [380, 300, 330, 350, 290, 280, 360][i] };
+function showLandingExamples() {
+  const example = previewSession([{ id: 'workout' }]);
+  const scenes = caseLinks.map((_, index) => {
+    const estimates = newEstimates();
+    for (const reply of caseAnswers(example, index)) recordTraitReply(estimates, reply);
+    return estimates;
   });
-  renderTable($('introTable'), nights, normal, { labels: false });
+  const featured = everydayTopics.find(topic => topic.id === 'social');
+  const replies = $('previewReplies');
+  for (const scene of scenes) {
+    const { evidence } = estimateFor(scene, featured.id);
+    if (!evidence.length) continue;
+    const quote = evidence[0].quote;
+    const label = el('label', 'preview-reply');
+    const choice = el('input');
+    choice.type = 'radio';
+    choice.name = 'previewReply';
+    choice.checked = !replies.querySelector('input');
+    label.append(choice, el('span', '', quote));
+    replies.append(label);
+    function showReplyResult() {
+      const estimates = newEstimates();
+      recordTraitReply(estimates, quote);
+      const { value, scale } = estimateModel(featured, estimates);
+      $('heroResult').replaceChildren(resultCard({ label: featured.title, value, scale }));
+    }
+    choice.addEventListener('change', showReplyResult);
+    if (choice.checked) showReplyResult();
+  }
+  // A fixed example person: the conversation of case 0 plus every test the app can open.
+  // The landing shows every indicator as a rank ('N등'): test scores become ranks among
+  // 100 virtual answers (demoRank), and rows with no example value get a fixed example rank.
+  const rankCard = (row, rank, model = {}) => ({ ...model,
+    value: { main: rank, unit: '등' },
+    scale: { min: 1, max: 100, current: rank, unit: '등', caption: '1등에 가까울수록 ' + row.high + '이에요.' } });
+  const asRank = (row, model) => {
+    if (model.value?.unit === '등' || !model.scale) return model;
+    const { current, min, max } = model.scale;
+    const card = rankCard(row, demoRank(current, min, max), model);
+    if (card.evidence) card.evidence = { ...card.evidence, items: [el('p', '', '예시 응답의 점수를 가상 100명 기준 등수로 환산했어요.'), ...card.evidence.items] };
+    return card;
+  };
+  const exampleRank = (row) => 20 + [...row.id].reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % 60;
+  const fill = (row) => rankCard(row, exampleRank(row), { evidence: { items: [el('p', '', '랜딩 예시용 값이에요. 실제 리포트에서는 검사로 확인해요.')] } });
+  const completed = new Map();
+  Promise.all(Object.entries(exampleTestAnswers).map(async ([id, values]) => {
+    const form = await loadForm(id);
+    const answers = Object.fromEntries(values.map((value, i) => [id + '.' + (i + 1), value]));
+    completed.set(id, { ...scoreForm(form, answers), sample: true });
+  })).then(() => {
+    appendProfileReport($('landingCases'), { results: new Map(), estimates: scenes[0], completed, demo: true, fill },
+      { bigCard: (row, model) => {
+        const ranked = asRank(row, model);
+        const card = resultCard({ ...ranked, label: row.title });
+        card.dataset.rank = ranked.value.main;
+        return card;
+      } });
+    // Closest to 1등 first. Ties keep indicators.js order (sort is stable).
+    const deck = $('landingCases').querySelector('.case-grid');
+    deck.replaceChildren(...[...deck.children].sort((a, b) => a.dataset.rank - b.dataset.rank));
+  }).catch(() => {
+    $('landingCases').append(el('p', 'fine', '예시 리포트를 불러오지 못했어요.'));
+  });
 }
 
 /* ---------- Focus: the conversation points at the data ---------- */
 
 const SLEEPY = new Set(['sleep', 'onset', 'regularity']);
-function setFocus(metric) {
+function setFocus(metric, { scroll = true } = {}) {
   const tt = $('sessionTable');
   tt.classList.toggle('focus', metric === 'onset' || metric === 'regularity');
   tt.classList.toggle('focus-all', metric === 'sleep');
   for (const tr of $('metricsBody').children) tr.classList.toggle('on', tr.dataset.id === metric || (metric === 'onset' && tr.dataset.id === 'regularity'));
-  if (metric && metric !== 'none' && !SLEEPY.has(metric) && matchMedia('(max-width: 900px)').matches === false) {
+  if (scroll && !phonePreview && metric && metric !== 'none' && !SLEEPY.has(metric) && !matchMedia('(max-width: 900px)').matches) {
     $('metricsBody').querySelector(`[data-id="${metric}"]`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
 }
 
 /* ---------- Start ---------- */
 
-async function start(file, isSample) {
+async function start() {
   $('introError').hidden = true;
+  $('progressFill').style.width = '0%';
+  $('progressText').textContent = '샘플 기록을 여는 중';
   $('progress').hidden = false;
-  for (const b of document.querySelectorAll('.actions .btn')) b.setAttribute('disabled', '');
+  for (const b of document.querySelectorAll('.actions button.btn')) b.setAttribute('disabled', '');
   try {
+    const res = await fetch('sample/export.xml');
+    if (!res.ok) throw new Error('샘플을 열 수 없어요. 잠시 뒤 다시 시도해 주세요.');
+    const file = new File([await res.blob()], 'export.xml', { type: 'text/xml' });
     const data = await parseHealthFile(file, (p) => {
       $('progressFill').style.width = `${Math.round(p * 100)}%`;
       $('progressText').textContent = `기록을 읽는 중 · ${Math.round(p * 100)}%`;
@@ -100,18 +173,29 @@ async function start(file, isSample) {
     const summary = computeSummary(data);
     if (!summary || summary.metrics.length < 2) throw new Error('비교할 만큼의 기록이 없어요. 최근 3개월 동안 수면이나 걸음 기록이 있어야 해요.');
     state.summary = summary;
-    openSession(isSample);
+    openSession(true);
   } catch (err) {
-    $('introError').textContent = err.message || '파일을 읽지 못했어요.';
+    $('introError').textContent = err.message || '샘플을 열 수 없어요.';
     $('introError').hidden = false;
     $('progress').hidden = true;
-    for (const b of document.querySelectorAll('.actions .btn')) b.removeAttribute('disabled');
+    for (const b of document.querySelectorAll('.actions button.btn')) b.removeAttribute('disabled');
   }
 }
 
-function openSession(isSample) {
+function openSession(isSample, sampleIndex, exampleScreening) {
+  screening.results.clear();
+  screening.status = 'available';
+  screening.offered = [];
+  state.supportRelevant = false;
+  if (exampleScreening) screening.results.set(exampleScreening.id, exampleScreening);
+  state.traitResults = new Map();
+  // Stage 2 reopens the session after the quiz; the opening answer's clues stay in the ledger.
+  if (!state.talk) state.estimates = newEstimates();
   const s = state.summary;
+  state.example = isSample && !state.talk ? previewSession(s.metrics) : null;
+  $('sentPanel').hidden = isSample;
   $('intro').hidden = true;
+  $('introNav').hidden = true;
   $('session').hidden = false;
   $('sampleTag').hidden = !isSample;
   renderTable($('sessionTable'), s.recentNights, s.normal);
@@ -127,35 +211,192 @@ function openSession(isSample) {
   $('sentPrompt').textContent = SYSTEM_PROMPT;
   window.scrollTo(0, 0);
   updateTurns();
-  aiTurn();
+  if (phonePreview) {
+    const change = state.talk?.changes[0];
+    const primary = state.example?.metric || s.metrics[0];
+    $('sessionTable').hidden = !s.recentNights.some((night) => night.asleep != null);
+    $('recordPanel').querySelector('.panel-head').hidden = $('sessionTable').hidden;
+    const overview = el('div', 'phone-overview');
+    if (change) overview.append(el('h1', '', change.label), el('strong', '', change.recentText), el('p', '', recordLine(change)));
+    else overview.append(el('h1', '', '최근 2주 ' + primary.label), el('strong', '', primary.recentText), el('p', '', '평소 ' + primary.baseText));
+    $('recordPanel').prepend(overview);
+    const next = el('button', 'btn primary record-next', '대화 이어보기');
+    next.id = 'recordNext';
+    next.type = 'button';
+    next.addEventListener('click', () => {
+      const tab = $('resultButton').hidden ? $('chatButton') : $('resultButton');
+      tab.click();
+      tab.focus({ preventScroll: true });
+    });
+    overview.append(next);
+    showPhonePanel('chatPanel');
+    $('msg').placeholder = '내 이야기로 답하기';
+  }
+  if (sampleIndex !== undefined) {
+    // A public example result can also be opened from its landing-page story.
+    for (const reply of caseAnswers(state.example, sampleIndex)) {
+      const question = previewTurn(state.example).reply;
+      addMsg('ai', question);
+      addMsg('user', reply);
+      state.history.push({ role: 'model', text: question }, { role: 'user', text: reply });
+      recordTraitReply(state.estimates, reply);
+      state.example.answers.push(reply);
+      state.turns++;
+    }
+    report();
+  } else if (state.talk) {
+    startTalk();
+  } else {
+    aiTurn();
+  }
 }
 
 /* ---------- Chat ---------- */
 
-function addMsg(role, text) {
+function revealChatItem(item, block = 'nearest') {
+  if (phonePreview) {
+    const chat = $('chat');
+    chat.scrollTo({ top: chat.scrollHeight, behavior: 'instant' });
+  } else {
+    item.scrollIntoView({ block, behavior: 'instant' });
+  }
+}
+
+function addMsg(role, text, actions) {
+  $('chat').querySelector('.scene-replies')?.remove();
   const li = document.createElement('li');
   li.className = `msg ${role}`;
-  if (role === 'ai') li.append(Object.assign(document.createElement('span'), { className: 'who', textContent: '마음 시간표' }));
+  // A run of AI bubbles shows the speaker name once, like a chat app.
+  const previous = $('chat').lastElementChild;
+  if (role === 'ai' && !previous?.matches('.msg.ai')) li.append(Object.assign(document.createElement('span'), { className: 'who', textContent: 'Herz' }));
   li.append(Object.assign(document.createElement('p'), { textContent: text }));
+  if (actions) {
+    li.classList.add('with-actions');
+    li.append(actions);
+  }
   $('chat').append(li);
-  li.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  revealChatItem(actions || li);
   return li;
 }
 
 function updateTurns() {
   $('turnCount').textContent = state.finished ? '대화 끝' : `${state.turns} / ${MAX_TURNS}`;
-  $('finishBtn').hidden = state.finished || state.turns < 3;
+  const onboarding = phonePreview && profile.step !== 'conversation';
+  $('finishBtn').hidden = onboarding || state.finished || state.editing || (state.turns < 2 && !screening.results.size && !state.supportRelevant);
+  if (state.example || state.talk) $('turnCount').hidden = true;
 }
 
-async function api(kind) {
+async function api(kind, context = state, { timeout, extra } = {}) {
   const res = await fetch('/api/chat', {
     method: 'POST',
+    signal: timeout ? AbortSignal.timeout(timeout) : undefined,
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ kind, summary: state.summary.text, history: state.history }),
+    body: JSON.stringify({ kind, summary: context.summary.text, history: context.history, screeningAvailable: screening.status === 'available', ...extra }),
   });
   const body = await res.json().catch(() => ({}));
   if (!res.ok || body.error) throw new Error(body.error || 'AI 응답을 받지 못했어요.');
   return body;
+}
+
+async function exampleTurn() {
+  const session = state.example;
+  const next = previewTurn(session);
+  if (screening.status !== 'available' || !session.answers.length) return next;
+  const [concern, opening, detail] = session.answers;
+  if (session.answers.length === 1 && concern === session.concern) return next;
+  const story = workoutStories.find((s) => s.opening === opening && s.detail === detail);
+  if (story && concern === workoutConcern && session.answers.length === 3) {
+    if (!story.screeningOffer) return next;
+    // Construct the external request exclusively from the published fictional scene.
+    const context = {
+      summary: { text: '대회 시연용 가상 사례. 아래 생활 장면에서 우울 선별검사를 제안할 근거가 있는지 보고, 없으면 자연스럽게 마무리해요.' },
+      history: [
+        { role: 'user', text: workoutConcern }, { role: 'model', text: '그동안 저녁은 어떻게 보냈어요?' },
+        { role: 'user', text: story.opening }, { role: 'model', text: story.question },
+        { role: 'user', text: story.detail },
+      ],
+    };
+    const response = await api('turn', context).catch(() => null);
+    if (response?.mode === 'gemini') return Object.hasOwn(screeners, response.screening) ? response : next;
+    return { reply: story.screeningOffer, screening: 'phq9', focus: 'none' };
+  }
+  const offer = offlineScreeningOffer(session.answers.at(-1));
+  return offer ? { ...offer, focus: 'none' } : next;
+}
+
+function leaveOffer() {
+  $('chat').querySelector('.screening-offer')?.remove();
+  screening.offered = [];
+  if (screening.status === 'offered') screening.status = 'declined';
+}
+
+function offerScreening(text, ids) {
+  leaveOffer();
+  screening.status = 'offered';
+  const group = el('div', 'screening-offer');
+  group.setAttribute('role', 'group');
+  group.setAttribute('aria-label', text);
+  screening.offered = ids;
+  for (const id of ids) {
+    const test = screeners[id];
+    const label = ids.length === 1 ? test.name + ' 시작' : test.topic + ' · ' + test.name + ' (' + test.length + '문항)';
+    const start = el('button', ids.length === 1 ? 'btn primary' : 'btn', label);
+    start.type = 'button';
+    start.dataset.test = id;
+    start.onclick = () => startScreening(id);
+    group.append(start);
+  }
+  const skip = el('button', 'btn', '대화만 계속');
+  skip.type = 'button';
+  skip.onclick = () => {
+    leaveOffer();
+    if (state.example) { aiTurn(); return; }
+    addMsg('ai', '그럼 이야기로 이어갈게요. 방금 돌아본 장면에서 더 들려주고 싶으신 게 있나요?');
+    $('msg').focus();
+  };
+  group.append(skip);
+  addMsg('ai', text, group);
+}
+
+async function collectScreening(id) {
+  const existing = screening.results.get(id);
+  const previous = existing || [...screening.results.values()].reverse().find(r =>
+    (id === 'gad7' && (r.id === 'gad2' || r.id === 'phq4')) || (id === 'phq9' && r.id === 'phq4'));
+  const result = await runScreening(id, previous?.answers, { retake: Boolean(existing) });
+  if (result) screening.results.set(id, result);
+  return result;
+}
+
+async function startScreening(id) {
+  if (state.finished || screening.status === 'active') return;
+  if (screening.results.has(id)) {
+    addMsg('ai', screeners[id].name + ' 검사는 마쳤어요. 최종 리포트에서 결과를 확인할 수 있어요.');
+    return;
+  }
+  const group = $('chat').querySelector('.screening-offer');
+  screening.status = 'active';
+  let outcome;
+  try {
+    outcome = await collectScreening(id);
+  } catch {
+    screening.status = group ? 'offered' : 'available';
+    showError('검사 화면을 열지 못했어요.', () => startScreening(id));
+    return;
+  }
+  group?.remove();
+  screening.offered = [];
+  screening.status = outcome ? 'completed' : 'declined';
+  if (outcome) {
+    updateTurns();
+    const followups = outcome.followups.filter((key) => !screening.results.has(key));
+    if (followups.length) {
+      offerScreening('앞에서 답하신 두 문항을 포함해 조금 더 살펴볼 수 있어요. 이어서 할 검사를 고르거나 대화로 돌아가세요.', followups);
+      return;
+    }
+  }
+  if (state.example) { aiTurn(); return; }
+  addMsg('ai', '최근에 마음에 남은 장면이 있다면 이어서 들려주세요.');
+  $('msg').focus({ preventScroll: true });
 }
 
 function busy(on) {
@@ -174,25 +415,52 @@ function showError(message, retry) {
   $('chat').append(li);
 }
 
+// `skip` adds a last button, such as 잘 모르겠어요.
+function replyChoices(choices, skip = null) {
+  const group = el('div', 'scene-replies');
+  group.setAttribute('role', 'group');
+  group.setAttribute('aria-label', '답장 선택');
+  for (const label of skip ? [...choices, skip] : choices) {
+    const button = el('button', label === skip ? 'quiet' : '', label);
+    button.type = 'button';
+    button.addEventListener('click', () => {
+      $('msg').value = label;
+      $('composer').requestSubmit();
+    });
+    group.append(button);
+  }
+  return group;
+}
+
 async function aiTurn() {
   busy(true);
-  const typing = addMsg('ai', '데이터를 보고 있어요');
-  typing.classList.add('typing');
+  const typing = thinking('데이터를 보고 있어요');
   try {
-    const out = await api('turn');
-    typing.remove();
-    const reply = checkReply(out.reply);
-    state.history.push({ role: 'model', text: reply });
-    addMsg('ai', reply);
-    if (out.risk === 'high') { state.crisis = true; showCrisis(); }
-    if (out.offer_test && !out.done && !state.test && !state.offered) { state.offered = true; addTestChips(); }
-    for (const it of out.items || []) {
-      if (it.id >= 1 && it.id <= 8) state.items.set(it.id, { score: Math.max(0, Math.min(3, it.score | 0)), why: it.why });
+    const out = state.example ? await exampleTurn() : await api('turn');
+    const reply = state.pendingReply;
+    if (reply) {
+      // The AI reads the reply when it answers; the on-device classifier covers the demo server.
+      const signals = out.mode === 'gemini' ? out.signals ?? out.traitSignals : null;
+      if (Array.isArray(signals)) recordSignals(state.estimates, reply, groundedSignals(reply, signals), 'AI 대화 해석');
+      else recordTraitReply(state.estimates, reply);
+      state.pendingReply = null;
     }
-    setFocus(out.focus);
+    typing.remove();
+    out.reply = checkReply(out.reply);
+    state.history.push({ role: 'model', text: out.reply });
+    const hasOffer = Object.hasOwn(screeners, out.screening) && screening.status === 'available' && state.turns > 0;
     busy(false);
-    if (out.done || state.turns >= MAX_TURNS) return report();
-    $('msg').focus();
+    if (hasOffer) {
+      setFocus(out.focus, { scroll: false });
+      offerScreening(out.reply, [out.screening]);
+      return;
+    }
+    const done = out.done || state.turns >= MAX_TURNS;
+    const choices = out.choices ?? (out.suggestedReply ? [out.suggestedReply] : null);
+    addMsg('ai', out.reply, !done && choices ? replyChoices(choices) : null);
+    setFocus(out.focus);
+    if (done) return report();
+    if (!phonePreview) $('msg').focus();
   } catch (err) {
     typing.remove();
     busy(false);
@@ -200,23 +468,23 @@ async function aiTurn() {
   }
 }
 
-function showCrisis() {
-  const li = document.createElement('li');
-  li.className = 'crisis';
-  li.innerHTML = '<p><strong>지금 많이 힘든 마음을 말해 줘서 고마워요.</strong> 이 이야기는 AI보다 사람이 들어야 해요. 지금 바로 전화하면 이야기를 들어 줄 사람이 있어요.</p>';
-  const ul = document.createElement('ul');
-  for (const c of CRISIS_LINES) {
-    const a = document.createElement('a');
-    a.href = `tel:${c.number.replace(/-/g, '')}`;
-    a.innerHTML = `<span>${c.name} <small>· ${c.note}</small></span><strong>${c.number}</strong>`;
-    const item = document.createElement('li');
-    item.append(a);
-    ul.append(item);
+function supportContacts(open = false) {
+  const details = el('details', 'support-contacts');
+  details.open = open;
+  details.append(el('summary', '', '도움받을 곳'));
+  for (const contact of CRISIS_LINES) {
+    const link = el('a', '', contact.name);
+    link.href = contact.href;
+    link.append(el('strong', '', contact.number));
+    details.append(link);
   }
-  li.append(ul);
-  li.append(Object.assign(document.createElement('p'), { className: 'fine', textContent: '이 안내는 AI가 아니라 정해진 규칙으로 나와요. 대화를 이어 가고 싶으면 아래에 다시 써 주세요.' }));
-  $('chat').append(li);
-  li.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  return details;
+}
+
+function showImmediateHelp() {
+  const message = addMsg('ai', '지금은 가까운 사람에게 곁에 있어 달라고 부탁해 주세요. 이미 다쳤거나 곧 자신을 해칠 것 같다면 바로 응급 도움을 요청하세요.');
+  message.append(supportContacts(true));
+  revealChatItem(message);
 }
 
 $('composer').addEventListener('submit', (e) => {
@@ -226,15 +494,69 @@ $('composer').addEventListener('submit', (e) => {
   if (!text) return;
   $('msg').value = '';
   addMsg('user', text);
-  if (isCrisis(text)) {
-    // Fixed rule: the model is not called for this message.
-    state.history.push({ role: 'user', text: '(사용자가 매우 힘든 마음을 이야기했고, 앱이 위기 상담 번호를 안내했어요. 내용은 전달하지 않아요.)' });
-    state.items.set(9, { score: 1, why: 'safety' });
-    state.crisis = true;
-    showCrisis();
+  const immediateDanger = isImmediateDanger(text);
+  if (immediateDanger || isCrisis(text)) {
+    leaveOffer();
+    state.supportRelevant = true;
+    if (profile.step === 'talk') {
+      // Stop asking about the records; the finish button opens the report when the user is ready.
+      state.talk.stopped = true;
+      profile.step = 'conversation';
+      $('msg').placeholder = '내 이야기로 답하기';
+    }
+    updateTurns();
+    if (immediateDanger) showImmediateHelp();
+    else addMsg('ai', '말해 주셔서 고마워요. 편한 만큼만 이야기해 주세요.');
     return;
   }
+  if (phonePreview && profile.step === 'opening') {
+    answerOpening(text);
+    return;
+  }
+  if (phonePreview && profile.step === 'quiz') {
+    answerQuiz(text);
+    return;
+  }
+  if (phonePreview && profile.step === 'talk') {
+    answerTalk(text);
+    return;
+  }
+  if (phonePreview && profile.step !== 'conversation') return;
+  const command = screeningCommand(text, screening.offered[0] || 'phq9');
+  if (!state.editing && command) {
+    startScreening(command);
+    return;
+  }
+  if ((text === '/' || text === '검사 목록') && !state.editing) {
+    const available = Object.keys(screeners).filter((id) => !screening.results.has(id));
+    if (available.length) offerScreening('지금 살펴보고 싶은 검사를 골라 주세요.', available);
+    else addMsg('ai', '네 가지 검사를 모두 마쳤어요. 최종 리포트에서 결과를 볼 수 있어요.');
+    return;
+  }
+  if (screening.status === 'offered') {
+    const buttons = $('chat').querySelectorAll('.screening-offer button');
+    if (/^(?:네|예|응|할게요|해볼게요|해볼래요|좋아요|시작|시작할게요)[.! ]*$/u.test(text)) {
+      if (screening.offered.length === 1) buttons[0].click();
+      else buttons[0].focus();
+      return;
+    }
+    if (/^(?:아니요|괜찮아요|건너뛰기|다음에|안 할래요)[.! ]*$/u.test(text)) { buttons[buttons.length - 1].click(); return; }
+    leaveOffer();
+  }
   state.history.push({ role: 'user', text });
+  if (state.editing) {
+    recordTraitReply(state.estimates, text, true);
+    (state.example || state.talk).correction = text;
+    state.editing = false;
+    report();
+    return;
+  }
+  if (state.example) {
+    recordTraitReply(state.estimates, text);
+    state.example.answers.push(text);
+  } else {
+    state.pendingReply = text;
+  }
   state.turns++;
   updateTurns();
   aiTurn();
@@ -249,116 +571,36 @@ $('msg').addEventListener('keydown', (e) => {
 
 $('finishBtn').addEventListener('click', () => { if (!state.busy) report(); });
 
-/* ---------- Test router: short validated tests in a sheet ---------- */
+/* ---------- Report ---------- */
 
-function addTestChips() {
-  const li = el('li', 'chips');
-  for (const t of TESTS) {
-    const b = el('button', 'chip', `${t.name} 짧은 검사 해 보기`);
-    b.type = 'button';
-    b.onclick = () => openTest(t);
-    li.append(b);
-  }
-  $('chat').append(li);
-  li.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-}
-
-function openTest(t) {
-  if (state.busy) return;
-  const d = $('testSheet');
-  const form = $('testForm');
-  form.textContent = '';
-  form.append(el('h2', null, t.name), el('p', 'sheet-pitch', t.pitch), el('p', 'sheet-inst', t.instruction));
-  const answers = new Array(t.items.length).fill(null);
-  const count = el('span', 'sheet-count', `0 / ${t.items.length}`);
-  const submit = el('button', 'btn primary', '결과 보기');
-  submit.type = 'submit';
-  submit.disabled = true;
-  t.items.forEach((text, i) => {
-    const fs = el('fieldset', 'q');
-    fs.append(el('legend', null, `${i + 1}. ${text}`));
-    const opts = el('div', 'opts');
-    for (const o of t.options) {
-      const lab = el('label');
-      const r = Object.assign(document.createElement('input'), { type: 'radio', name: `q${i}`, value: o.value, required: true });
-      r.onchange = () => {
-        answers[i] = o.value;
-        const n = answers.filter((a) => a != null).length;
-        count.textContent = `${n} / ${t.items.length}`;
-        submit.disabled = n < t.items.length;
-        // Move to the next unanswered question, so a phone user can tap through.
-        const next = form.querySelectorAll('.q')[answers.findIndex((x, j) => x == null && j > i)];
-        if (next) next.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
-      };
-      lab.append(r, el('span', null, o.label));
-      opts.append(lab);
-    }
-    fs.append(opts);
-    form.append(fs);
-  });
-  const foot = el('div', 'sheet-foot');
-  const cancel = el('button', 'btn ghost-btn', '닫기');
-  cancel.type = 'button';
-  cancel.onclick = () => d.close();
-  foot.append(count, cancel, submit);
-  form.append(foot, el('p', 'fine', t.attribution));
-  form.onsubmit = (e) => {
-    e.preventDefault();
-    if (answers.some((a) => a == null)) return;
-    d.close();
-    finishTest(t, answers);
-  };
-  d.showModal();
-  form.scrollTop = 0;
-}
-
-function finishTest(t, answers) {
-  const r = scoreOf(t, answers);
-  state.test = { test: t, ...r };
-  for (const c of document.querySelectorAll('.chips')) c.remove();
-  const li = el('li', 'msg user test-result');
-  li.append(el('p', null, `${t.name} 결과: ${r.total}점 / ${r.max}점 · ${r.band}`));
-  $('chat').append(li);
-  if (r.safety) {
-    // Fixed rule: item 9 is answered in code, the AI is not called for it.
-    state.crisis = true;
-    state.items.set(9, { score: 1, why: 'safety' });
-    state.history.push({ role: 'user', text: `[검사 결과] ${t.name} 총 ${r.total}/${r.max}점, ${r.band}. 앱이 위기 상담 번호를 안내했어요. 문항별 답은 전달하지 않아요.` });
-    showCrisis();
-    return;
-  }
-  state.history.push({ role: 'user', text: `[검사 결과] 사용자가 직접 ${t.name} 검사를 했어요. 총 ${r.total}/${r.max}점, ${r.band}. 문항별 답은 전달하지 않아요.` });
-  if (!state.finished) aiTurn();
-}
-
-// "/" in an empty composer lists the tests (a shortcut; the main entry is the AI's chip).
-$('msg').addEventListener('input', () => {
-  const menu = $('slashMenu');
-  if ($('msg').value === '/' && !state.finished) {
-    menu.textContent = '';
-    for (const t of TESTS) {
-      const b = el('button', null);
-      b.type = 'button';
-      b.append(el('strong', null, `/${t.id}`), el('span', null, t.pitch));
-      b.onclick = () => { $('msg').value = ''; menu.hidden = true; openTest(t); };
-      menu.append(b);
-    }
-    menu.hidden = false;
-  } else menu.hidden = true;
-});
-
-/* ---------- Report: stacked, collapsible cards ---------- */
-
-const METRIC_LABEL = Object.fromEntries(Object.entries(METRICS).map(([id, m]) => [id, m.label]));
+const METRIC_LABEL = { sleep: '수면 시간', onset: '잠드는 시각', regularity: '수면 규칙성', steps: '걸음 수', rhr: '안정 시 심박', hrv: '심박변이도', workout: '운동' };
 
 async function report() {
+  leaveOffer();
   state.finished = true;
   updateTurns();
   $('composer').hidden = true;
-  for (const c of document.querySelectorAll('.chips')) c.remove();
+  $('chat').querySelector('.scene-replies')?.remove();
+  if (state.example || state.talk) {
+    const container = phonePreview ? $('phoneReport') : el('li', 'case-report');
+    showExampleReport(container);
+    if (phonePreview) {
+      $('resultButton').hidden = false;
+      $('recordNext').textContent = '대화 결과 보기';
+      const metric = state.example?.metric;
+      $('viewRecord').textContent = (metric ? (metric.id === 'workout' ? '운동' : metric.label) : state.talk.changes[0]?.label ?? '건강') + ' 기록 다시 보기';
+      showPhonePanel('resultPanel');
+      $('resultPanel').scrollTop = 0;
+      $('resultTitle').focus({ preventScroll: true });
+    } else {
+      $('chat').append(container);
+      container.querySelector('h2').focus({ preventScroll: true });
+      container.scrollIntoView({ block: 'start' });
+    }
+    return;
+  }
   busy(true);
-  const typing = addMsg('ai', '지난 2주를 정리하고 있어요');
-  typing.classList.add('typing');
+  const typing = thinking('지난 2주를 정리하고 있어요');
   try {
     const r = await api('report');
     typing.remove();
@@ -371,130 +613,100 @@ async function report() {
   }
 }
 
-function el(tag, cls, text) {
-  const e = document.createElement(tag);
-  if (cls) e.className = cls;
-  if (text != null) e.textContent = text;
-  return e;
-}
-
-function card(title, { open = false, tag = null, cls = '' } = {}) {
-  const d = el('details', `rc ${cls}`.trim());
-  d.open = open;
-  const s = el('summary');
-  s.append(el('span', 'rc-title', title));
-  if (tag) s.append(tag);
-  d.append(s);
-  const body = el('div', 'rc-body');
-  d.append(body);
-  return { d, body };
-}
-
-function badge(strength) {
-  return el('span', `badge ${strength}`, STRENGTH_LABEL[strength]);
-}
-
-// Two bars on one scale: the user's normal and the last 2 weeks.
-function compareBars(m) {
-  const wrap = el('div', 'bars');
-  const max = Math.max(Math.abs(m.base), Math.abs(m.recent)) || 1;
-  for (const [label, v, text, cls] of [['평소', m.base, m.baseText, ''], ['최근 2주', m.recent, m.recentText, 'now']]) {
-    const row = el('div', `bar-row ${cls}`.trim());
-    const track = el('div', 'bar-track');
-    const fill = el('i');
-    fill.style.width = `${Math.max(4, (Math.abs(v) / max) * 100)}%`;
-    track.append(fill);
-    row.append(el('span', null, label), track, el('b', null, text));
-    wrap.append(row);
+function appendProfile(container, opening, records, correction = '') {
+  appendProfileReport(container, {
+    results: state.traitResults, estimates: state.estimates, completed: screening.results, demo: Boolean(state.example || state.talk), prior: state.prior,
+  }, { takeScreening: collectScreening });
+  if (correction) container.append(el('p', 'profile-correction', '바로잡은 내용 · ' + correction));
+  if (records.length || opening) {
+    const evidence = resultDetails('대화와 건강 기록 보기');
+    evidence.classList.add('profile-evidence');
+    if (opening && !correction) evidence.append(el('p', '', opening));
+    for (const entry of records) {
+      const group = el('div', 'profile-basis');
+      group.append(el('h3', '', entry.label));
+      if (entry.basis) group.append(el('p', '', entry.basis));
+      for (const quote of entry.quotes || []) group.append(el('blockquote', '', quote));
+      if (entry.metric) {
+        const link = el('button', 'basis-record', '기록 보기');
+        link.type = 'button';
+        link.onclick = () => setFocus(entry.metric);
+        group.append(link);
+      }
+      evidence.append(group);
+    }
+    container.append(evidence);
   }
-  return wrap;
+}
+
+// The stage 2 story: which changes were discussed and what the user answered.
+function talkStory(talk) {
+  if (talk.correction) return { opening: `마지막으로 “${talk.correction}”라고 바로잡아 주셨어요.`, records: talkRecords(talk) };
+  if (!talk.changes.length) return { opening: '최근 기록은 평소와 크게 다르지 않았어요.', records: [] };
+  const lines = talk.log.map(({ change, first, second }) => {
+    if (!first) return `${change.label} 변화는 이유를 건너뛰었어요.`;
+    return `${change.label} 변화에 “${first}”라고 답했어요.` + (second ? ` 이어서 “${second}”라고 했어요.` : '');
+  });
+  return { opening: lines.join(' '), records: talkRecords(talk) };
+}
+
+function talkRecords(talk) {
+  return talk.log.map(({ change, first, second }) => ({
+    label: change.label + ' 변화', basis: recordLine(change), quotes: [first, second].filter(Boolean), metric: change.record,
+  }));
+}
+
+function showExampleReport(container) {
+  container.replaceChildren();
+  if (!phonePreview) {
+    const title = el('h2', '', 'Herz');
+    title.tabIndex = -1;
+    container.append(title);
+  }
+  if (state.talk) {
+    const { opening, records } = talkStory(state.talk);
+    appendProfile(container, opening, records, state.talk.correction);
+  } else {
+    const { metric } = state.example;
+    const result = previewResult(state.example);
+    const record = {
+      label: '대화를 시작한 기록',
+      basis: `${metric.label} · ${recordText(metric)}`,
+      quotes: [result.concern, ...result.context].filter(Boolean),
+    };
+    const opening = result.opening || (result.concern ? `“${result.concern}”라는 이야기에서 시작했어요.` : '');
+    appendProfile(container, opening, [record], result.correction);
+  }
+  const edit = el('button', 'correct-report', '내 얘기와 달라요');
+  edit.type = 'button';
+  edit.onclick = () => {
+    state.editing = true;
+    state.finished = false;
+    if (phonePreview) {
+      $('resultButton').hidden = true;
+      $('recordNext').textContent = '대화 이어보기';
+      showPhonePanel('chatPanel');
+    } else {
+      container.remove();
+    }
+    updateTurns();
+    $('composer').hidden = false;
+    addMsg('ai', '어떤 부분이 내 얘기와 달랐나요? 들려주신 말로 결과를 바로잡을게요.');
+    $('msg').focus();
+  };
+  container.append(edit);
 }
 
 function renderReport(r) {
   const li = el('li', 'report');
-  const metricById = new Map(state.summary.metrics.map((m) => [m.id, m]));
-
-  // 1. Hero: name, one line, the 2–3 numbers that carry it.
-  const hero = el('section', 'rc-hero');
-  hero.append(el('span', 'rc-kicker', '최근 2주의 나'), el('h2', 'type', r.type_name), el('p', 'type-line', r.type_line));
-  const nums = el('dl', 'hero-nums');
-  const shown = (r.evidence || []).map((e) => metricById.get(e.metric)).filter((m) => m && m.change).slice(0, 2);
-  for (const m of shown) nums.append(numCell(m.label, m.change));
-  if (state.test) nums.append(numCell(state.test.test.name, `${state.test.total}점`));
-  if (nums.children.length) hero.append(nums);
-  hero.append(el('p', 'fine', '별명은 최근 2주 숫자와 대화로 붙였어요. 진단이 아니에요.'));
-  li.append(hero);
-
-  // 2. Evidence: one card per metric, data paired with what the user said.
-  for (const e of r.evidence || []) {
-    const spec = METRICS[e.metric];
-    const m = metricById.get(e.metric);
-    const { d, body } = card(METRIC_LABEL[e.metric] || '대화', { tag: spec ? badge(spec.strength) : null });
-    if (m) body.append(compareBars(m));
-    body.append(el('p', null, e.data));
-    if (e.said) body.append(el('p', 'said', e.said));
-    if (spec) body.append(el('p', 'fine', `연구: ${spec.evidence}. ${spec.source}`));
-    d.querySelector('summary').onclick = () => setFocus(e.metric);
-    li.append(d);
-  }
-
-  // 3. Test result (only from the sheet, never estimated from the chat).
-  if (state.test) {
-    const t = state.test;
-    const { d, body } = card(`${t.test.name} 검사 결과`, { open: true });
-    const scale = el('div', 'scale');
-    for (const b of t.test.bands) {
-      const seg = el('span', b.label === t.band ? 'on' : '', b.label);
-      seg.style.flex = String(b.max - b.min + 1);
-      scale.append(seg);
-    }
-    const mark = el('i', 'scale-mark');
-    mark.style.left = `${(t.total / t.max) * 100}%`;
-    scale.append(mark);
-    body.append(el('p', 'score', `${t.total}점 / ${t.max}점 · ${t.band}`), scale, el('p', 'fine', t.test.context));
-    li.append(d);
-  }
-
-  // 4. Reflection and one small step (single-session shape: action, obstacle, plan).
-  li.append(el('p', 'reflection', r.reflection));
-  const step = el('section', 'step');
-  step.append(el('strong', null, '이번 주 작은 실험'));
-  const ol = el('dl');
-  for (const [k, v] of [['해 볼 것', r.step?.action], ['막힐 만한 것', r.step?.obstacle], ['그때는', r.step?.plan]]) {
-    if (v) ol.append(el('dt', null, k), el('dd', null, v));
-  }
-  step.append(ol);
+  li.append(el('h2', 'type', 'Herz'));
+  const findings = (r.evidence || []).map((item) => ({
+    label: METRIC_LABEL[item.metric] || '대화', basis: item.text, metric: item.metric,
+  }));
+  appendProfile(li, r.reflection, findings);
+  const step = el('div', 'step');
+  step.append(el('strong', null, '이번 주 작은 실험'), el('span', null, r.small_step));
   li.append(step);
-
-  // 5. Nudge. Based on the test when there is one; otherwise a gentle offer, no number.
-  const covered = [...state.items.entries()].filter(([id]) => id <= 8);
-  const convo = covered.reduce((s, [, v]) => s + v.score, 0);
-  const note = el('p', 'screen-note');
-  if (state.crisis || (state.test && state.test.total >= 10)) {
-    note.classList.add('heavy');
-    note.innerHTML = '지난 2주 마음이 꽤 무거웠던 것 같아요. 혼자 견디기보다 이야기할 사람을 만나 보면 좋겠어요. <a href="tel:15770199">정신건강위기상담 1577-0199</a>, 가까운 정신건강복지센터, 학교나 회사의 상담실은 무료로 시작할 수 있어요.';
-  } else if (!state.test && convo >= 5) {
-    note.textContent = '대화 속에 조금 지친 신호가 몇 가지 있었어요. 숫자로 확인해 보고 싶으면 2분짜리 검사를 해 볼 수 있어요.';
-    const b = el('button', 'chip', 'PHQ-9 짧은 검사 해 보기');
-    b.type = 'button';
-    b.onclick = () => openTest(TESTS[0]);
-    note.append(' ', b);
-  } else {
-    note.textContent = '몸의 리듬이 돌아오는지 한 달 뒤에 다시 비춰 봐요.';
-  }
-  li.append(note);
-
-  // 6. Method: how this was measured and how far it can be trusted.
-  const { d: md, body: mb } = card('어떻게 쟀나요');
-  mb.append(el('p', null, `최근 2주(${state.summary.recentFrom.replaceAll('-', '.')}~${state.summary.last.replaceAll('-', '.')})를 그 전 약 11주의 나와 비교했어요. 다른 사람의 평균과 비교하지 않았어요.`));
-  const ul = el('ul', 'method');
-  for (const m of state.summary.metrics) {
-    const row = el('li');
-    row.append(el('span', null, m.label), badge(METRICS[m.id].strength));
-    ul.append(row);
-  }
-  mb.append(ul, el('p', null, '몸 데이터와 기분의 관련은 연구에서 작게 나타나요. 이 리포트는 판정이 아니라 대화의 출발점이에요. 대화에서 추정한 내용은 점수로 보여 주지 않아요.'));
-  li.append(md);
 
   li.append(shareCard(r), el('p', 'card-hint', '이 카드는 캡처해서 공유해도 괜찮은 내용만 담았어요.'));
   $('chat').append(li);
@@ -502,17 +714,9 @@ function renderReport(r) {
   setFocus('none');
 }
 
-function numCell(label, value) {
-  const f = document.createDocumentFragment();
-  f.append(el('dt', null, label), el('dd', null, value));
-  const w = el('div');
-  w.append(f);
-  return w;
-}
-
 function shareCard(r) {
   const card = el('div', 'card');
-  card.append(el('span', 'card-brand', '마음 시간표'), el('strong', 'card-type', r.type_name), el('p', 'card-line', r.card_line));
+  card.append(el('span', 'card-brand', 'Herz'), el('strong', 'card-type', r.type_name), el('p', 'card-line', r.card_line));
   const mini = el('div', 'mini');
   for (const n of state.summary.recentNights) {
     const col = el('div');
@@ -529,13 +733,341 @@ function shareCard(r) {
   return card;
 }
 
-
 /* ---------- Wire up ---------- */
 
-introTable();
-$('fileInput').addEventListener('change', (e) => { const f = e.target.files[0]; if (f) start(f, false); });
-$('sampleBtn').addEventListener('click', async () => {
-  const res = await fetch('sample/export.xml');
-  const blob = await res.blob();
-  start(new File([blob], 'export.xml', { type: 'text/xml' }), true);
+/* ---------- Rapport quiz: guess your own records first ---------- */
+
+// Opening: one free-text answer about self-knowledge. It builds rapport and, like Q2, may move indicators.
+const OPENING = '사용자님은 스스로에 대해서 얼마나 잘 아시나요?';
+
+function startOpening() {
+  profile.step = 'opening';
+  state.history.push({ role: 'model', text: OPENING });
+  addMsg('ai', OPENING);
+  $('msg').placeholder = '내 말로 답하기';
+}
+
+async function answerOpening(text) {
+  state.history.push({ role: 'user', text });
+  busy(true);
+  const typing = thinking('답을 읽고 있어요');
+  const { cues, source, reaction } = await readFreeText(text);
+  typing.remove();
+  busy(false);
+  const signals = cueSignals(cues, text, null);
+  if (signals.length) recordSignals(state.estimates, text, signals, source);
+  addMsg('ai', `${reaction || '좋아요.'} 그럼 기록으로 한번 확인해 볼게요.`);
+  startQuiz();
+}
+
+function startQuiz() {
+  quiz.questions = buildQuiz(state.summary.data, state.summary.through);
+  quiz.at = 0;
+  quiz.correct = 0;
+  if (!quiz.questions.length) return endQuiz();
+  profile.step = 'quiz';
+  askQuiz();
+}
+
+const ORDINALS = ['첫 번째', '두 번째', '세 번째', '네 번째', '다섯 번째'];
+const ordinalOf = (i) => (i === quiz.questions.length - 1 && i > 0 ? '마지막' : ORDINALS[i]);
+
+function askQuiz() {
+  const question = quiz.questions[quiz.at];
+  addMsg('ai', `${ordinalOf(quiz.at)} 질문이에요. ${question.text}`, replyChoices(question.choices));
+  $('msg').placeholder = question.choices.length ? '고르거나 숫자로 답하기' : '예) 7시간 반';
+}
+
+function answerQuiz(reply) {
+  const result = quiz.questions[quiz.at].answer(reply);
+  if (result.correct) quiz.correct++;
+  quiz.at++;
+  if (quiz.at < quiz.questions.length) {
+    addMsg('ai', result.reply);
+    askQuiz();
+  } else {
+    endQuiz(result.reply);
+  }
+}
+
+// At least half right: the count with '!'. Under half: no count.
+function quizScore(total, correct) {
+  if (correct === total) return `${total}개 모두 맞히셨어요!`;
+  if (correct * 2 >= total) return `${total}개 중 ${correct}개 맞히셨어요!`;
+  return '기록이 생각과는 꽤나 달랐던 모양이에요.';
+}
+
+// A '...' bubble whose dots ripple: the one waiting indicator for every pause.
+function thinking(label = '기록을 분석하고 있어요') {
+  const li = document.createElement('li');
+  li.className = 'msg ai thinking';
+  li.setAttribute('role', 'status');
+  const dots = el('p', 'dots');
+  dots.setAttribute('aria-label', label);
+  for (let i = 0; i < 3; i++) dots.append(el('span', null, '.'));
+  li.append(dots);
+  $('chat').append(li);
+  revealChatItem(li);
+  return li;
+}
+
+// The last answer's feedback and the score share one bubble, then the dots stand in for
+// the agent reading the records, so stage 2 opens on a single question bubble.
+const THINKING_MS = 3500;
+
+async function endQuiz(lastReply = '') {
+  if (quiz.questions.length) {
+    addMsg('ai', `${lastReply} ${quizScore(quiz.questions.length, quiz.correct)}`.trim());
+    busy(true);
+    const dots = thinking();
+    await new Promise((resolve) => setTimeout(resolve, THINKING_MS));
+    dots.remove();
+    busy(false);
+  }
+  $('msg').placeholder = '내 이야기로 답하기';
+  state.talk = { changes: detectChanges(state.summary.data, state.summary.through), at: 0, asked: 0, log: [], current: null, stopped: false, correction: '' };
+  openSession(true);
+}
+
+/* ---------- Stage 2: ask about the clearest changes in the user's own records ---------- */
+
+const MAX_TALK_QUESTIONS = 4;
+// Q2 has no choices: the user answers in their own words or taps 잘 모르겠어요.
+const TALK_UNKNOWN = '잘 모르겠어요';
+const TALK_SKIP = /^(?:잘 모르겠어요|모르겠어요|건너뛸게요|넘어갈래요|패스|말하고 싶지 않아요|이 이야기는 건너뛸게요)[.!~ ]*$/u;
+
+// A thin line that closes the quiz; stage 2 starts below it as a new part of the talk.
+function chatDivider() {
+  const li = el('li', 'chat-divider');
+  li.setAttribute('role', 'separator');
+  $('chat').append(li);
+}
+
+function startTalk() {
+  const talk = state.talk;
+  profile.step = 'talk';
+  updateTurns();
+  chatDivider();
+  if (!talk.changes.length) {
+    addMsg('ai', '최근 기록은 평소와 크게 다르지 않았어요. 지금까지의 이야기로 Herz에 정리했어요.');
+    finishTalk();
+    return;
+  }
+  askChange('다음으로, 생활기록에 특이한 사항이 있어서 여쭤볼게요. ');
+}
+
+function askChange(prefix = '') {
+  const talk = state.talk;
+  const change = talk.changes[talk.at];
+  const question = firstQuestion(change, talk.at);
+  talk.current = { change, question, why: null, first: '', firstCues: [], second: '' };
+  talk.asked++;
+  setFocus(change.record || 'none', { scroll: false });
+  askTalk(prefix + question.text);
+}
+
+// Q1 offers its reasons as buttons; Q2 asks for the user's own words. Both offer 잘 모르겠어요.
+// Q1 and Q2 have no reason buttons: the user answers in their own words or taps 잘 모르겠어요.
+function askTalk(text) {
+  state.history.push({ role: 'model', text });
+  addMsg('ai', text, replyChoices([], TALK_UNKNOWN));
+  $('msg').placeholder = '내 말로 답하기';
+}
+
+// Free text: Gemini reads it when the server has a key, the demo on the device.
+// Returns cues { indicator, item, dir, quote }. A slow or failed AI read falls back to the device.
+// Free text: Gemini reads it against the cue table when the server has a key. Without an
+// answer from it, the device classifier reads it, then the question's own reason table.
+// Also returns the AI's one-line reaction to the answer ('' when the AI did not answer).
+async function readFreeText(text, reasons) {
+  let reaction = '';
+  if (state.mode === 'gemini') {
+    try {
+      const out = await api('signals', state, { timeout: 15000 });
+      if (typeof out.reaction === 'string' && !hasBanned(out.reaction)) reaction = out.reaction;
+      const cues = Array.isArray(out.signals) ? groundedCues(out.signals, text) : [];
+      if (cues.length) return { cues, source: 'AI 대화 해석', reaction };
+    } catch {
+      // Fall through to the device.
+    }
+  }
+  const local = localCues(text);
+  if (local.length) return { cues: local, source: '기기 내 문장 분류', reaction };
+  const reason = closestReason(text, reasons);
+  return reason ? { cues: reason.cues, why: reason.why, source: '이유 표 대조', reaction } : { cues: [], source: '기기 내 문장 분류', reaction };
+}
+
+// Q2: why about the first answer. Gemini writes it when the server has a key; the scripted
+// WHY bank answers in the demo, and when the AI is slow (15 s) or returns too little.
+async function whyFor(turn, key) {
+  const scripted = whyQuestion(key, state.talk.at);
+  if (state.mode !== 'gemini') return scripted;
+  const typing = thinking('다음 질문을 고르고 있어요');
+  try {
+    const context = { summary: state.summary, history: [{ role: 'model', text: turn.question.text }, { role: 'user', text: turn.first }] };
+    const out = await api('why', context, { timeout: 15000, extra: { change: turn.change.label } });
+    const choices = (out.choices || []).map((choice) => ({ text: choice.text, cues: groundedCues(choice.cues) }));
+    if (typeof out.question === 'string' && !hasBanned(out.question) && choices.length >= 2) return { text: out.question, choices };
+  } catch {
+    // Use the scripted question.
+  } finally {
+    typing.remove();
+  }
+  return scripted;
+}
+
+async function answerTalk(text) {
+  const talk = state.talk;
+  const turn = talk.current;
+  const second = Boolean(turn.why);
+  const asked = turn.why || turn.question;
+  const skipped = TALK_SKIP.test(text);
+  const picked = asked.choices.find((choice) => choice.text === text);
+  state.history.push({ role: 'user', text });
+  let cues = [];
+  let source = '선택한 이유';
+  let why;
+  let reaction = '';
+  if (picked) {
+    cues = picked.cues;
+  } else if (!skipped) {
+    busy(true);
+    const typing = thinking('답을 읽고 있어요');
+    ({ cues, source, why, reaction } = await readFreeText(text, asked.choices));
+    typing.remove();
+    busy(false);
+  }
+  const signals = skipped ? [] : cueSignals(cues, text, second ? turn.firstCues : null);
+  if (!skipped) recordSignals(state.estimates, text, signals, source);
+  if (!second) {
+    turn.first = skipped ? '' : text;
+    turn.firstCues = cues;
+    talk.log.push(turn);
+    if (!skipped && talk.asked < MAX_TALK_QUESTIONS) {
+      busy(true);
+      turn.why = await whyFor(turn, picked?.why ?? why ?? whyKeyFor(cues));
+      busy(false);
+      talk.asked++;
+      askTalk(`${reaction || (talk.at ? '그랬군요.' : '그런 일이 있었군요.')} ${turn.why.text}`);
+      return;
+    }
+  } else {
+    turn.second = skipped ? '' : text;
+  }
+  talk.at++;
+  const ack = skipped ? '괜찮아요.' : reaction || (signals.length ? '말씀해 주셔서 고마워요.' : '그런 사정이 있었군요.');
+  if (talk.at < talk.changes.length && talk.asked < MAX_TALK_QUESTIONS) {
+    askChange(ack + ' 하나 더 볼게요. ');
+    return;
+  }
+  addMsg('ai', ack + ' 들려주신 이야기로 Herz에 정리했어요.');
+  finishTalk();
+}
+
+function finishTalk() {
+  profile.step = 'conversation';
+  $('msg').placeholder = '내 이야기로 답하기';
+  report();
+}
+
+function showPhonePanel(panelId) {
+  const nav = $('phoneNav');
+  nav.hidden = $('resultButton').hidden;
+  for (const tab of nav.querySelectorAll('button')) {
+    const panel = $(tab.getAttribute('aria-controls'));
+    panel.hidden = panel.id !== panelId;
+    tab.setAttribute('aria-pressed', String(!panel.hidden));
+  }
+}
+
+// The picked sample person's starting ranks: { <indicator id>: { rank, basis } }, or null.
+async function readPrior(persona) {
+  if (!persona) return null;
+  try {
+    const response = await fetch(`sample/${persona}/profile.json`);
+    return response.ok ? (await response.json()).indicators : null;
+  } catch {
+    return null;
+  }
+}
+
+function openPhone() {
+  document.title = '스마트폰 체험 · Herz';
+  // Stage 2 calls the AI only when the server has a key; until this answers, it stays on the device.
+  fetch('/api/status').then((res) => res.json()).then((status) => { state.mode = status.mode; }).catch(() => {});
+  document.body.append($('phoneTemplate').content.cloneNode(true));
+  $('intro').hidden = true;
+  $('phoneViewport').append($('session'));
+  $('session').append($('resultPanel'));
+  const viewport = window.visualViewport;
+  if (viewport) {
+    // The software keyboard can shrink the visible screen without resizing the layout viewport.
+    const fitKeyboard = () => {
+      if (viewport.scale === 1) document.documentElement.style.setProperty('--phone-visible-height', viewport.height + 'px');
+    };
+    fitKeyboard();
+    viewport.addEventListener('resize', fitKeyboard);
+  }
+  const clock = new Intl.DateTimeFormat('ko-KR', { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+  const showTime = () => { $('phoneClock').textContent = clock.format(new Date()); };
+  showTime();
+  window.setInterval(showTime, 60_000);
+  for (const tab of $('phoneNav').querySelectorAll('button')) {
+    tab.addEventListener('click', () => showPhonePanel(tab.getAttribute('aria-controls')));
+  }
+  setupPhoneAccess(async (summary, persona) => {
+    state.summary = summary;
+    state.prior = await readPrior(persona);
+    $('session').hidden = false;
+    showPhonePanel('chatPanel');
+    $('turnCount').hidden = true;
+    $('chatPanel').tabIndex = -1;
+    $('chatPanel').focus({ preventScroll: true });
+    startOpening();
+  });
+  $('viewRecord').addEventListener('click', () => {
+    showPhonePanel('recordPanel');
+    setFocus(state.example?.metric.id ?? state.talk?.changes[0]?.record ?? 'none');
+    $('recordPanel').scrollTop = 0;
+    $('recordsButton').focus({ preventScroll: true });
+  });
+  const params = new URLSearchParams(location.search);
+  const index = caseLinks.indexOf(params.get('case'));
+  if (index >= 0) {
+    $('appleContinue').disabled = true;
+    const answers = params.get('test') === 'phq9' && workoutStories[index].samplePhq9;
+    Promise.all([readPreviewHealth(['workouts']), answers ? loadForm('phq9') : null]).then(([summary, form]) => {
+      const exampleScreening = form ? { ...scoreForm(form, answers), sample: true } : null;
+      state.summary = summary;
+      profile.step = 'conversation';
+      $('signupStep').hidden = true;
+      openSession(true, index, exampleScreening);
+    }).catch(() => {
+      $('appleContinue').disabled = false;
+      $('signupError').textContent = '예시 결과를 불러오지 못했어요. 아래에서 체험을 시작할 수 있어요.';
+    });
+  }
+}
+
+const hero = document.querySelector('.intro-hero');
+let dragStartY = 0;
+let dragStartScroll = 0;
+
+// Touch and trackpad scrolling stay native. A mouse can also drag the backdrop.
+hero.addEventListener('pointerdown', (event) => {
+  if (event.pointerType !== 'mouse' || event.button !== 0 || event.target !== hero) return;
+  dragStartY = event.clientY;
+  dragStartScroll = window.scrollY;
+  hero.setPointerCapture(event.pointerId);
+  hero.classList.add('is-dragging');
 });
+hero.addEventListener('pointermove', (event) => {
+  if (event.pointerType === 'mouse' && hero.hasPointerCapture(event.pointerId)) {
+    window.scrollTo(0, dragStartScroll + dragStartY - event.clientY);
+  }
+});
+hero.addEventListener('lostpointercapture', () => hero.classList.remove('is-dragging'));
+
+if (phonePreview) openPhone();
+else showLandingExamples();
+$('sampleBtn').addEventListener('click', start);

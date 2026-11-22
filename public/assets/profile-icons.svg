@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+  <symbol id="mood" viewBox="0 0 24 24">
+    <path d="M6 18.5a4 4 0 0 1-.3-8 5.7 5.7 0 0 1 10.9 1.2 3.4 3.4 0 1 1 .4 6.8Z"/>
+    <path d="M14 4.3a4.7 4.7 0 0 1 6.2 6.3M18.4 2.4l.3-1M22 5.1l1-.5"/>
+  </symbol>
+  <symbol id="resilience" viewBox="0 0 24 24">
+    <path d="M12 20v-5c0-5.5 3.4-9.5 9-10-0.2 5.8-3.3 9.6-8.9 10M12 16.6C6.6 16.8 3.2 13.4 3 8.5c4.6-.1 7.8 2.3 9.2 6.2M8 20h8"/>
+  </symbol>
+  <symbol id="worry" viewBox="0 0 24 24">
+    <path d="M2 9c2.5 0 2.5-3.2 5-3.2s2.5 3.2 5 3.2 2.5-3.2 5-3.2 2.5 3.2 5 3.2M2 16c2.5 0 2.5-3.2 5-3.2s2.5 3.2 5 3.2 2.5-3.2 5-3.2 2.5 3.2 5 3.2"/>
+  </symbol>
+  <symbol id="delay" viewBox="0 0 24 24">
+    <path d="M5.5 3.5h13M5.5 20.5h13M7.5 3.5v3c0 2.4 2.2 3.9 4.5 5.5 2.3 1.6 4.5 3.1 4.5 5.5v3M16.5 3.5v3c0 2.4-2.2 3.9-4.5 5.5-2.3 1.6-4.5 3.1-4.5 5.5v3M9.4 17.7h5.2"/>
+  </symbol>
+  <symbol id="social" viewBox="0 0 24 24">
+    <path d="M2 12s3.8-6.5 10-6.5S22 12 22 12s-3.8 6.5-10 6.5S2 12 2 12Z"/>
+    <circle cx="12" cy="12" r="2.8"/>
+  </symbol>
+  <symbol id="rumination" viewBox="0 0 24 24">
+    <path d="M20.3 10A8.5 8.5 0 0 0 5 7.7L3.5 10m0-5v5h5M3.7 14A8.5 8.5 0 0 0 19 16.3l1.5-2.3m0 5v-5h-5"/>
+  </symbol>
+  <symbol id="recognition" viewBox="0 0 24 24">
+    <path d="m12 3 2.7 5.7 6.3.9-4.5 4.5 1.1 6.3-5.6-3-5.6 3 1.1-6.3L3 9.6l6.3-.9Z"/>
+  </symbol>
+  <symbol id="recovery" viewBox="0 0 24 24">
+    <path d="M4 10h12v3.5a6 6 0 0 1-12 0ZM16 10h1.7a2.7 2.7 0 1 1 0 5.4h-2M5 21h13M8 6.8c1-1 .2-2.2 1-3.5M12 6.8c1-1 .2-2.2 1-3.5"/>
+  </symbol>
+  <symbol id="pressure" viewBox="0 0 24 24">
+    <circle cx="12" cy="13.6" r="7.5"/>
+    <path d="M12 6V2.5m-2.5 0h5M18 7.7l1.6-1.6M12 13.6l3-3.2"/>
+  </symbol>
+</svg>

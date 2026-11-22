@@ -1,0 +1,63 @@
+{
+  "id": "phq2",
+  "name": "PHQ-2",
+  "title_ko": "우울 2문항",
+  "measures": "흥미 저하와 우울한 기분의 빈도",
+  "recall": "지난 2주",
+  "korean_form_status": "form_available",
+  "sources": [
+    "S06-01",
+    "S06-02",
+    "S06-06"
+  ],
+  "license": {
+    "terms": "PHQ/GAD 개발자 매뉴얼: 복제·번역·표시·배포에 허가 불필요 (S06-01)",
+    "condition": "자유 사용. Pfizer 및 개발자 표기 유지",
+    "url": "https://www.phqscreeners.com/images/sites/g/files/g10016261/f/201412/instructions.pdf"
+  },
+  "korean_source": {
+    "citation": "PHQ Screeners, PHQ-9 Korean for Korea 1·2번 문항 (S06-02)",
+    "url": "https://www.phqscreeners.com/images/sites/g/files/g10060481/f/201412/PHQ9_Korean%20for%20Korea.pdf",
+    "locator": "1쪽 문항 1·2. 문구는 phq9.json에서 가져옴"
+  },
+  "sections": [
+    {
+      "source": "phq9",
+      "items": [
+        "phq9.1",
+        "phq9.2"
+      ]
+    }
+  ],
+  "scoring": {
+    "method": "sum",
+    "range": [
+      0,
+      6
+    ],
+    "reverse_items": [],
+    "require_all": true
+  },
+  "bands": [
+    {
+      "min": 0,
+      "max": 2,
+      "label": "추가 선별 제안 기준 미만"
+    },
+    {
+      "min": 3,
+      "max": 6,
+      "label": "추가 선별 제안 범위"
+    }
+  ],
+  "bands_source": "개발자 매뉴얼(S06-01): PHQ-2 ≥3에서 PHQ-9 전체 실시 제안. 참고: 한국 일반 인구 6,022명 연구(Kim 2023, S06-06)의 우울장애 선별점은 PHQ-2 ≥2",
+  "offers": [
+    {
+      "score": "total",
+      "at_least": 3,
+      "offer": "phq9",
+      "only_unanswered": true
+    }
+  ],
+  "summary": "지난 2주간 우울 두 문항에 답한 점수는 {score}/6점이에요."
+}

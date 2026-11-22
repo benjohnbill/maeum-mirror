@@ -1,0 +1,25 @@
+# 심리검사 출처와 판본
+
+확인일은 2026-11-22다. A는 검증 논문, B는 양식·개발자 지침·기관 조사표 같은 1차 자료다. 아래의 ‘확인’은 해당 행에 적힌 내용에 한한다. 제품에서 정한 표시 문구, 미완료 처리, 복수 검사 제안 순서는 [설계 문서](REPORT.md)에 기록했다.
+
+| ID | 등급 | 자료 | 직접 확인한 위치·표현 | 확인한 값 또는 범위 | 확인 |
+|---|---|---|---|---|---|
+| S06-01 | B | [Spitzer 등, PHQ/GAD 개발자 매뉴얼](https://www.phqscreeners.com/images/sites/g/files/g10016261/f/201412/instructions.pdf) | 2쪽 채점·생활 지장·PHQ-9 9번, 3쪽 표 1, 6쪽 증상 구간, 이용 조건 | 두 짧은 검사는 각각 ≥3에서 전체 검사 제안. PHQ-9 경계 5/10/15/20, GAD-7 경계 5/10/15. 복제·번역·표시·배포 허가 불필요 | 확인 |
+| S06-02 | B | [PHQ Screeners, PHQ-9 Korean for Korea](https://www.phqscreeners.com/images/sites/g/files/g10060481/f/201412/PHQ9_Korean%20for%20Korea.pdf) | 1쪽의 지시문, 문항, 응답 열과 하단 이용·저자 표기 | 지난 2주, 9×0–3점. 생활 지장 질문은 별도 | 확인 |
+| S06-03 | B | [PHQ Screeners, GAD-7 Korean for Korea](https://www.phqscreeners.com/images/sites/g/files/g10060481/f/201412/GAD7_Korean%20for%20Korea.pdf) | 1쪽의 지시문, 문항, 응답 열과 하단 이용·저자 표기 | 지난 2주, 7×0–3점. 1·2번이 GAD-2 | 확인 |
+| S06-04 | A | [Kroenke 등, 2009, PHQ-4](https://pubmed.ncbi.nlm.nih.gov/19996233/) · [논문 부록 1](https://www.reviva.org.co/wp-content/uploads/2021/09/Ultrabrief-PHQ-4-2009.pdf) · [구간 포함 양식](https://scholar.harvard.edu/files/bettina.hoeppner/files/phq-4.pdf) | 부록 1의 순서는 긴장, 걱정 조절, 우울감, 흥미 저하 | 미국 일차의료 2,149명. 합계 0–12, 하위척도 각 0–6, 총점 구간의 시작점 0/3/6/9 | 확인 |
+| S06-05 | A | [Kim 등, 2021, 한국 PHQ-4 표준화](https://pmc.ncbi.nlm.nih.gov/articles/PMC7851451/) | Methods의 Korean version of the PHQ-4에서 연구진의 번역 경위 확인 | 국내 정신건강의학과 초진 116명, α=.792. 이 연구의 GAD 번역과 S06-03의 문구 일치는 미확인 | 표본·계수 확인 |
+| S06-06 | A | [Kim 등, 2023, 한국 일반 인구 PHQ-2·PHQ-9](https://pubmed.ncbi.nlm.nih.gov/37794667/) | 초록 Results, 2011년 역학 자료 분석 | 6,022명. 우울장애 선별에 PHQ-2 ≥2, PHQ-9 ≥5. PHQ-9 해당 기준의 양성예측도 12.6% | 확인 |
+| S06-07 | A | [Ahn 등, 2019, 한국 GAD-7·GAD-2](https://doi.org/10.3389/fpsyt.2019.00127) | 도구 절과 표 2에서 범불안장애 대상 행 확인 | 1,157명. GAD-2 ≥3(민감도 .76, 특이도 .88), GAD-7 ≥8(.81, .85) | 확인 |
+| S06-08 | B | [Cohen 연구실, PSS 이용 조건·절단점·번역자 연락 경로](https://www.cmu.edu/dietrich/psychology/stress-immunity-disease-lab/scales/index.html) · [채점법](https://www.cmu.edu/dietrich/psychology/stress-immunity-disease-lab/scales/html/pssscoring.html) | PSS-4 채점 단락과 번역자 목록 | 2·3번 역채점. 보편 절단점 없음. 원척도는 Mapi ePROVIDE로, 한국어 번역은 이은현에게 이용 문의 | 안내 확인, 개별 허가 미확인 |
+| S06-09 | B | [이은현, 한국어 PSS 14·10·4문항 양식](https://www.cmu.edu/dietrich/psychology/stress-immunity-disease-lab/scales/pdf/korean_pss_4_10_14_item_eunhyunlee.pdf) | 마지막 쪽 ‘지각된 스트레스 척도 (PSS-4)’, Korean version 07/20/2012 | 지난 한 달, 4문항, 응답 0–4 | 확인 |
+| S06-10 | A | [Lee 등, Korean versions of the Perceived Stress Scale, 2015](https://www.cmu.edu/dietrich/psychology/stress-immunity-disease-lab/scales/pdf/korean-versions_chronic-disease.pdf) | Results, 표 6, Discussion의 KPSS-4 결과 | 만성질환자 402명. 4문항 α=.55, 재검사 ICC=.77 | 확인 |
+| S06-11 | A | [Soldatos 등, 2000, AIS 개발](https://pubmed.ncbi.nlm.nih.gov/11033374/) | 초록 Methods의 8개 측정 영역 | 야간 5개와 주간 3개 | 확인 |
+| S06-12 | A | [Soldatos 등, 2003, AIS 선별점 검증](https://pubmed.ncbi.nlm.nih.gov/12932801/) | 초록 Methods와 Results | 299명, ≥6에서 민감도 93%, 특이도 85%. 해당 연구 표본의 결과 | 확인 |
+| S06-13 | A | [Jeong 등, 2015, 국내 AIS 검증](https://link.springer.com/article/10.1007/s11136-015-0986-7) · [공개 부록](https://static-content.springer.com/esm/art%3A10.1007%2Fs11136-015-0986-7/MediaObjects/11136_2015_986_MOESM1_ESM.docx) | 초록과 부록 표 1·2. 부록 표 2는 영문 항목명과 집단별 점수. 교신저자 In Kyoon Lyoo는 논문 페이지에 표기 | 소방·구조 인력 221명, α=.88. 한국어 실시 문구와 앱 사용 조건 미확인 | 표본·계수·부록 확인 |
+| S06-14 | B | [미 국방보건기관, Insomnia Disorder Screening Guide 중 Athens Insomnia Scale, 2025](https://health.mil/Reference-Center/Fact-Sheets/2025/06/27/Insomnia-Disorder-Screening-Guidance) | AIS 양식 지시문, 문항별 보기, 하단의 ‘clinical use allowance’ | 지난 한 달 주 3회 이상, 항목별 0–3, 합계 0–24 | 확인 |
+| S06-15 | A/B | [Smith 등, 2008, BRS 원 개발 논문](https://doi.org/10.1080/10705500802222972) · [문항·채점 양식](https://www.recoveryanswers.org/assets/the_brief_resilience_scale_brs.pdf) | 설문 양식의 지시문·6개 문항·Scoring | 1–5 동의 척도. 2·4·6번 반전 후 6개 평균 | 확인 |
+| S06-16 | A | [Kim 등, 2023, 한국 BRS 검증](https://pmc.ncbi.nlm.nih.gov/articles/PMC10591158/) | Instruments, Results, 표 2–3. 국내 54개 사업체·지자체 종사자 대상. 공개 논문은 문항번호별 통계를 제공 | α=.91, ω=.91. 논문은 합계 단위 6–30 사용. 대상 검증판 한국어 실시 원문 미확인 | 집단·계수·단위 확인 |
+| S06-17 | B/A | [2018–2023 장애인삶 패널조사 통합조사표](https://www.jbaha.or.kr/main/filedown.php?menu=174&no=419) · [해당 패널 BRS 분석, 보건사회연구 2025](https://www.kihasa.re.kr/hswr/assets/pdf/1620/journal-45-4-190.pdf) | 조사표 인쇄면 13쪽 A-2 문 4, 변수 W1**_A2_04_c1~c6. 연구방법 ‘회복탄력성’ | 한국어 6문항과 5개 보기 모두 공개. 연구에서 2·4·6번 반전 후 평균 사용 | 실시판 확인, 앱 전재 범위 미확인 |
+| S06-18 | B | [B. W. Smith의 2020년 BRS 사용 회신, Raffety 학위논문 부록](https://scholarworks.waldenu.edu/cgi/viewcontent.cgi?article=12108&context=dissertations) | ‘Request for Permission to use the Brief Resilience Scale’, 2020-11-01자 회신 | 원저자가 해당 연구자에게 무료 사용을 안내. 한국어판 공개 서비스 전재에 관한 조건은 이 회신에 없음 | 회신 범위 확인 |
+| S06-19 | B | [WHO, WHO-5, 2024](https://www.who.int/publications/m/item/who-ucn-msd-mhe-2024.01) · [원문과 라이선스](https://cdn.who.int/media/docs/default-source/mental-health/who-5_english-original4da539d6ed4b49389e3afe47cda2326a.pdf) | 별도 후보인 긍정적 안녕감 척도의 지시문과 판권면 | 최근 2주, 5문항, CC BY-NC-SA 3.0 IGO | 확인 |

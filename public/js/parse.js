@@ -1,10 +1,18 @@
-// Streams an Apple Health export (export.xml or export.zip) and keeps only
+// Streams an Apple Health export.xml and keeps only
 // the records the metrics need. Runs in the browser; nothing is uploaded.
 
 const SLEEP = 'HKCategoryTypeIdentifierSleepAnalysis';
 const STEPS = 'HKQuantityTypeIdentifierStepCount';
 const RHR = 'HKQuantityTypeIdentifierRestingHeartRate';
 const HRV = 'HKQuantityTypeIdentifierHeartRateVariabilitySDNN';
+// Daily values the rapport quiz asks about. Each maps dayKey -> [values].
+const DAILY = {
+  HKQuantityTypeIdentifierWalkingStepLength: 'stride', // cm
+  HKQuantityTypeIdentifierWalkingSpeed: 'speed', // km/hr
+  HKQuantityTypeIdentifierFlightsClimbed: 'flights', // count
+  HKQuantityTypeIdentifierTimeInDaylight: 'daylight', // min
+  HKQuantityTypeIdentifierAppleExerciseTime: 'exercise', // min
+};
 
 function attr(tag, name) {
   const key = ` ${name}="`;
@@ -27,6 +35,7 @@ export function createCollector() {
     rhr: new Map(), // dayKey -> [values]
     hrv: new Map(),
     workouts: [], // dayKey
+    ...Object.fromEntries(Object.values(DAILY).map((name) => [name, new Map()])),
     records: 0,
   };
   const push = (map, day, v) => (map.has(day) ? map.get(day).push(v) : map.set(day, [v]));
@@ -48,6 +57,8 @@ export function createCollector() {
         push(data.rhr, attr(tag, 'startDate').slice(0, 10), +attr(tag, 'value'));
       } else if (type === HRV) {
         push(data.hrv, attr(tag, 'startDate').slice(0, 10), +attr(tag, 'value'));
+      } else if (DAILY[type]) {
+        push(data[DAILY[type]], attr(tag, 'startDate').slice(0, 10), +attr(tag, 'value'));
       }
     } else if (tag.startsWith('Workout ')) {
       data.workouts.push(attr(tag, 'startDate').slice(0, 10));
@@ -84,38 +95,9 @@ async function feedXmlStream(stream, total, collector, onProgress) {
   collector.feed(dec.decode());
 }
 
-async function feedZip(file, collector, onProgress) {
-  const { Unzip, UnzipInflate } = await import('https://cdn.jsdelivr.net/npm/fflate@0.8.2/esm/browser.js');
-  const dec = new TextDecoder();
-  let found = false;
-  const unzip = new Unzip((entry) => {
-    if (!/(^|\/)export\.xml$/.test(entry.name)) return;
-    found = true;
-    entry.ondata = (err, chunk, final) => {
-      if (err) throw err;
-      collector.feed(dec.decode(chunk, { stream: !final }));
-    };
-    entry.start();
-  });
-  unzip.register(UnzipInflate);
-  const reader = file.stream().getReader();
-  let read = 0;
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) { unzip.push(new Uint8Array(0), true); break; }
-    read += value.byteLength;
-    unzip.push(value);
-    onProgress?.(read / file.size);
-    await new Promise((r) => setTimeout(r)); // let the progress bar paint
-  }
-  if (!found) throw new Error('zip 안에서 export.xml을 찾지 못했어요. 건강 앱의 "모든 건강 데이터 내보내기" 파일이 맞는지 확인해 주세요.');
-}
-
 export async function parseHealthFile(file, onProgress) {
   const collector = createCollector();
-  const isZip = /\.zip$/i.test(file.name) || file.type.includes('zip');
-  if (isZip) await feedZip(file, collector, onProgress);
-  else await feedXmlStream(file.stream(), file.size, collector, onProgress);
-  if (!collector.data.records) throw new Error('건강 기록을 하나도 찾지 못했어요. Apple 건강 앱에서 내보낸 export.zip 또는 export.xml을 올려 주세요.');
+  await feedXmlStream(file.stream(), file.size, collector, onProgress);
+  if (!collector.data.records) throw new Error('건강 기록을 하나도 찾지 못했어요.');
   return collector.data;
 }

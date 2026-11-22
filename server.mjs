@@ -9,7 +9,7 @@ import { chat, status, KEY, MODELS } from './lib/chat.mjs';
 
 const root = fileURLToPath(new URL('./public/', import.meta.url));
 const PORT = +process.env.PORT || 8787;
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.xml': 'application/xml', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.xml': 'application/xml', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.ico': 'image/x-icon' };
 
 async function readJson(req) {
   let raw = '';

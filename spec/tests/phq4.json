@@ -1,0 +1,87 @@
+{
+  "id": "phq4",
+  "name": "PHQ-4",
+  "title_ko": "우울·불안 4문항",
+  "measures": "우울·불안 증상 부담과 두 영역의 선별 점수",
+  "recall": "지난 2주",
+  "korean_form_status": "composed_from_korean_forms",
+  "sources": [
+    "S06-01",
+    "S06-02",
+    "S06-03",
+    "S06-04",
+    "S06-05"
+  ],
+  "sections": [
+    {
+      "source": "gad7",
+      "items": [
+        "gad7.1",
+        "gad7.2"
+      ]
+    },
+    {
+      "source": "phq9",
+      "items": [
+        "phq9.2",
+        "phq9.1"
+      ]
+    }
+  ],
+  "scoring": {
+    "method": "sum",
+    "range": [
+      0,
+      12
+    ],
+    "reverse_items": [],
+    "require_all": true
+  },
+  "subscores": {
+    "gad2": [
+      "gad7.1",
+      "gad7.2"
+    ],
+    "phq2": [
+      "phq9.2",
+      "phq9.1"
+    ]
+  },
+  "bands": [
+    {
+      "min": 0,
+      "max": 2,
+      "label": "최소"
+    },
+    {
+      "min": 3,
+      "max": 5,
+      "label": "경도"
+    },
+    {
+      "min": 6,
+      "max": 8,
+      "label": "중등도"
+    },
+    {
+      "min": 9,
+      "max": 12,
+      "label": "고도"
+    }
+  ],
+  "offers": [
+    {
+      "score": "gad2",
+      "at_least": 3,
+      "offer": "gad7",
+      "only_unanswered": true
+    },
+    {
+      "score": "phq2",
+      "at_least": 3,
+      "offer": "phq9",
+      "only_unanswered": true
+    }
+  ],
+  "summary": "지난 2주의 우울·불안 증상 부담은 {score}/12점({band})이에요. 불안 두 문항은 {gad2}/6점, 우울 두 문항은 {phq2}/6점이에요."
+}

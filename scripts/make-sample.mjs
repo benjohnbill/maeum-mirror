@@ -1,15 +1,25 @@
 // Generates a synthetic Apple Health export.xml for the demo persona.
 // Every value is invented. Run: node scripts/make-sample.mjs
 import { writeFileSync } from 'node:fs';
+import { createCollector } from '../public/js/parse.js';
+import { writeReadFixtures } from './read-fixtures.mjs';
 
-let seed = 20261122;
-const rand = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 2 ** 32);
-const gauss = () => {
-  const u = rand() || 1e-9, v = rand();
-  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
-};
+function rng(start) {
+  let seed = start;
+  const rand = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 2 ** 32);
+  const gauss = () => {
+    const u = rand() || 1e-9, v = rand();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+  };
+  return { rand, gauss };
+}
+// The last 120 days keep the original seed, so the existing story values do not change.
+// Older days and the quiz-only categories use a second stream.
+const main = rng(20261122);
+const extra = rng(20261123);
 
 const DAYS = 120;
+const YEAR = 365;
 const RECENT = 14;
 const end = new Date(Date.UTC(2026, 10, 21)); // 2026-11-21, treated as local date
 const pad = (n) => String(n).padStart(2, '0');
@@ -27,7 +37,7 @@ out.push(' <Me HKCharacteristicTypeIdentifierDateOfBirth="2000-03-14" HKCharacte
 const rec = (type, src, start, stop, value, unit) =>
   out.push(` <Record type="${type}" sourceName="${src === 'w' ? '지수의 Apple Watch' : '지수의 iPhone'}" sourceVersion="11.1" device="&lt;&lt;HKDevice: 0x0&gt;, name:${src === 'w' ? 'Apple Watch' : 'iPhone'}, manufacturer:Apple Inc.&gt;" ${unit ? `unit="${unit}" ` : ''}creationDate="${fmt(stop)}" startDate="${fmt(start)}" endDate="${fmt(stop)}" value="${value}"/>`);
 
-for (let i = DAYS - 1; i >= 0; i--) {
+function writeDay(i, { rand, gauss }) {
   const day = new Date(end.getTime() - i * 86400000); // midnight of this date
   const recent = i < RECENT;
   const weekend = [0, 6].includes(day.getUTCDay());
@@ -77,8 +87,35 @@ for (let i = DAYS - 1; i >= 0; i--) {
   if (!recent && [1, 3, 6].includes(day.getUTCDay()) && rand() < 0.85) {
     const s = addMin(day, 19 * 60 + 30);
     out.push(` <Workout workoutActivityType="HKWorkoutActivityTypeRunning" duration="32" durationUnit="min" sourceName="지수의 Apple Watch" startDate="${fmt(s)}" endDate="${fmt(addMin(s, 32))}"/>`);
+    return true;
   }
+  return false;
 }
+
+// Quiz-only categories: walking from the iPhone, exercise and daylight from the Watch.
+function writeQuizDay(i, worked) {
+  const { rand, gauss } = extra;
+  const day = new Date(end.getTime() - i * 86400000);
+  const recent = i < RECENT;
+  const weekend = [0, 6].includes(day.getUTCDay());
+  for (const h of [9, 13, 19]) {
+    const s = addMin(day, h * 60 + Math.round(rand() * 30));
+    rec('HKQuantityTypeIdentifierWalkingStepLength', 'p', s, addMin(s, 10), (68 + gauss() * 1.5).toFixed(1), 'cm');
+    rec('HKQuantityTypeIdentifierWalkingSpeed', 'p', s, addMin(s, 10), ((recent ? 4.4 : 4.8) + gauss() * 0.25).toFixed(2), 'km/hr');
+  }
+  const flights = Math.max(0, Math.round((recent ? 4 : 9) + gauss() * 3));
+  if (flights) rec('HKQuantityTypeIdentifierFlightsClimbed', 'p', addMin(day, 8 * 60), addMin(day, 20 * 60), flights, 'count');
+  const exercise = Math.max(0, Math.round((recent ? 6 : 11) + (worked ? 31 : 0) + gauss() * 4));
+  if (exercise) rec('HKQuantityTypeIdentifierAppleExerciseTime', 'w', addMin(day, 7 * 60), addMin(day, 21 * 60), exercise, 'min');
+  const daylight = Math.max(0, Math.round((recent ? 18 : weekend ? 75 : 42) + gauss() * 12));
+  if (daylight) rec('HKQuantityTypeIdentifierTimeInDaylight', 'w', addMin(day, 9 * 60), addMin(day, 18 * 60), daylight, 'min');
+}
+
+for (let i = YEAR - 1; i >= 0; i--) writeQuizDay(i, writeDay(i, i < DAYS ? main : extra));
 out.push('</HealthData>');
 writeFileSync(new URL('../public/sample/export.xml', import.meta.url), out.join('\n'));
+// The phone preview requests only the sample categories the visitor grants.
+const collector = createCollector();
+collector.feed(out.join('\n'));
+writeReadFixtures(collector.data, end.toISOString().slice(0, 10), new URL('../public/sample/read/', import.meta.url));
 console.log('records:', out.length);

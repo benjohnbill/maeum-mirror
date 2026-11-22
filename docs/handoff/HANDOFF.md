@@ -21,12 +21,14 @@ Required deliverables (not started yet):
 4. Email the same files to the organizer address before the deadline (address and filename format: `10w_EV3...txt`).
 Optional: demo video (max 3 min), source repo link.
 
-Rule sources, already downloaded (PDF as .bin + extracted .txt):
-- `/tmp/maeum-handoff/hackathon-docs/10w_EV3uv6lMtKyJMqNdANWlW3acgEssM.txt`: 대회 안내문 (schedule, judging, prizes)
-- `/tmp/maeum-handoff/hackathon-docs/1PPCIMds1RBXces430OeGF2D7mQWkrdyj.txt`: AI 활용 및 출처 표기 기준
-- `/tmp/maeum-handoff/hackathon-docs/15gESCgdavnFcTF9xTV_3R2nZyhGbgC-P.txt`: 프로젝트 소개서 작성 안내
-- `/tmp/maeum-handoff/hackathon-docs/a4.txt`: 참가자 동의 안내
-- Page: https://korcham-careerfair.com/hackathon. It renders only with JS. Use Aside, not WebFetch.
+[Official notice, original PDFs and source links](../hackathon-2026/README.md) · [Offline notice](../hackathon-2026/notice.html)
+
+Earlier text extracts:
+
+- [대회 안내문](10w_EV3uv6lMtKyJMqNdANWlW3acgEssM.txt)
+- [AI 활용 및 출처 표기 기준](1PPCIMds1RBXces430OeGF2D7mQWkrdyj.txt)
+- [프로젝트 소개서 작성 안내](15gESCgdavnFcTF9xTV_3R2nZyhGbgC-P.txt)
+- [참가자 동의 안내](a4.txt)
 
 Rules that shape the product:
 - **Never send real personal or sensitive data to an external AI API, even with consent.** Demos use the synthetic user only.

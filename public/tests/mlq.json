@@ -1,0 +1,144 @@
+{
+  "id": "mlq",
+  "name": "MLQ",
+  "title_ko": "삶의 의미 척도",
+  "measures": "삶의 의미를 이미 느끼는 정도(의미의 존재)와 의미를 찾고 있는 정도(의미의 추구)",
+  "recall": "특정 회상 기간 없음. 현재 자신을 기준으로 응답",
+  "korean_form_status": "items_and_anchors_from_validation",
+  "korean_form_note": "원두리·김교헌·권선중(2005) 표 1에 10문항 전체와 원척도 번호가 실려 있다. 지시문은 논문에 없어 비워 두었다. 보기는 1·4·7의 표현만 논문에 있어 나머지는 숫자만 표시한다.",
+  "license": {
+    "terms": "Steger 사이트: MLQ는 \"educational, therapeutic, and academic research purposes\"에 무료. \"Commercial use requires prior written permission.\"",
+    "condition": "교육·치료·학술 연구 목적에 한해 무료. 상업적 사용은 사전 서면 허락 필요. 공개 무료 앱은 교육 목적으로 안내하는 것이 경계선상",
+    "url": "https://www.michaelfsteger.com/?page_id=13"
+  },
+  "korean_source": {
+    "citation": "원두리, 김교헌, 권선중 (2005). 한국판 삶의 의미 척도의 타당화 연구: 대학생을 대상으로. 한국심리학회지: 건강, 10(2), 211-225.",
+    "url": "https://accesson.kr/healthpsy/assets/pdf/18617/journal-10-2-211.pdf",
+    "locator": "문항: 인쇄면 214쪽 표 1(삶의 의미척도의 문항분석결과 및 요인구조와 형태 계수). 보기: 인쇄면 213쪽 측정도구 단락(7점, 1:전혀 그렇지 않다 4:보통이다 7:언제나 그렇다)"
+  },
+  "instruction": null,
+  "options": [
+    {
+      "value": 1,
+      "label": "전혀 그렇지 않다"
+    },
+    {
+      "value": 2,
+      "label": "2"
+    },
+    {
+      "value": 3,
+      "label": "3"
+    },
+    {
+      "value": 4,
+      "label": "보통이다"
+    },
+    {
+      "value": 5,
+      "label": "5"
+    },
+    {
+      "value": 6,
+      "label": "6"
+    },
+    {
+      "value": 7,
+      "label": "언제나 그렇다"
+    }
+  ],
+  "items": [
+    {
+      "id": "mlq.1",
+      "text": "나는 내 삶의 의미를 이해하고 있다.",
+      "cue": "삶의 의미를 앎"
+    },
+    {
+      "id": "mlq.2",
+      "text": "나는 내 삶을 의미 있게 만드는 무언가를 찾고 있다.",
+      "cue": "의미 줄 것을 탐색"
+    },
+    {
+      "id": "mlq.3",
+      "text": "나는 항상 내 삶의 목적을 찾기 위해 노력하고 있다.",
+      "cue": "목적 찾으려 애씀"
+    },
+    {
+      "id": "mlq.4",
+      "text": "나는 분명한 삶의 목적의식을 가지고 있다.",
+      "cue": "목적의식 뚜렷"
+    },
+    {
+      "id": "mlq.5",
+      "text": "나는 내 삶을 의미 있게 해주는 것이 무엇인지 잘 알고 있다.",
+      "cue": "의미의 원천을 앎"
+    },
+    {
+      "id": "mlq.6",
+      "text": "나는 만족할만한 삶의 목적을 발견하였다.",
+      "cue": "만족스런 목적 찾음"
+    },
+    {
+      "id": "mlq.7",
+      "text": "나는 내 삶의 중요성을 느끼도록 해주는 것들을 늘 찾고 있다.",
+      "cue": "중요함 느낄 것 탐색"
+    },
+    {
+      "id": "mlq.8",
+      "text": "나는 내 삶의 목적 혹은 소명을 찾고 있다.",
+      "cue": "소명을 찾는 중"
+    },
+    {
+      "id": "mlq.9",
+      "text": "내 삶에는 뚜렷한 목적이 없다.",
+      "cue": "목적이 없음"
+    },
+    {
+      "id": "mlq.10",
+      "text": "나는 내 삶의 의미를 찾고 있다.",
+      "cue": "삶의 의미 탐색 중"
+    }
+  ],
+  "scoring": {
+    "method": "sum",
+    "range": [
+      10,
+      70
+    ],
+    "reverse_items": [
+      "mlq.9"
+    ],
+    "require_all": true,
+    "reverse_rule": "역채점 문항은 8 − 응답값",
+    "total_meaningful": false,
+    "note": "MLQ는 총점을 쓰지 않는다. presence와 search를 따로 해석한다."
+  },
+  "subscores": {
+    "presence": [
+      "mlq.1",
+      "mlq.4",
+      "mlq.5",
+      "mlq.6",
+      "mlq.9"
+    ],
+    "search": [
+      "mlq.2",
+      "mlq.3",
+      "mlq.7",
+      "mlq.8",
+      "mlq.10"
+    ]
+  },
+  "subscore_rules": {
+    "method": "sum",
+    "range": [
+      5,
+      35
+    ],
+    "note": "presence의 mlq.9는 역채점(8 − 응답값) 후 합산. 요인 배정은 원두리 외(2005) 표 1과 Steger et al.(2006)이 같음."
+  },
+  "bands_source": "없음. 원두리 외(2005)는 절단점을 정의하지 않음. Steger 사이트의 24점 기준 해석 안내는 검증된 절단점이 아니라서 넣지 않았다.",
+  "attribution": "Steger, M. F., Frazier, P., Oishi, S., & Kaler, M. (2006). The Meaning in Life Questionnaire: Assessing the presence of and search for meaning in life. Journal of Counseling Psychology, 53, 80-93. 한국판: 원두리, 김교헌, 권선중(2005).",
+  "summary": "삶의 의미를 이미 느끼는 정도는 {presence}/35점, 의미를 찾고 있는 정도는 {search}/35점이에요.",
+  "summary_note": "총점({score})은 이 척도에서 해석하지 않으므로 summary는 subscores 키를 자리표시자로 쓴다."
+}

@@ -1,0 +1,92 @@
+{
+  "id": "brs",
+  "name": "BRS",
+  "title_ko": "단축형 회복탄력성 척도",
+  "measures": "힘든 일을 겪은 뒤 회복하는 평소 경향",
+  "recall": "특정 회상 기간 없음. 평소의 자신을 기준으로 응답",
+  "korean_form_status": "pending",
+  "korean_form_note": "한국어 실사용 양식(2018–2023 장애인삶 패널조사 통합조사표, 인쇄면 13쪽 A-2 문 4)은 jbaha.or.kr 서버의 TLS 인증서 오류로 이번에 열지 못했다. Kim et al.(2023) 검증 논문은 한국어 문구를 싣지 않는다. 보건사회연구 2025 논문은 6문항 중 2문항 문구와 보기 5개만 인용한다(partial_text_seen). 6문항 전부를 공식 문구로 읽지 못해 text는 넣지 않았다.",
+  "partial_text_seen": {
+    "source": "보건사회연구 45(4) 근로장애인 BRS 논문, PDF 7쪽 '매개변수: 회복탄력성' 단락(전상원 외, 2015에서 재인용)",
+    "url": "https://www.kihasa.re.kr/hswr/assets/pdf/1620/journal-45-4-190.pdf",
+    "brs.1": "나는 어려운 시기를 보낸 후에 빠르게 회복하는 편이다",
+    "brs.2": "나는 스트레스를 주는 사건들을 이겨내는 데 어려움을 겪는다"
+  },
+  "license": {
+    "terms": "원저자 B. W. Smith가 2020-11-01 회신에서 해당 연구자에게 무료 사용을 안내(S06-18). 한국어판을 공개 서비스에 싣는 조건은 회신에 없음.",
+    "condition": "무료 사용. 한국어판 문구의 전재 범위는 미확인",
+    "url": "https://scholarworks.waldenu.edu/cgi/viewcontent.cgi?article=12108&context=dissertations"
+  },
+  "korean_source": {
+    "citation": "2018–2023 장애인삶 패널조사 통합조사표 (S06-17); 검증: Kim J et al. (2023) Clin Psychopharmacol Neurosci 21(4):732–741 (S06-16)",
+    "url": "https://www.jbaha.or.kr/main/filedown.php?menu=174&no=419",
+    "locator": "인쇄면 13쪽 A-2 문 4 (이번에 열지 못함)"
+  },
+  "instruction": null,
+  "options": [
+    {
+      "value": 1,
+      "label": "매우 그렇지 않음"
+    },
+    {
+      "value": 2,
+      "label": "그렇지 않은 편임"
+    },
+    {
+      "value": 3,
+      "label": "보통임"
+    },
+    {
+      "value": 4,
+      "label": "그러한 편임"
+    },
+    {
+      "value": 5,
+      "label": "매우 그러함"
+    }
+  ],
+  "options_source": "보건사회연구 45(4) PDF 7쪽(패널조사 BRS 보기 인용). 조사표 원본과 대조하지 못함.",
+  "items": [
+    {
+      "id": "brs.1",
+      "cue": "힘든 뒤 빨리 회복"
+    },
+    {
+      "id": "brs.2",
+      "cue": "스트레스 견디기 힘듦"
+    },
+    {
+      "id": "brs.3",
+      "cue": "회복에 시간 적게 듦"
+    },
+    {
+      "id": "brs.4",
+      "cue": "나쁜 일 뒤 재기 어려움"
+    },
+    {
+      "id": "brs.5",
+      "cue": "힘든 시기 무난히 넘김"
+    },
+    {
+      "id": "brs.6",
+      "cue": "좌절 뒤 회복 더딤"
+    }
+  ],
+  "scoring": {
+    "method": "mean",
+    "range": [
+      1,
+      5
+    ],
+    "reverse_items": [
+      "brs.2",
+      "brs.4",
+      "brs.6"
+    ],
+    "require_all": true,
+    "reverse_rule": "역채점 문항은 6 − 응답값"
+  },
+  "bands_source": "없음. Smith et al.(2008)과 Kim et al.(2023) 모두 절단점을 정의하지 않음.",
+  "attribution": "Smith, B. W., Dalen, J., Wiggins, K., Tooley, E., Christopher, P., & Bernard, J. (2008). The brief resilience scale: Assessing the ability to bounce back. International Journal of Behavioral Medicine, 15(3), 194-200.",
+  "summary": "평소 힘든 일을 겪은 뒤 회복하는 경향을 스스로 평가한 평균은 {score}/5점이에요. 값이 클수록 대체로 회복이 수월하다고 답한 거예요."
+}

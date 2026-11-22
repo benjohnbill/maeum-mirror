@@ -50,14 +50,16 @@ const hhmm = (minAfterMidnight) => {
   const m = ((Math.round(minAfterMidnight) % DAY) + DAY) % DAY;
   return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
 };
+// Onset as minutes after the night's own midnight (23:30 -> -30, 01:10 -> 70).
+const onsetOf = (n, k) => n.onset - keyToMin(k) - DAY;
 const hm = (min) => `${Math.floor(min / 60)}시간 ${Math.round(min % 60)}분`;
 
-export function computeSummary(data) {
+export function computeSummary(data, through) {
   const sleepNights = nights(data.sleep);
   const stepDays = new Map([...data.steps].map(([k, m]) => [k, Math.max(...m.values())]));
   const allKeys = [...sleepNights.keys(), ...stepDays.keys(), ...data.rhr.keys()].sort();
-  if (!allKeys.length) return null;
-  const last = allKeys[allKeys.length - 1];
+  const last = through ?? allKeys.at(-1);
+  if (!last) return null;
 
   const windowed = (map, valueOf) => {
     const base = [], recent = [];
@@ -70,8 +72,6 @@ export function computeSummary(data) {
     return { base, recent };
   };
 
-  // Onset as minutes after the night's own midnight (23:30 -> -30, 01:10 -> 70).
-  const onsetOf = (n, k) => n.onset - keyToMin(k) - DAY;
   const sleepDur = windowed(sleepNights, (n) => n.asleep);
   const onset = windowed(sleepNights, onsetOf);
   const steps = windowed(stepDays, (v) => v);
@@ -131,4 +131,4 @@ export function computeSummary(data) {
   return { last, recentFrom: shift(last, -(RECENT - 1)), metrics, recentNights, normal, text };
 }
 
-export { hhmm, hm, nights, dayKey, keyToMin, shift, mean, sd };
+export { hhmm, hm, nights, onsetOf, dayKey, keyToMin, shift, mean, sd, WD };

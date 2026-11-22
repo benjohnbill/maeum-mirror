@@ -2,6 +2,10 @@
 
 These update `docs/handoff/HANDOFF.md`. Where they conflict, this file wins.
 
+## 대회 시연의 측정 범위
+
+Apple 건강과 삼성 헬스에서 공통으로 설명할 걷기·수면 지표를 우선한다. 팀이 구현할 계산식, 출처와 결측 처리, 합성 데이터 시연 범위, 현재 구현과의 차이는 [걷기·수면 측정 지침](../spec/walking-sleep.md)에 정리했다. 질문과 리포트에서 인용할 수 있는 범위는 [학술 근거 검토](../research/07-walking-sleep/REPORT.md)를 따른다.
+
 ## Problem definition (user said)
 
 - Core: young adults want to know their own mental state (MBTI and psych-test popularity), but in practice they do not know it.
@@ -22,11 +26,11 @@ These update `docs/handoff/HANDOFF.md`. Where they conflict, this file wins.
 
 ## Test router (user said)
 
-- The main conversation is a router. When the AI needs more context, it offers a short validated test in a separate sheet. The result returns to the main session and goes through the API for a more specific answer.
-- MVP includes **one test: PHQ-9**.
+- The main conversation is a router. When the AI needs more context, it offers a short validated test in a separate sheet. The result returns to the main session. In the hackathon demo, only a synthetic participant’s result may be included in an external AI request. [해커톤 기획·개발 기준](../PRODUCT.md#해커톤-기획개발-기준)
+- The prototype supports PHQ-9, GAD-2, GAD-7 and PHQ-4. A longer follow-up reuses the overlapping responses from a completed short form in the same session.
 - Entry: an AI-offered chip in the chat is the main entry; `/` test list is a hidden shortcut.
-- **PHQ-9 item 9 is included in the sheet.** Any score ≥ 1 on item 9 is handled by code (crisis panel: 109, 1577-0199, 119) without calling the AI. The AI itself still never asks about self-harm in conversation.
-- Tests live in a registry (`spec/tests/<id>.json`: items, scoring, cutoffs, summary line). Next candidates: GAD-7, ISI.
+- The PHQ-9 questionnaire ends with item 9 for every response. Support resources can be opened in the final report. A request for immediate help or a disclosure of immediate danger opens contact options. Completed tests appear in the final report. PHQ-9 also includes its Korean adult reference comparison for eligible profiles.
+- Tests live in a registry (`spec/tests/<id>.json`: items, scoring, cutoffs, summary line).
 
 ## Research
 

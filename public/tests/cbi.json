@@ -1,0 +1,88 @@
+{
+  "id": "cbi",
+  "name": "CBI (personal burnout)",
+  "title_ko": "코펜하겐 번아웃 척도: 개인적 소진",
+  "measures": "일과 관계없이 느끼는 신체적·정서적 지침의 정도",
+  "recall": "회상 기간 명시 없음(원척도도 기간을 정하지 않음)",
+  "korean_form_status": "form_available",
+  "korean_form_note": "CBI-K 설문지 원본의 머리말은 \"다음은 귀하의 업무로 인한 '탈진' 관련 질문입니다. (BT)\"로 업무를 전제한다. 개인적 소진 6문항 자체는 업무를 언급하지 않는다. 구직자에게 보일 때 이 머리말을 그대로 쓸지는 결정이 필요하다.",
+  "license": {
+    "terms": "NFA: CBI \"may be used freely for non-commercial and commercial purposes, provided that the following source is clearly cited\" (Borritz et al. 2006). CBI-K 논문은 CC BY 4.0.",
+    "condition": "상업·비상업 모두 무료. 출처(Borritz et al., 2006; CBI-K는 Jeon et al., 2019) 명시",
+    "url": "https://nfa.dk/vaerktoejer/spoergeskemaer/spoergeskema-til-maaling-af-udbraendthed-cbi/copenhagen-burnout-inventory-cbi"
+  },
+  "korean_source": {
+    "citation": "Jeon, G.-S., You, S.-J., Kim, M.-G., Kim, Y.-M., & Cho, S.-H. (2019). Psychometric properties of the Korean version of the Copenhagen Burnout Inventory in Korean homecare workers for older adults. PLoS ONE, 14(8), e0221323.",
+    "url": "https://journals.plos.org/plosone/article/file?type=supplementary&id=10.1371/journal.pone.0221323.s001",
+    "locator": "S1 Fig(Questionnaire of Korean version of CBI-K), '개인적인 상황' 1–6번과 보기 머리줄"
+  },
+  "instruction": "다음은 귀하의 업무로 인한 '탈진' 관련 질문입니다.",
+  "options": [
+    {
+      "value": 100,
+      "label": "항상~거의 그렇다"
+    },
+    {
+      "value": 75,
+      "label": "자주~많이 그렇다"
+    },
+    {
+      "value": 50,
+      "label": "가끔~어느 정도 그렇다"
+    },
+    {
+      "value": 25,
+      "label": "별로 그렇지 않다~약간 그렇다"
+    },
+    {
+      "value": 0,
+      "label": "결코 그렇지 않다~매우 조금만 그렇다"
+    }
+  ],
+  "items": [
+    {
+      "id": "cbi.1",
+      "text": "얼마나 자주 피곤합니까?",
+      "cue": "피곤함"
+    },
+    {
+      "id": "cbi.2",
+      "text": "얼마나 자주 육체적으로 지칩니까?",
+      "cue": "몸이 지침"
+    },
+    {
+      "id": "cbi.3",
+      "text": "얼마나 자주 감정적으로 지칩니까?",
+      "cue": "마음이 지침"
+    },
+    {
+      "id": "cbi.4",
+      "text": "'더 이상 못 견디겠다'고 생각하는 일이 얼마나 자주 있습니까?",
+      "cue": "한계에 다다른 느낌"
+    },
+    {
+      "id": "cbi.5",
+      "text": "기진맥진하다고 느끼는 일이 얼마나 자주 있습니까?",
+      "cue": "완전히 녹초가 됨"
+    },
+    {
+      "id": "cbi.6",
+      "text": "몸이 약하고 병에 걸릴 것 같다고 느끼는 일이 얼마나 자주 있습니까?",
+      "cue": "몸이 약해진 느낌"
+    }
+  ],
+  "scoring": {
+    "method": "mean",
+    "range": [
+      0,
+      100
+    ],
+    "reverse_items": [],
+    "require_all": true,
+    "note": "보기 값이 이미 100/75/50/25/0 점수다. 6문항 평균이 개인적 소진 점수(원척도 채점, NFA CBI first edition PDF)."
+  },
+  "bands_source": "없음. 원저자(NFA)와 CBI-K 모두 절단점을 정의하지 않음.",
+  "norm_note": "한국 규준 없음. 덴마크 PUMA 일반 인구 규준(N=1,498, 20–59세): 개인적 소진 평균 32.7, 표준편차 15.7 (https://nfa.dk/media/hl5nbers/cbi-first-edition.pdf).",
+  "attribution": "Borritz, M., Rugulies, R., Bjorner, J. B., Villadsen, E., Mikkelsen, O. A., & Kristensen, T. S. (2006). Burnout among employees in human service work: design and baseline findings of the PUMA study. Scandinavian Journal of Public Health, 34, 49-58. 한국어판: Jeon et al. (2019), PLoS ONE 14(8): e0221323.",
+  "summary": "스스로 답한 개인적 소진 점수는 {score}/100점이에요. 값이 클수록 지침을 자주 느꼈다는 뜻이에요."
+}
