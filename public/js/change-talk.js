@@ -230,49 +230,33 @@ function ratioWords(change) {
   return `평소보다 ${Math.round((ratio - 1) * 100)}%쯤 많아요`;
 }
 
-// One sentence about the change. Index varies the phrasing between the first and second change.
-function describe(change, index = 0) {
+// About how much, rounded for talk: 2시간 반쯤, 40분쯤.
+function rough(minutes) {
+  const m = Math.abs(minutes);
+  if (m < 50) return `${Math.max(10, Math.round(m / 10) * 10)}분쯤`;
+  const half = Math.round(m / 30) / 2;
+  return `${Math.floor(half)}시간${half % 1 ? ' 반' : ''}쯤`;
+}
+
+// One short sentence about the change with one number: since when, what, how much, which way.
+// The exact values stay in the record panel.
+function describe(change) {
   const metric = METRICS[change.id];
-  const from = since(change.start, change.through);
-  const base = metric.show(change.base);
-  const recent = metric.show(change.recent);
+  const from = since(change.start, change.through).replace(/\([^)]*\)/, '');
   const up = change.direction === 'up';
-  const lines = {
-    sleep: [
-      `${from} 하루 평균 ${recent} 잤어요. 평소 ${base}보다 ${hm(Math.abs(change.recent - change.base) * 60)} ${up ? '길어요' : '짧아요'}.`,
-      `${span(change)} 잠이 평소보다 ${hm(Math.abs(change.recent - change.base) * 60)}쯤 ${up ? '늘었어요' : '줄었어요'}. ${from} 그래요.`,
-    ],
-    onset: [
-      `${from} 잠드는 시각이 평소 ${base}쯤에서 ${recent}쯤으로 ${up ? '늦어졌어요' : '당겨졌어요'}.`,
-      `${span(change)} 평소보다 ${hm(Math.abs(change.recent - change.base))}쯤 ${up ? '늦게' : '일찍'} 잠들고 있어요. ${from}예요.`,
-    ],
-    steps: [
-      `${from} 하루 걸음이 ${ratioWords(change)}. 평소엔 ${base}, 요즘은 ${ida(recent)}.`,
-      `${span(change)} 걸음 수가 ${ratioWords(change)}. ${from} 하루 ${recent}쯤이에요.`,
-    ],
-    flights: [
-      `${from} 오른 계단이 ${ratioWords(change)}. 평소 하루 ${base}, 요즘 ${ida(recent)}.`,
-      `${span(change)} 계단 오른 기록이 ${ratioWords(change)}. ${from} 하루 ${recent}쯤이에요.`,
-    ],
-    daylight: [
-      `${from} 햇빛 아래 있던 시간이 ${ratioWords(change)}. 평소 하루 ${base}, 요즘 ${ida(recent)}.`,
-      `${span(change)} 바깥 햇빛을 본 시간이 ${ratioWords(change)}. ${from} 하루 ${recent}쯤이에요.`,
-    ],
-    exercise: [
-      `${from} 운동한 시간이 ${ratioWords(change)}. 평소 하루 ${base}, 요즘 ${ida(recent)}.`,
-      `${span(change)} 운동 시간이 ${ratioWords(change)}. ${from} 하루 ${recent}쯤이에요.`,
-    ],
-    workouts: up
-      ? [`${from} 운동 기록이 ${recent}로 늘었어요. 평소엔 ${base}였어요.`, `${span(change)} 운동 기록이 평소(${base})보다 자주 있어요.`]
-      : change.recent === 0
-        ? [`평소엔 운동 기록이 ${base} 있었는데, ${from}는 한 번도 없어요.`, `${from} 운동 기록이 비어 있어요. 평소엔 ${base} 있었어요.`]
-        : [`${from} 운동 기록이 ${recent}로 줄었어요. 평소엔 ${base}였어요.`, `${span(change)} 운동 기록이 평소(${base})보다 드물어요.`],
-    rhr: [
-      `${from} 가만히 있을 때 심박이 평소 ${base}에서 ${recent}로 ${up ? '올랐어요' : '내려갔어요'}.`,
-      `${span(change)} 안정 시 심박이 평소보다 ${Math.round(Math.abs(change.recent - change.base))}회쯤 ${up ? '높아요' : '낮아요'}. ${from}예요.`,
-    ],
+  const diff = change.recent - change.base;
+  return {
+    sleep: `${from} 잠이 평소보다 하루 ${rough(diff * 60)} ${up ? '늘었어요' : '줄었어요'}.`,
+    onset: `${from} 평소보다 ${rough(diff)} ${up ? '늦게' : '일찍'} 주무시고 있어요.`,
+    steps: `${from} 하루 걸음이 ${ratioWords(change)}.`,
+    flights: `${from} 오르신 계단이 ${ratioWords(change)}.`,
+    daylight: `${from} 햇빛 아래 계신 시간이 ${ratioWords(change)}.`,
+    exercise: `${from} 운동하신 시간이 ${ratioWords(change)}.`,
+    workouts: up ? `${from} 운동 기록이 평소보다 자주 있어요.`
+      : change.recent === 0 ? `평소 있던 운동 기록이 ${from} 없어요.`
+        : `${from} 운동 기록이 평소보다 드물어요.`,
+    rhr: `${from} 가만히 계실 때 심박이 평소보다 ${Math.round(Math.abs(diff))}회쯤 ${up ? '높아요' : '낮아요'}.`,
   }[change.id];
-  return lines[index % lines.length];
 }
 
 // For the report: one plain line about the period and the values.
@@ -292,7 +276,7 @@ const c = (indicator, item, dir) => ({ indicator, item, dir });
 // person (travel, illness, weather) and free text with no cue. Choices are everyday reasons, not symptoms.
 const WHY = {
   burnout: {
-    asks: ['할 일이 그렇게 몰린 데는 이유가 있었어요?', '요즘 그렇게 바빴던 건 왜였을까요?'],
+    asks: ['할 일이 그렇게 몰린 데는 이유가 있었어요?', '요즘 그렇게 바쁘셨던 건 왜였을까요?'],
     choices: [
       { text: '미뤄 둔 일이 한꺼번에 몰렸어요', cues: [c('delay', 'delay.2', 1)] },
       { text: '잘 해내고 싶어서 끝까지 붙잡고 있었어요', cues: [c('conscientiousness', 'tipi.3', 1)] },
@@ -301,7 +285,7 @@ const WHY = {
     ],
   },
   worry: {
-    asks: ['그 생각이 자꾸 떠오른 데는 이유가 있었어요?', '무엇이 그렇게 마음에 걸렸어요?'],
+    asks: ['그 생각이 자꾸 떠오른 데는 이유가 있었어요?', '무엇이 그렇게 마음에 걸리셨어요?'],
     choices: [
       { text: '결과를 기다리는 일이 있었어요', cues: [c('worry', 'gad7.1', 1)] },
       { text: '원래 걱정이 많은 편이에요', cues: [c('worry', 'gad7.3', 1), c('stability', 'tipi.4', -1)] },
@@ -310,7 +294,7 @@ const WHY = {
     ],
   },
   phone: {
-    asks: ['휴대폰을 오래 보게 된 데는 이유가 있었어요?', '그 시간엔 왜 휴대폰을 붙잡게 됐을까요?'],
+    asks: ['휴대폰을 오래 보게 된 데는 이유가 있었어요?', '그 시간엔 왜 휴대폰을 붙잡게 되셨을까요?'],
     choices: [
       { text: '보다 보면 시간 가는 줄 몰랐어요', cues: [c('phone', 'sassv.9', 1)] },
       { text: '연락이나 알림을 놓칠까 봐 계속 봤어요', cues: [c('phone', 'sassv.8', 1)] },
@@ -319,7 +303,7 @@ const WHY = {
     ],
   },
   fatigue: {
-    asks: ['그렇게 지친 데는 짚이는 이유가 있었어요?', '기운이 빠진 건 무엇 때문이었을까요?'],
+    asks: ['그렇게 지치신 데는 짚이는 이유가 있었어요?', '기운이 빠진 건 무엇 때문이었을까요?'],
     choices: [
       { text: '일이나 공부에 힘을 많이 쏟았어요', cues: [c('burnout', 'cbi.1', 1)] },
       { text: '마음 쓰이는 일이 있어서 더 지쳤어요', cues: [c('burnout', 'cbi.3', 1)] },
@@ -337,7 +321,7 @@ const WHY = {
     ],
   },
   rested: {
-    asks: ['푹 자려고 마음먹은 계기가 있었어요?', '잠을 챙기게 된 이유가 있었어요?'],
+    asks: ['푹 주무시려고 마음먹으신 계기가 있었어요?', '잠을 챙기시게 된 이유가 있었어요?'],
     choices: [
       { text: '그동안 너무 지쳐 있었어요', cues: [c('burnout', 'cbi.1', 1)] },
       { text: '잘 자고 나면 마음이 풀리더라고요', cues: [c('recovery', 'recovery.2', 1)] },
@@ -346,7 +330,7 @@ const WHY = {
     ],
   },
   tension: {
-    asks: ['낮에는 내 시간이 없었던 이유가 있었어요?', '하루가 그렇게 빠듯했던 건 왜였을까요?'],
+    asks: ['낮에 개인 시간이 없으셨던 이유가 있었어요?', '하루가 그렇게 빠듯했던 건 왜였을까요?'],
     choices: [
       { text: '일과 할 일이 낮을 다 채웠어요', cues: [c('burnout', 'cbi.1', 1)] },
       { text: '퇴근해도 머리가 계속 일 생각이었어요', cues: [c('worry', 'gad7.4', 1)] },
@@ -355,7 +339,7 @@ const WHY = {
     ],
   },
   recovery: {
-    asks: ['머리를 식힐 시간이 필요했던 이유가 있었어요?', '그렇게 쉬어 가게 된 계기가 있었어요?'],
+    asks: ['머리를 식힐 시간이 필요하셨던 이유가 있었어요?', '그렇게 쉬어 가시게 된 계기가 있었어요?'],
     choices: [
       { text: '일이 많아서 잠깐이라도 벗어나고 싶었어요', cues: [c('burnout', 'cbi.1', 1)] },
       { text: '움직이고 나면 마음이 풀리더라고요', cues: [c('recovery', 'recovery.2', 1)] },
@@ -364,7 +348,7 @@ const WHY = {
     ],
   },
   restless: {
-    asks: ['마음이 답답했던 데는 이유가 있었어요?', '무엇 때문에 그렇게 답답했을까요?'],
+    asks: ['마음이 답답하셨던 데는 이유가 있었어요?', '무엇 때문에 그렇게 답답하셨을까요?'],
     choices: [
       { text: '신경 쓰이는 일이 머리에서 안 떠났어요', cues: [c('worry', 'gad7.2', 1)] },
       { text: '가만히 있으면 더 초조했어요', cues: [c('worry', 'gad7.5', 1)] },
@@ -373,7 +357,7 @@ const WHY = {
     ],
   },
   energy: {
-    asks: ['새로 해 보게 된 계기가 있었어요?', '그걸 시작하게 된 이유가 있었어요?'],
+    asks: ['새로 해 보시게 된 계기가 있었어요?', '그걸 시작하시게 된 이유가 있었어요?'],
     choices: [
       { text: '새로운 걸 해 보고 싶었어요', cues: [c('openness', 'tipi.5', 1)] },
       { text: '사람들과 어울리는 게 좋아서요', cues: [c('extraversion', 'tipi.1', 1)] },
@@ -382,7 +366,7 @@ const WHY = {
     ],
   },
   routine: {
-    asks: ['그렇게 마음먹은 계기가 있었어요?', '꾸준히 하게 된 이유가 있었어요?'],
+    asks: ['그렇게 마음먹으신 계기가 있었어요?', '꾸준히 하시게 된 이유가 있었어요?'],
     choices: [
       { text: '한번 정한 건 지키는 편이에요', cues: [c('conscientiousness', 'tipi.3', 1)] },
       { text: '몸이 예전 같지 않아서 챙기기로 했어요', cues: [c('burnout', 'cbi.6', 1)] },
@@ -391,7 +375,7 @@ const WHY = {
     ],
   },
   joy: {
-    asks: ['요즘 사람들을 자주 만난 이유가 있었어요?', '같이 하게 된 계기가 있었어요?'],
+    asks: ['요즘 사람들을 자주 만나신 이유가 있었어요?', '같이 하시게 된 계기가 있었어요?'],
     choices: [
       { text: '사람들과 있으면 힘이 나요', cues: [c('extraversion', 'tipi.1', 1), c('flourishing', 'fs.2', 1)] },
       { text: '오랜만에 여유가 생겼어요', cues: [c('burnout', 'cbi.1', -1)] },
@@ -400,7 +384,7 @@ const WHY = {
     ],
   },
   calm: {
-    asks: ['마음이 편해진 데는 이유가 있었어요?', '무엇 덕분에 차분해졌을까요?'],
+    asks: ['마음이 편해진 데는 이유가 있었어요?', '무엇 덕분에 차분해지셨을까요?'],
     choices: [
       { text: '신경 쓰던 일이 잘 마무리됐어요', cues: [c('worry', 'gad7.3', -1)] },
       { text: '쉬는 시간을 잘 챙겼어요', cues: [c('recovery', 'recovery.2', 1)] },
@@ -409,7 +393,7 @@ const WHY = {
     ],
   },
   delay: {
-    asks: ['자꾸 미루게 된 데는 이유가 있었어요?', '손이 잘 안 간 건 왜였을까요?'],
+    asks: ['자꾸 미루시게 된 데는 이유가 있었어요?', '손이 잘 안 간 건 왜였을까요?'],
     choices: [
       { text: '시작하기까지가 제일 힘들었어요', cues: [c('delay', 'delay.4', 1)] },
       { text: '내일 하면 되지 싶었어요', cues: [c('delay', 'delay.3', 1)] },
@@ -418,7 +402,7 @@ const WHY = {
     ],
   },
   drinking: {
-    asks: ['술자리가 늘어난 데는 이유가 있었어요?', '요즘 자주 마시게 된 건 왜였을까요?'],
+    asks: ['술자리가 늘어난 데는 이유가 있었어요?', '요즘 자주 마시게 되신 건 왜였을까요?'],
     choices: [
       { text: '한잔하면 긴장이 좀 풀려서요', cues: [c('worry', 'gad7.4', 1)] },
       { text: '마시다 보면 양이 늘었어요', cues: [c('alcohol', 'auditc.2', 1)] },
@@ -427,7 +411,7 @@ const WHY = {
     ],
   },
   life: {
-    asks: ['그 일이 있던 동안은 어떻게 지냈어요?', '그동안 마음은 좀 어땠어요?'],
+    asks: ['그 일이 있던 동안은 어떻게 지내셨어요?', '그동안 마음은 좀 어떠셨어요?'],
     choices: [
       { text: '오랜만에 기분 전환이 됐어요', cues: [c('affect', 'spane.3', 1)] },
       { text: '정신없이 바빠서 좀 지쳤어요', cues: [c('burnout', 'cbi.1', 1)] },
@@ -450,12 +434,11 @@ export function whyKeyFor(cues) {
   return (first && WHY_BY_INDICATOR[first.indicator]?.[first.dir > 0 ? 0 : 1]) || 'life';
 }
 
-// metric × direction -> Q1 asks and 3–4 reasons. dir is the sign the reason points on that indicator;
+// metric × direction -> 3–4 reasons. dir is the sign the reason points on that indicator;
 // `why` names the WHY entry for Q2.
 const BANK = {
   sleep: {
     down: {
-      asks: ['잠이 줄어든 데 이유가 있었을까요?', '무엇 때문에 잠이 줄었을까요?'],
       choices: [
         { text: '할 일이 많아서 늦게까지 깨어 있었어요', cues: [c('burnout', 'cbi.1', 1)], why: 'burnout' },
         { text: '누워도 생각이 많아 잠이 안 왔어요', cues: [c('worry', 'gad7.2', 1), c('mood', 'phq9.3', 1)], why: 'worry' },
@@ -464,7 +447,6 @@ const BANK = {
       ],
     },
     up: {
-      asks: ['잠이 늘어난 건 어떤 이유였을까요?', '요즘 더 오래 자게 된 이유가 있을까요?'],
       choices: [
         { text: '피곤해서 자도 자도 졸렸어요', cues: [c('mood', 'phq9.4', 1), c('burnout', 'cbi.1', 1)], why: 'fatigue' },
         { text: '딱히 할 게 없어서 오래 누워 있었어요', cues: [c('mood', 'phq9.1', 1), c('flourishing', 'fs.3', -1)], why: 'mood' },
@@ -475,7 +457,6 @@ const BANK = {
   },
   onset: {
     up: {
-      asks: ['늦게 잠드는 날이 이어진 이유가 있을까요?', '밤이 길어진 데 무슨 일이 있었어요?'],
       choices: [
         { text: '일이나 공부가 밤까지 이어졌어요', cues: [c('burnout', 'cbi.1', 1)], why: 'burnout' },
         { text: '밤에만 내 시간이 있어서 늦게까지 버텼어요', cues: [c('recovery', 'recovery.2', -1), c('burnout', 'cbi.3', 1)], why: 'tension' },
@@ -484,7 +465,6 @@ const BANK = {
       ],
     },
     down: {
-      asks: ['일찍 잠들게 된 이유가 있을까요?', '잠드는 시간이 당겨진 데 무슨 일이 있었어요?'],
       choices: [
         { text: '저녁이면 금방 지쳐서 일찍 눕게 돼요', cues: [c('burnout', 'cbi.1', 1)], why: 'burnout' },
         { text: '일찍 자고 일찍 일어나려고 마음먹었어요', cues: [c('conscientiousness', 'tipi.3', 1)], why: 'routine' },
@@ -495,7 +475,6 @@ const BANK = {
   },
   steps: {
     down: {
-      asks: ['무슨 일이 있었어요?', '덜 걷게 된 이유가 있었을까요?'],
       choices: [
         { text: '나가기가 싫었어요', cues: [c('mood', 'phq9.1', 1), c('affect', 'spane.1', -1)], why: 'mood' },
         { text: '일이 많아 책상 앞에만 있었어요', cues: [c('burnout', 'cbi.1', 1)], why: 'burnout' },
@@ -504,7 +483,6 @@ const BANK = {
       ],
     },
     up: {
-      asks: ['많이 걷게 된 이유가 있었어요?', '어디를 그렇게 다녔어요?'],
       choices: [
         { text: '산책하면서 머리를 식혔어요', cues: [c('recovery', 'recovery.2', 1), c('affect', 'spane.1', 1)], why: 'recovery' },
         { text: '마음이 답답해서 무작정 걸었어요', cues: [c('worry', 'gad7.5', 1), c('affect', 'spane.2', -1)], why: 'restless' },
@@ -515,7 +493,6 @@ const BANK = {
   },
   flights: {
     down: {
-      asks: ['덜 움직이게 된 이유가 있었을까요?', '무슨 일이 있었어요?'],
       choices: [
         { text: '움직이기가 귀찮았어요', cues: [c('mood', 'phq9.4', 1), c('burnout', 'cbi.2', 1)], why: 'fatigue' },
         { text: '바빠서 거의 앉아만 있었어요', cues: [c('burnout', 'cbi.1', 1)], why: 'burnout' },
@@ -524,7 +501,6 @@ const BANK = {
       ],
     },
     up: {
-      asks: ['계단을 많이 오른 이유가 있었어요?', '어디를 다녀왔어요?'],
       choices: [
         { text: '건강 챙기려고 일부러 계단으로 다녔어요', cues: [c('conscientiousness', 'tipi.3', 1)], why: 'routine' },
         { text: '등산이나 나들이를 다녀왔어요', cues: [c('affect', 'spane.1', 1), c('openness', 'tipi.5', 1)], why: 'energy' },
@@ -534,7 +510,6 @@ const BANK = {
   },
   daylight: {
     down: {
-      asks: ['밖에 덜 나가게 된 이유가 있었을까요?', '무슨 일이 있었어요?'],
       choices: [
         { text: '집에만 있고 싶었어요', cues: [c('mood', 'phq9.1', 1), c('extraversion', 'tipi.6', -1)], why: 'mood' },
         { text: '실내에서 일하는 시간이 길어졌어요', cues: [c('burnout', 'cbi.1', 1)], why: 'burnout' },
@@ -543,7 +518,6 @@ const BANK = {
       ],
     },
     up: {
-      asks: ['밖에 있는 시간이 늘어난 이유가 있었어요?', '요즘 어디서 시간을 보냈어요?'],
       choices: [
         { text: '일부러 밖에서 쉬는 시간을 가졌어요', cues: [c('recovery', 'recovery.2', 1), c('affect', 'spane.1', 1)], why: 'recovery' },
         { text: '나들이나 약속이 많았어요', cues: [c('extraversion', 'tipi.1', 1), c('affect', 'spane.10', 1)], why: 'joy' },
@@ -553,7 +527,6 @@ const BANK = {
   },
   exercise: {
     down: {
-      asks: ['운동이 줄어든 이유가 있었을까요?', '그 시간은 어떻게 보냈어요?'],
       choices: [
         { text: '운동할 마음이 잘 안 생겼어요', cues: [c('mood', 'phq9.1', 1), c('flourishing', 'fs.3', -1)], why: 'mood' },
         { text: '일이 바빠 시간이 없었어요', cues: [c('burnout', 'cbi.1', 1)], why: 'burnout' },
@@ -562,7 +535,6 @@ const BANK = {
       ],
     },
     up: {
-      asks: ['운동을 더 하게 된 계기가 있었어요?', '요즘 운동이 늘어난 이유가 궁금해요.'],
       choices: [
         { text: '스트레스를 풀려고 운동했어요', cues: [c('recovery', 'recovery.2', 1)], why: 'recovery' },
         { text: '목표가 생겨서 꾸준히 해요', cues: [c('conscientiousness', 'tipi.3', 1), c('affect', 'spane.1', 1)], why: 'routine' },
@@ -573,7 +545,6 @@ const BANK = {
   },
   rhr: {
     up: {
-      asks: ['요즘 몸이나 마음에 무슨 일이 있었어요?', '심박이 오른 데 짚이는 게 있을까요?'],
       choices: [
         { text: '긴장하거나 신경 쓰는 일이 많아요', cues: [c('worry', 'gad7.1', 1), c('stability', 'tipi.4', -1)], why: 'worry' },
         { text: '잠을 잘 못 잤어요', cues: [c('mood', 'phq9.3', 1), c('burnout', 'cbi.1', 1)], why: 'fatigue' },
@@ -582,7 +553,6 @@ const BANK = {
       ],
     },
     down: {
-      asks: ['심박이 내려간 데 짚이는 게 있을까요?', '요즘 달라진 생활이 있어요?'],
       choices: [
         { text: '운동을 꾸준히 했어요', cues: [c('conscientiousness', 'tipi.3', 1), c('affect', 'spane.1', 1)], why: 'routine' },
         { text: '요즘 마음이 편해졌어요', cues: [c('stability', 'tipi.9', 1), c('worry', 'gad7.1', -1)], why: 'calm' },
@@ -596,7 +566,7 @@ BANK.workouts = BANK.exercise;
 // The first question about one change: wording and reason choices.
 export function firstQuestion(change, index = 0) {
   const entry = BANK[change.id][change.direction];
-  return { text: `${describe(change, index)} ${entry.asks[index % entry.asks.length]}`, choices: entry.choices };
+  return { text: `${describe(change)} ${index ? '짚이는 이유가 있으세요?' : '이유가 있었을까요?'}`, choices: entry.choices };
 }
 
 // The scripted second question: why about the first answer. `key` is a WHY key (whyKeyFor for free text).

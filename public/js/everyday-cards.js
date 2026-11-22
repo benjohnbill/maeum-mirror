@@ -31,7 +31,7 @@ function evidence(topic, record, basis) {
   if (topic.credit) {
     details.append(el('p', '', topic.credit), sourceLink('CC BY 4.0 이용 조건', 'https://creativecommons.org/licenses/by/4.0/'));
   } else {
-    details.append(el('p', '', '마음 시간표가 만든 ' + (topic === pressureTopic ? '비교 과제예요. 수치는 이번 문제에서의 수행을 보여줘요.' : '질문이에요. 결과는 여기서 직접 고른 응답을 요약해요.')));
+    details.append(el('p', '', 'Herz가 만든 ' + (topic === pressureTopic ? '비교 과제예요. 수치는 이번 문제에서의 수행을 보여줘요.' : '질문이에요. 결과는 여기서 직접 고른 응답을 요약해요.')));
   }
   if (topic.source) details.append(sourceLink(...topic.source));
   return details;
@@ -75,7 +75,7 @@ const number = (value) => Number.isInteger(value) ? String(value) : value.toFixe
 
 function scoreValue({ score, min, max, method }) {
   if (method === 'mean') return { prefix: '평균', main: number(score), unit: '/ ' + number(max) };
-  if (min < 0) return { main: (score > 0 ? '+' : '') + score, unit: '점 (' + min + '~' + max + ')' };
+  if (min < 0) return { main: (score > 0 ? '+' : '') + score, unit: '점' };
   return { main: score, unit: '/ ' + max + '점' };
 }
 
@@ -101,13 +101,17 @@ function scoreLine(result) {
   return line;
 }
 
-function screeningModel(measured) {
+function screeningModel(measured, row) {
   const { test, related, instrument, rank, group, source, label, band } = measured;
   const items = related.map(result => el('p', '', scoreLine(result)));
   const keys = Object.keys(test.answers || {});
   if (test.id !== 'phq4' && keys.length && keys.every(key => /^(?:phq9|gad7)\./.test(key))) items.push(el('p', '', screeningReflection([test])));
   else if (test.summary) items.push(el('p', '', test.summary));
-  let metric = { value: scoreValue(measured), description: band || '' };
+  // Every card carries the same parts: number, bar, one caption line. The bar spans the form's own range.
+  const { score, min, max, method } = measured;
+  const unit = method === 'mean' ? '' : '점';
+  let metric = { value: scoreValue(measured),
+    scale: { min, max, current: score, unit, caption: band || (row?.high ? '높을수록 ' + row.high + '이에요.' : '') } };
   if (rank != null) {
     metric = rankMetric(rank, group + ' 100명 기준 환산 · 검사 점수가 높은 순');
     items.push(el('p', '', '조사 분포에서 같은 점수를 받은 사람들의 중간 위치를 100명 기준 등수로 환산했어요.'), sourceLink(label, source));
@@ -143,84 +147,164 @@ function exerciseModel(topic, record, demo, row) {
   return { ...metric, meta: metric.scale ? source + ' · 체험용 순위' : source, evidence: { items } };
 }
 
-function actionButton(footer, { label, detail, disabled, run }) {
-  footer.append(el('p', 'profile-test-detail', detail));
+function testButton(container, { label, detail, disabled, run }, accessibleName) {
   const button = el('button', 'btn assessment-start', label);
   button.type = 'button';
+  if (accessibleName) button.setAttribute('aria-label', accessibleName);
   button.setAttribute('aria-description', detail);
   if (disabled) {
     button.disabled = true;
-    footer.append(button);
-    return;
+    return button;
   }
   button.onclick = async () => {
     if (button.getAttribute('aria-disabled') === 'true') return;
     button.setAttribute('aria-disabled', 'true');
-    footer.querySelector('[role=alert]')?.remove();
+    container.querySelector('[role=alert]')?.remove();
     try {
       await run();
     } catch {
       const message = el('p', 'inline-error', '검사를 열지 못했어요. 다시 눌러 주세요.');
       message.setAttribute('role', 'alert');
-      footer.append(message);
+      container.append(message);
     } finally {
       button.removeAttribute('aria-disabled');
       if (button.isConnected) button.focus({ preventScroll: true });
     }
   };
-  footer.append(button);
+  return button;
 }
 
-// One card per indicators.js row, in that order. Each card shows one source:
-// a finished test, else a finished everyday exercise, else the conversation estimate.
-export function appendProfileCards(deck, { results, estimates, completed, demo, takeScreening }) {
-  for (const row of indicators) {
-    const topic = everydayById.get(row.everyday);
-    const card = el('details', 'result-card profile-result');
-    function render(focus = false) {
-      const record = topic && results.get(topic.id);
-      const measured = row.test && testResult(row, completed);
-      let model;
-      if (measured) model = screeningModel(measured);
-      else if (record) model = exerciseModel(topic, record, demo, row);
-      else model = estimateModel(row, estimates);
-      const footer = el('div', 'profile-test-action');
-      if (topic) {
-        const label = topic === pressureTopic
-          ? (record ? '숫자 비교 과제 다시 하기' : '숫자 비교 과제 시작하기')
-          : topic.title + (record ? ' 다시 검사하기' : ' 검사 시작하기');
-        const detail = topic === pressureTopic ? '선택 과제 · 연습 2문제 · 본 과제 8문제'
-          : ['선택 검사', topic.method.split(' · ')[0], topic.questions.length + '문항'].join(' · ');
-        actionButton(footer, { label, detail, run: async () => {
-          const answers = topic === pressureTopic ? await runPressureTask() : await runTopicQuestions(topic, record?.answers);
-          if (answers) {
-            results.set(topic.id, { answers });
-            render(true);
-          }
-        } });
-      }
-      if (row.test) {
-        const test = testManifest[row.test];
-        const ready = test?.status === 'available';
-        const parts = ['선택 검사', test?.name ?? row.test.toUpperCase()];
-        if (test?.length) parts.push(test.length + '문항');
-        const detail = parts.join(' · ') + (ready ? '' : ' · 한국어판 검사지를 확인하고 있어 아직 열 수 없어요.');
-        const label = ready ? test.topic + (completed.has(row.test) ? ' 다시 검사하기' : ' 검사 시작하기') : '준비 중';
-        actionButton(footer, { label, detail, disabled: !ready, run: async () => {
-          if (await takeScreening(row.test)) render(true);
-        } });
-      }
-      renderProfileResult(card, { ...model, topic: row.icon || row.id, label: row.title }, footer);
-      card.dataset.topic = row.id;
-      card.dataset.source = measured ? 'test' : record ? 'exercise' : 'conversation';
-      if (measured) card.dataset.test = measured.test.id;
-      if (focus) {
-        const target = card.querySelector('summary');
-        target.focus({ preventScroll: true });
-        target.scrollIntoView({ block: 'nearest' });
-      }
-    }
-    render();
-    deck.append(card);
+function actionButton(footer, action) {
+  footer.append(el('p', 'profile-test-detail', action.detail));
+  footer.append(testButton(footer, action));
+}
+
+// The one place that decides whether an indicator has a value. A finished test comes first,
+// then a finished everyday exercise, then the conversation estimate. No source → null.
+export function indicatorModel(row, { results, estimates, completed, demo }) {
+  const measured = row.test && completed && testResult(row, completed);
+  if (measured) return { ...screeningModel(measured, row), source: 'test', test: measured.test.id };
+  const topic = everydayById.get(row.everyday);
+  const record = topic && results?.get(topic.id);
+  if (record) return { ...exerciseModel(topic, record, demo, row), source: 'exercise' };
+  if (!estimates || !estimateFor(estimates, row.id).count) return null;
+  return { ...estimateModel(row, estimates), source: 'conversation' };
+}
+
+// The ways to measure one row: its everyday exercise, then its test. Without `takeScreening`
+// (the landing example) every action is shown but stays closed.
+function rowActions(row, { results, completed }, { takeScreening }, done) {
+  const actions = [];
+  const topic = everydayById.get(row.everyday);
+  if (topic) {
+    const record = results?.get(topic.id);
+    const pressure = topic === pressureTopic;
+    actions.push({
+      label: pressure ? (record ? '숫자 비교 과제 다시 하기' : '숫자 비교 과제 시작하기') : topic.title + (record ? ' 다시 검사하기' : ' 검사 시작하기'),
+      short: pressure ? '과제하기' : '검사하기',
+      detail: pressure ? '선택 과제 · 연습 2문제 · 본 과제 8문제' : ['선택 검사', topic.method.split(' · ')[0], topic.questions.length + '문항'].join(' · '),
+      line: pressure ? '연습 2문제 · 본 과제 8문제' : topic.method.split(' · ')[0] + ' ' + topic.questions.length + '문항',
+      disabled: !takeScreening,
+      run: async () => {
+        const answers = pressure ? await runPressureTask() : await runTopicQuestions(topic, record?.answers);
+        if (answers) {
+          results.set(topic.id, { answers });
+          done();
+        }
+      },
+    });
   }
+  if (row.test) {
+    const test = testManifest[row.test];
+    const ready = test?.status === 'available';
+    const name = test?.name ?? row.test.toUpperCase();
+    const parts = ['선택 검사', name];
+    if (test?.length) parts.push(test.length + '문항');
+    actions.push({
+      label: ready ? test.topic + (completed?.has(row.test) ? ' 다시 검사하기' : ' 검사 시작하기') : '준비 중',
+      short: ready ? '검사하기' : '준비 중',
+      detail: parts.join(' · ') + (ready ? '' : ' · 한국어판 검사지를 확인하고 있어 아직 열 수 없어요.'),
+      line: name + (test?.length ? ' ' + test.length + '문항' : ''),
+      pending: !ready,
+      disabled: !ready || !takeScreening,
+      run: async () => {
+        if (await takeScreening(row.test)) done();
+      },
+    });
+  }
+  return actions;
+}
+
+// Rows that share one form (the five TIPI traits) become one list item.
+function todoGroups(rows) {
+  const groups = new Map();
+  for (const row of rows) {
+    const key = row.everyday ? row.id : row.test;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(row);
+  }
+  return [...groups.values()];
+}
+
+function profileCard(row, model, footer) {
+  const card = el('details', 'result-card profile-result');
+  renderProfileResult(card, { ...model, topic: row.icon || row.id, label: row.title }, footer);
+  card.dataset.topic = row.id;
+  card.dataset.source = model.source;
+  if (model.test) card.dataset.test = model.test;
+  return card;
+}
+
+// Two parts: '알아낸 지표' (one big card per indicator with a value, in indicators.js order)
+// and '더 알아볼 지표' (one line per form still to take; pending forms last).
+// Finishing a test or exercise re-renders both parts, so the indicator moves up.
+// `bigCard(row, model)` swaps the big card for another surface (the landing uses resultCard).
+export function appendProfileReport(container, state, { takeScreening, bigCard } = {}) {
+  const countLabel = el('span', 'profile-count');
+  const foundTitle = el('h3', 'profile-section-title', '알아낸 지표 ');
+  foundTitle.append(countLabel);
+  const deck = el('div', bigCard ? 'case-grid' : 'result-deck');
+  const empty = el('p', 'profile-test-detail', '아직 알아낸 지표가 없어요. 아래 검사로 하나씩 채워 보세요.');
+  const todoTitle = el('h3', 'profile-section-title', '더 알아볼 지표');
+  const todo = el('ul', 'profile-todo');
+  container.append(foundTitle, deck, empty, todoTitle, todo);
+
+  function render(focusIds = []) {
+    const open = new Set([...deck.querySelectorAll('details.profile-result[open]')].map(card => card.dataset.topic));
+    // `state.fill(row)` gives a model to rows with no value (the landing example fills all 24).
+    const models = indicators.map(row => [row, indicatorModel(row, state) ?? state.fill?.(row) ?? null]);
+    const known = models.filter(([, model]) => model);
+    countLabel.textContent = known.length + ' / ' + indicators.length;
+    empty.hidden = known.length > 0;
+    deck.replaceChildren(...known.map(([row, model]) => {
+      if (bigCard) return bigCard(row, model);
+      const footer = el('div', 'profile-test-action');
+      for (const action of rowActions(row, state, { takeScreening }, () => render([row.id]))) actionButton(footer, action);
+      const card = profileCard(row, model, footer);
+      card.open = open.has(row.id);
+      return card;
+    }));
+    const groups = todoGroups(models.filter(([, model]) => !model).map(([row]) => row));
+    const items = groups.map(rows => {
+      const title = rows.map(row => row.title).join(' · ');
+      const actions = rowActions(rows[0], state, { takeScreening }, () => render(rows.map(row => row.id)));
+      const action = actions.find(item => !item.pending) ?? actions[0];
+      const item = el('li', 'profile-todo-item');
+      item.dataset.topic = rows[0].id;
+      if (action.pending) item.dataset.pending = '';
+      const text = el('div');
+      text.append(el('strong', '', title), el('p', 'profile-test-detail', action.line));
+      item.append(text, testButton(item, { ...action, label: action.short }, title + ' · ' + action.label));
+      return { pending: Boolean(action.pending), item };
+    });
+    todo.replaceChildren(...items.filter(entry => !entry.pending).map(entry => entry.item), ...items.filter(entry => entry.pending).map(entry => entry.item));
+    todo.hidden = todoTitle.hidden = !items.length;
+    const target = focusIds.map(id => deck.querySelector(`[data-topic="${id}"]`)).find(Boolean);
+    if (target) {
+      const summary = target.querySelector('summary') || target;
+      summary.focus({ preventScroll: true });
+      summary.scrollIntoView({ block: 'nearest' });
+    }
+  }
+  render();
 }

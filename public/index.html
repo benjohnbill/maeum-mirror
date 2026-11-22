@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>내 심리 점수는 몇 등일까? · 마음 시간표</title>
+  <title>내 심리 점수는 몇 등일까? · Herz</title>
   <meta name="description" content="짧은 대화로 성격, 마음 건강, 일과 생활 등 24가지 심리 지표를 짚어 보세요. 리포트에서 내 답변이 어느 지표에 반영됐는지 보고, 궁금한 지표는 직접 검사해 볼 수 있어요.">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
@@ -16,7 +16,7 @@
 </head>
 <body>
   <header class="bar">
-    <a class="wordmark" href="./"><img src="favicon.svg" alt="" width="28" height="28">마음 시간표</a>
+    <a class="wordmark" href="./"><img src="favicon.svg" alt="" width="28" height="28">Herz</a>
     <nav class="intro-nav" id="introNav" aria-label="페이지 안내">
       <a href="#example">결과 예시</a><a href="#guide">이용 안내</a>
     </nav>
@@ -36,7 +36,7 @@
       </div>
       <div class="preview-stage" aria-label="답변을 골라 보는 리포트 미리보기" role="region">
         <div class="preview-paper">
-          <div class="preview-masthead"><span><img src="favicon.svg" alt="" width="20" height="20">마음 프로필</span>결과 미리보기</div>
+          <div class="preview-masthead"><span><img src="favicon.svg" alt="" width="20" height="20">Herz</span>결과 미리보기</div>
           <div id="heroResult" aria-live="polite" aria-atomic="true"></div>
           <fieldset class="preview-replies" id="previewReplies">
             <legend>짧은 답장이 오면 어떤 생각이 들어요?</legend>
@@ -48,9 +48,9 @@
     <section class="example-section" id="example" aria-labelledby="exampleTitle" tabindex="-1">
       <header class="example-intro">
         <h2 id="exampleTitle">내 리포트에 담기는<br>24가지 심리 지표</h2>
-        <p class="example-caption">예시 대화를 바탕으로 만든 리포트예요. 대화에서 단서가 나온 지표는 어떤 답변이 반영됐는지 볼 수 있어요. 나머지 지표는 리포트에서 직접 검사해 보세요.</p>
+        <p class="example-caption">예시 대화와 예시 검사 응답으로 만든 리포트예요. 대화에서 단서가 나온 지표는 어떤 답변이 반영됐는지 볼 수 있어요. 내 리포트에는 내 대화와 검사 결과만 담겨요.</p>
       </header>
-      <div class="case-grid" id="landingCases"></div>
+      <div class="landing-report" id="landingCases"></div>
       <div class="example-actions">
         <a class="btn primary" href="?view=phone&amp;case=again">이 사람의 리포트 보기</a>
         <a class="case-link" href="?view=phone&amp;case=interest&amp;test=phq9">PHQ-9를 마친 사례 보기</a>
@@ -82,7 +82,7 @@
         </details>
       </div>
     </section>
-    <footer class="intro-footer">마음 시간표는 일상을 돌아보기 위한 서비스예요. 의학적 진단을 제공하지 않아요.</footer>
+    <footer class="intro-footer">Herz는 일상을 돌아보기 위한 서비스예요. 의학적 진단을 제공하지 않아요.</footer>
   </main>
 
   <main id="session" class="session" hidden>
@@ -161,7 +161,15 @@
           </div>
           <div class="phone-viewport" id="phoneViewport">
             <section class="phone-step signup-step" id="signupStep" aria-labelledby="signupTitle">
-              <h1 id="signupTitle">마음 시간표</h1>
+              <!-- One beat per day: the R peak height stands for that day's record. -->
+              <svg class="signup-pulse" viewBox="0 0 400 160" aria-hidden="true" focusable="false">
+                <path class="beat-line" pathLength="1" d="M-10 110 L10 110 Q14 102 18 110 L23 110 L25 117 L28 76 L31 123 L34 110 L40 110 Q46 99 52 110 L70 110 Q74 102 78 110 L83 110 L85 117 L88 60 L91 123 L94 110 L100 110 Q106 99 112 110 L130 110 Q134 102 138 110 L143 110 L145 117 L148 82 L151 123 L154 110 L160 110 Q166 99 172 110 L190 110 Q194 102 198 110 L203 110 L205 117 L208 48 L211 123 L214 110 L220 110 Q226 99 232 110 L250 110 Q254 102 258 110 L263 110 L265 117 L268 68 L271 123 L274 110 L280 110 Q286 99 292 110 L310 110 Q314 102 318 110 L323 110 L325 117 L328 86 L331 123 L334 110 L340 110 Q346 99 352 110 L370 110 Q374 102 378 110 L383 110 L385 117 L388 54 L391 123 L394 110 L400 110 Q406 99 412 110 L420 110"/>
+                <path class="beat-sweep" pathLength="1" d="M-10 110 L10 110 Q14 102 18 110 L23 110 L25 117 L28 76 L31 123 L34 110 L40 110 Q46 99 52 110 L70 110 Q74 102 78 110 L83 110 L85 117 L88 60 L91 123 L94 110 L100 110 Q106 99 112 110 L130 110 Q134 102 138 110 L143 110 L145 117 L148 82 L151 123 L154 110 L160 110 Q166 99 172 110 L190 110 Q194 102 198 110 L203 110 L205 117 L208 48 L211 123 L214 110 L220 110 Q226 99 232 110 L250 110 Q254 102 258 110 L263 110 L265 117 L268 68 L271 123 L274 110 L280 110 Q286 99 292 110 L310 110 Q314 102 318 110 L323 110 L325 117 L328 86 L331 123 L334 110 L340 110 Q346 99 352 110 L370 110 Q374 102 378 110 L383 110 L385 117 L388 54 L391 123 L394 110 L400 110 Q406 99 412 110 L420 110"/>
+              </svg>
+              <div class="signup-brand">
+                <h1 id="signupTitle">Herz</h1>
+                <p>검사 없이, 생활 기록으로 보는 내 마음</p>
+              </div>
               <div class="signup-actions">
                 <p id="signupError" role="alert"></p>
                 <button class="apple-sign-in" type="button" id="appleContinue">
@@ -197,9 +205,9 @@
               <div class="sheet-content">
                 <img class="health-icon" src="assets/apple-health.png" width="68" height="68" alt="">
                 <h3>건강</h3>
-                <p id="healthPurpose">‘마음 시간표’에서 사용자의 건강 데이터에 접근하려고 합니다.</p>
+                <p id="healthPurpose">‘Herz’에서 사용자의 건강 데이터에 접근하려고 합니다.</p>
                 <button type="button" id="toggleHealth">모두 켜기</button>
-                <fieldset class="health-types"><legend>‘마음 시간표’의 읽기 허용</legend>
+                <fieldset class="health-types"><legend>‘Herz’의 읽기 허용</legend>
                   <label><i class="health-glyph activity" aria-hidden="true"></i>걸음<input type="checkbox" role="switch" name="healthType" value="steps"></label>
                   <label><i class="health-glyph sleep" aria-hidden="true"></i>수면<input type="checkbox" role="switch" name="healthType" value="sleep"></label>
                   <label><i class="health-glyph heart" aria-hidden="true"></i>심박 변이<input type="checkbox" role="switch" name="healthType" value="hrv"></label>
@@ -211,11 +219,11 @@
                   <label><i class="health-glyph activity" aria-hidden="true"></i>운동하기 시간<input type="checkbox" role="switch" name="healthType" value="exercise"></label>
                   <label><i class="health-glyph activity" aria-hidden="true"></i>일광 노출 시간<input type="checkbox" role="switch" name="healthType" value="daylight"></label>
                 </fieldset>
-                <p class="sheet-note">앱 설명: 마음 시간표는 선택한 항목의 최근 1년 기록을 읽어 퀴즈를 내고, 최근 2주를 평소와 비교합니다.</p>
+                <p class="sheet-note">앱 설명: Herz는 선택한 항목의 최근 1년 기록을 읽어 퀴즈를 내고, 최근 2주를 평소와 비교합니다.</p>
               </div>
             </dialog>
             <section class="panel phone-result" id="resultPanel" aria-labelledby="resultTitle" hidden>
-              <h1 id="resultTitle" tabindex="-1">마음 프로필</h1>
+              <h1 id="resultTitle" tabindex="-1">Herz</h1>
               <article class="case-report" id="phoneReport"></article>
               <button class="flow-link" id="viewRecord" type="button">기록 다시 보기</button>
               <a class="btn primary flow-action" href="./">체험 마치기</a>

@@ -39,7 +39,7 @@ function windowDays(through, id, random) {
     const first = m === 1 ? `${y - 1}-12-01` : `${y}-${String(m - 1).padStart(2, '0')}-01`;
     const days = [];
     for (let k = first; k.slice(0, 7) === first.slice(0, 7); k = shift(k, 1)) days.push(k);
-    return { days, label: `지난달(${+first.slice(5, 7)}월)` };
+    return { days, label: `${+first.slice(5, 7)}월` };
   }
   return { days: Array.from({ length: 365 }, (_, i) => shift(through, -i)), label: '최근 1년' };
 }
@@ -60,77 +60,69 @@ export const daily = {
 // `single` asks about one day (the window's Saturday for weekend cells).
 const CATEGORIES = {
   sleep: {
-    words: ['짧았', '길었'],
     show: (h) => hm(h * 60),
     free: true,
     cells: {
-      day: { agg: 'single', ask: (w) => `${w.label} 밤엔 몇 시간 잤을 것 같아요?` },
-      weekend: { agg: 'single', ask: (w) => `${w.saturday} 밤엔 몇 시간 잤을 것 같아요?` },
-      week: { agg: 'avg', ask: (w) => `${w.label}, 하루 평균 몇 시간 잤을 것 같아요?` },
-      month: { agg: 'avg', ask: (w) => `${w.label} 하루 평균 수면은 몇 시간쯤이었을까요?` },
+      day: { agg: 'single', ask: (w) => `${w.label === '어제' ? '어젯밤' : `${w.label} 밤`}. 몇 시간 주무셨는지 기억이 나시나요?` },
+      weekend: { agg: 'single', ask: (w) => `${w.saturday} 밤. 혹시 몇 시간 주무셨는지 기억이 나시나요?` },
+      week: { agg: 'avg', ask: (w) => `${w.label}, 하루 평균 몇 시간 주무셨을까요?` },
+      month: { agg: 'avg', ask: (w) => `${w.label}에는 하루 평균 몇 시간 주무셨을까요?` },
     },
   },
   steps: {
-    words: ['적었', '많았'],
     cells: {
-      day: { agg: 'single', step: 2000, unit: (x) => `${num(x)}걸음`, ask: (w) => `${w.label}는 몇 걸음 걸었을까요?` },
-      weekend: { agg: 'single', step: 2000, unit: (x) => `${num(x)}걸음`, ask: (w) => `${w.saturday}엔 몇 걸음 걸었을까요?` },
-      week: { agg: 'avg', step: 1500, unit: (x) => `${num(x)}걸음`, ask: (w) => `${w.label}, 하루 평균 몇 걸음 걸었을까요?` },
-      month: { agg: 'avg', step: 1500, unit: (x) => `${num(x)}걸음`, ask: (w) => `${w.label} 하루 평균 걸음 수는요?` },
+      day: { agg: 'single', step: 2000, unit: (x) => `${num(x)}걸음`, ask: (w) => `${w.label}는 몇 걸음 걸으셨을까요?` },
+      weekend: { agg: 'single', step: 2000, unit: (x) => `${num(x)}걸음`, ask: (w) => `${w.saturday}에는 몇 걸음 걸으셨을까요?` },
+      week: { agg: 'avg', step: 1500, unit: (x) => `${num(x)}걸음`, ask: (w) => `${w.label}, 하루 평균 몇 걸음 걸으셨을까요?` },
+      month: { agg: 'avg', step: 1500, unit: (x) => `${num(x)}걸음`, ask: (w) => `${w.label}에는 하루 평균 몇 걸음 걸으셨을까요?` },
       year: {
         agg: 'sum', step: 1, digits: 1,
         convert: (total, d) => (total * strideMeters(d)) / 1000 / SEOUL_BUSAN_KM,
         unit: (x) => `${num(x, Number.isInteger(x) ? 0 : 1)}번`,
         exact: (x) => `서울–부산 ${num(x, 1)}번 거리(${num(x * SEOUL_BUSAN_KM)}km)`,
-        ask: (w) => `${w.label} 걸은 거리를 합치면 서울에서 부산까지 몇 번쯤일까요?`,
+        ask: (w) => `${w.label} 걸으신 거리를 합치면 서울에서 부산까지 몇 번쯤 될까요?`,
       },
     },
   },
   stride: {
-    words: ['짧았', '길었'],
-    cells: { year: { agg: 'avg', step: 5, unit: (x) => `${num(x)}cm`, ask: () => '한 걸음에 몇 cm쯤 갈까요? 최근 1년 평균 보폭이에요.' } },
+    cells: { year: { agg: 'avg', step: 5, unit: (x) => `${num(x)}cm`, ask: () => '한 걸음에 몇 cm쯤 걸으실까요? 최근 1년 평균 보폭이에요.' } },
   },
   speed: {
-    words: ['느렸', '빨랐'],
     cells: {
-      month: { agg: 'avg', step: 0.5, digits: 1, unit: (x) => `${num(x, 1)}km/h`, ask: (w) => `${w.label} 평소 걷는 속도는 시속 몇 km였을까요?` },
-      year: { agg: 'avg', step: 0.5, digits: 1, unit: (x) => `${num(x, 1)}km/h`, ask: (w) => `${w.label} 평균 걷는 속도는 시속 몇 km일까요?` },
+      month: { agg: 'avg', step: 0.5, digits: 1, unit: (x) => `${num(x, 1)}km/h`, ask: (w) => `${w.label}에는 평소 시속 몇 km로 걸으셨을까요?` },
+      year: { agg: 'avg', step: 0.5, digits: 1, unit: (x) => `${num(x, 1)}km/h`, ask: (w) => `${w.label} 동안 평균 시속 몇 km로 걸으셨을까요?` },
     },
   },
   flights: {
-    words: ['적었', '많았'],
     cells: {
-      day: { agg: 'single', step: 3, unit: (x) => `${num(x)}층`, ask: (w) => `${w.label}는 계단을 몇 층쯤 올랐을까요?` },
-      week: { agg: 'avg', step: 3, unit: (x) => `${num(x)}층`, ask: (w) => `${w.label}, 하루 평균 계단 몇 층을 올랐을까요?` },
+      day: { agg: 'single', step: 3, unit: (x) => `${num(x)}층`, ask: (w) => `${w.label}는 계단을 몇 층쯤 오르셨을까요?` },
+      week: { agg: 'avg', step: 3, unit: (x) => `${num(x)}층`, ask: (w) => `${w.label}, 하루 평균 계단을 몇 층 오르셨을까요?` },
       year: {
         agg: 'sum', step: 5,
         convert: (floors) => floors / LOTTE_TOWER_FLOORS,
         unit: (x) => `${num(x)}번`,
         exact: (x) => `롯데월드타워 ${num(x, 1)}번(${num(x * LOTTE_TOWER_FLOORS)}층)`,
-        ask: (w) => `${w.label} 오른 계단을 합치면 롯데월드타워(123층) 몇 번쯤일까요?`,
+        ask: (w) => `${w.label} 오르신 계단을 합치면 롯데월드타워(123층) 몇 번쯤 될까요?`,
       },
     },
   },
   rhr: {
-    words: ['낮았', '높았'],
     cells: {
-      week: { agg: 'avg', step: 5, unit: (x) => `${num(x)}회`, exact: (x) => `1분에 ${num(x)}회`, ask: (w) => `${w.label}, 가만히 있을 때 심장은 1분에 몇 번 뛰었을까요?` },
-      year: { agg: 'avg', step: 5, unit: (x) => `${num(x)}회`, exact: (x) => `1분에 ${num(x)}회`, ask: (w) => `${w.label} 평균, 가만히 있을 때 심장은 1분에 몇 번 뛸까요?` },
+      week: { agg: 'avg', step: 5, unit: (x) => `${num(x)}회`, exact: (x) => `1분에 ${num(x)}회`, ask: (w) => `${w.label}, 가만히 계실 때 심장은 1분에 몇 번 뛰었을까요?` },
+      year: { agg: 'avg', step: 5, unit: (x) => `${num(x)}회`, exact: (x) => `1분에 ${num(x)}회`, ask: (w) => `${w.label} 평균, 가만히 계실 때 심장은 1분에 몇 번 뛸까요?` },
     },
   },
   exercise: {
-    words: ['적었', '많았'],
     cells: {
-      weekend: { agg: 'sum', step: 20, unit: (x) => `${num(x)}분`, ask: (w) => `${w.label} 이틀 동안 운동한 시간은 모두 몇 분일까요?` },
-      week: { agg: 'avg', step: 10, unit: (x) => `${num(x)}분`, ask: (w) => `${w.label}, 하루 평균 운동한 시간은요?` },
-      month: { agg: 'sum', step: 3, convert: (min) => min / 60, unit: (x) => `${num(x)}시간`, exact: (x) => hm(x * 60), ask: (w) => `${w.label} 운동한 시간을 다 합치면 몇 시간일까요?` },
+      weekend: { agg: 'sum', step: 20, unit: (x) => `${num(x)}분`, ask: (w) => `${w.label} 이틀 동안 운동하신 시간은 모두 몇 분일까요?` },
+      week: { agg: 'avg', step: 10, unit: (x) => `${num(x)}분`, ask: (w) => `${w.label}, 하루 평균 몇 분 운동하셨을까요?` },
+      month: { agg: 'sum', step: 3, convert: (min) => min / 60, unit: (x) => `${num(x)}시간`, exact: (x) => hm(x * 60), ask: (w) => `${w.label}에 운동하신 시간을 다 합치면 몇 시간일까요?` },
     },
   },
   daylight: {
-    words: ['짧았', '길었'],
     cells: {
-      weekend: { agg: 'avg', step: 15, unit: (x) => `${num(x)}분`, ask: (w) => `${w.label}, 하루에 햇빛 아래 몇 분 있었을까요?` },
-      week: { agg: 'avg', step: 15, unit: (x) => `${num(x)}분`, ask: (w) => `${w.label}, 하루 평균 햇빛 아래 몇 분 있었을까요?` },
+      weekend: { agg: 'avg', step: 15, unit: (x) => `${num(x)}분`, ask: (w) => `${w.label}, 하루에 햇빛 아래 몇 분 계셨을까요?` },
+      week: { agg: 'avg', step: 15, unit: (x) => `${num(x)}분`, ask: (w) => `${w.label}, 하루 평균 햇빛 아래 몇 분 계셨을까요?` },
     },
   },
 };
@@ -152,13 +144,12 @@ function measure(series, cell, w, data) {
   return cell.convert ? cell.convert(raw, data) : raw;
 }
 
-// Four options on the step grid; the rounded truth sits at a random position.
-function options(truth, step, random) {
+// Two choices: "under" and "at least" a line one step away from the rounded truth,
+// so the answer sits clearly on one side but still takes a guess.
+function split(truth, step, random) {
   const r = Math.max(step, Math.round(truth / step) * step);
-  let at = Math.floor(random() * 4);
-  while (at > 0 && r - at * step <= 0) at--;
-  const fix = (x) => +x.toFixed(2);
-  return { values: Array.from({ length: 4 }, (_, i) => fix(r + (i - at) * step)), correct: fix(r) };
+  const line = random() < 0.5 && r - step > 0 ? r - step : r + step;
+  return +line.toFixed(2);
 }
 
 // "7시간 반" -> 7.5, "7천" -> 7000, "1만 2천" -> 12000, "68" -> 68.
@@ -212,28 +203,27 @@ export function buildQuiz(data, through, random = Math.random) {
 function makeQuestion(id, category, cell, w, truth, random) {
   const show = category.show || cell.exact || cell.unit;
   const exact = show(truth);
-  const [less, more] = category.words;
-  if (category.free) {
-    return {
-      id, text: cell.ask(w), choices: [],
-      answer(reply) {
-        const guess = parseGuess(reply);
-        if (guess == null) return { reply: `넘어갈게요. 실제로는 ${was(exact)}.`, correct: false };
-        const diff = (truth - guess) * 60;
-        if (Math.abs(diff) < 30) return { reply: `거의 맞혔어요. 실제로 ${was(exact)}.`, correct: true };
-        return { reply: `실제로는 ${was(exact)}. 생각보다 ${hm(Math.abs(diff))} ${diff > 0 ? more : less}어요.`, correct: false };
-      },
-    };
-  }
-  const { values, correct } = options(truth, cell.step, random);
-  const labels = values.map((v) => cell.unit(v));
+  const step = category.free ? 1 : cell.step;
+  const unit = category.free ? (h) => `${num(h)}시간` : cell.unit;
+  const line = split(truth, step, random);
+  const choices = [`${unit(line)} 미만`, `${unit(line)} 이상`];
   return {
-    id, text: cell.ask(w), choices: labels,
+    id, text: cell.ask(w), choices,
     answer(reply) {
-      const picked = labels.includes(reply) ? values[labels.indexOf(reply)] : parseGuess(reply);
-      if (picked == null) return { reply: `넘어갈게요. 실제로는 ${was(exact)}.`, correct: false };
-      if (picked === correct) return { reply: `맞혔어요. 실제로 ${was(exact)}.`, correct: true };
-      return { reply: `실제로는 ${was(exact)}. 고른 것보다 ${truth > picked ? more : less}어요.`, correct: false };
+      const side = choices.indexOf(reply);
+      if (side >= 0) {
+        if ((truth >= line) === (side === 1)) return { reply: `맞히셨어요. 실제로 ${was(exact)}.`, correct: true };
+        return { reply: `실제로는 ${was(exact)}.`, correct: false };
+      }
+      const guess = parseGuess(reply);
+      if (guess == null) return { reply: `넘어갈게요. 실제로는 ${was(exact)}.`, correct: false };
+      if (category.free) {
+        const diff = (truth - guess) * 60;
+        if (Math.abs(diff) < 30) return { reply: `거의 맞히셨어요. 실제로 ${was(exact)}.`, correct: true };
+        return { reply: `실제로는 ${was(exact)}.`, correct: false };
+      }
+      if (Math.abs(truth - guess) < step / 2) return { reply: `거의 맞히셨어요. 실제로 ${was(exact)}.`, correct: true };
+      return { reply: `실제로는 ${was(exact)}.`, correct: false };
     },
   };
 }

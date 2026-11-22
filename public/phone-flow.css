@@ -4,13 +4,13 @@
   overflow-y: auto;
   overscroll-behavior: contain;
 }
+/* Same ground as the steps that follow (connect, Health sheet); the heartbeat is the only red. */
 .phone-screen:has(.signup-step:not([hidden])) {
-  --signup-photo: url('late-night.webp');
-  color: #fff;
-  background: linear-gradient(to bottom, rgb(15 11 9 / 52%), transparent 32%, transparent 63%, rgb(15 11 9 / 55%)),
-    #241a15 var(--signup-photo) 6% center / cover no-repeat;
+  --herz-red: light-dark(#e0322b, #ff5a4f);
+  --herz-glow: light-dark(rgb(224 50 43 / 35%), rgb(255 90 79 / 55%));
+  color: var(--ink);
+  background: radial-gradient(120% 55% at 50% 30%, light-dark(#fdeeea, #2a1715) 0%, var(--surface) 70%);
 }
-.phone-screen:has(.signup-step:not([hidden])) .phone-home { background: currentColor; }
 .signup-step {
   display: flex;
   flex-direction: column;
@@ -18,14 +18,37 @@
   gap: 24px;
   padding: clamp(16px, 5dvh, 48px) 24px clamp(16px, 3dvh, 28px);
 }
-.signup-step h1, .signup-actions { width: min(100%, 300px); }
-.phone-step.signup-step h1 { font-size: 2rem; font-weight: 700; }
-.signup-actions { margin-top: auto; }
+.signup-brand, .signup-actions { width: min(100%, 300px); }
+/* Herz: a heartbeat line where each beat is one day of records. Drawn once on arrival. */
+.signup-pulse { flex: none; width: calc(100% + 48px); margin: clamp(24px, 12dvh, 110px) -24px 0; overflow: visible; }
+.signup-pulse path {
+  fill: none; stroke: var(--herz-red); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;
+  stroke-dasharray: 1; stroke-dashoffset: 1; filter: drop-shadow(0 0 5px var(--herz-glow));
+  animation: pulse-draw 1600ms cubic-bezier(0.16, 1, 0.3, 1) 200ms forwards;
+}
+@keyframes pulse-draw { to { stroke-dashoffset: 0; } }
+/* After the draw, a faint bright head runs along the line, like a monitor sweep. */
+.signup-pulse .beat-sweep {
+  stroke: light-dark(#ffc9c2, #ffe1dc); stroke-width: 2.8; stroke-dasharray: .06 .94; stroke-dashoffset: .06; opacity: 0;
+  filter: drop-shadow(0 0 7px var(--herz-red));
+  animation: pulse-sweep 3600ms linear 1800ms infinite;
+}
+@keyframes pulse-sweep {
+  0% { stroke-dashoffset: .06; opacity: 0; }
+  10%, 85% { opacity: .7; }
+  100% { stroke-dashoffset: -.94; opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .signup-pulse path { animation: none; stroke-dashoffset: 0; }
+  .signup-pulse .beat-sweep { display: none; }
+}
+.signup-brand { margin-top: auto; }
+.phone-step.signup-step h1 { font-size: 3.2rem; font-weight: 800; letter-spacing: -.04em; line-height: 1; }
+.signup-brand p { margin: 12px 0 0; color: var(--ink-2); font-size: 1rem; line-height: 1.5; word-break: keep-all; }
+/* Apple's artwork: black button on a light ground, white on a dark one. */
+@media (prefers-color-scheme: light) { .signup-step .apple-sign-in img { content: url('assets/apple-sign-in-ko-black.png'); } }
 #signupError { margin: 0; font-size: .9rem; }
 #signupError:not(:empty) { margin-bottom: 12px; }
-@media (max-height: 550px) and (orientation: landscape) {
-  .phone-screen:has(.signup-step:not([hidden])) { --signup-photo: url('late-night-wide.webp'); }
-}
 .connect-step { padding: 30px 22px 18px; display: flex; flex-direction: column; gap: 28px; }
 .connect-step img { display: block; margin-bottom: 18px; }
 .connect-actions { display: grid; gap: 8px; margin-top: auto; }
@@ -36,6 +59,14 @@
   background: rgb(60 60 67 / 34%); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
 }
 .persona-overlay[hidden] { display: none; }
+/* Hand-off from the Health sheet: it leaves first (300ms), then the blur fades in and the card rises. */
+.persona-overlay { transition: opacity 220ms ease-out 260ms; }
+.persona-card { transition: transform 440ms cubic-bezier(.32, .72, 0, 1) 300ms; }
+@starting-style {
+  .persona-overlay { opacity: 0; }
+  .persona-overlay .persona-card { transform: translateY(110%); }
+}
+@media (prefers-reduced-motion: reduce) { .persona-card { transition: none; } }
 .persona-card {
   width: 100%; max-height: 100%; overflow-y: auto; overscroll-behavior: contain;
   padding: 20px 16px 16px; color: var(--ink); background: var(--surface); border-radius: 16px;
@@ -64,8 +95,24 @@
 }
 .access-sheet[open] { display: flex; flex-direction: column; overflow: hidden; }
 .access-sheet::backdrop { background: transparent; }
-.phone-screen:has(.access-sheet[open]) { background: var(--sheet-surface, white); }
-.phone-screen:has(.access-sheet[open]) .connect-step { visibility: hidden; }
+/* iOS sheet: rises from the bottom edge and leaves the same way.
+   The sheet sits in the top layer, so the clip cuts it at the phone screen's bottom edge. */
+.access-sheet {
+  transform: translateY(100%); clip-path: inset(0 0 100% 0);
+  transition: transform 500ms cubic-bezier(.32, .72, 0, 1), clip-path 500ms cubic-bezier(.32, .72, 0, 1),
+    display 500ms allow-discrete, overlay 500ms allow-discrete;
+}
+/* Leaving is quicker than arriving: 500ms in, 300ms out. */
+.access-sheet:not([open]) { transition-duration: 300ms; }
+.access-sheet[open] { transform: none; clip-path: inset(0); }
+@starting-style { .access-sheet[open] { transform: translateY(100%); clip-path: inset(0 0 100% 0); } }
+@media (prefers-reduced-motion: reduce) { .access-sheet { transition: none; } }
+/* The screen under the sheet stays until the sheet covers it (delay = sheet duration, open only). */
+.phone-screen:has(.access-sheet[open]) { background: var(--sheet-surface, white); transition: background-color 0s 500ms; }
+.phone-screen:has(.access-sheet[open]) .connect-step { visibility: hidden; transition: visibility 0s 500ms; }
+@media (prefers-reduced-motion: reduce) {
+  .phone-screen:has(.access-sheet[open]), .phone-screen:has(.access-sheet[open]) .connect-step { transition: none; }
+}
 .sheet-bar {
   flex: none; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
   min-height: 48px; padding-inline: 6px; background: var(--sheet-surface);
@@ -119,6 +166,9 @@
 }
 .health-types input:checked { background: #30c45b; }
 .health-types input:checked::before { transform: translateX(19px); }
+.health-types input { transition: background-color 200ms ease-out; }
+.health-types input::before { transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1); }
+@media (prefers-reduced-motion: reduce) { .health-types input::before { transition: none; } }
 .sheet-content .sheet-note { margin-top: 7px; }
 @media (prefers-color-scheme: dark) {
   .access-sheet { --sheet-surface: #151517; --sheet-ink: #fafafa; --sheet-group: #2c2c2e; --sheet-link: #71afff; --sheet-line: #444448; --sheet-label: #adadb3; --switch-off: #57575e; }
@@ -137,7 +187,7 @@
   cursor: pointer;
 }
 .apple-sign-in img { display: block; width: 100%; height: auto; }
-.apple-sign-in:focus-visible { outline-color: #fff; outline-offset: 4px; }
+.apple-sign-in:focus-visible { outline-color: currentColor; outline-offset: 4px; }
 .apple-sign-in:active { opacity: .85; }
 .phone-step h1, .phone-screen .phone-result h1 { font-size: 1.8rem; line-height: 1.22; letter-spacing: -.035em; }
 .phone-step h1:focus, .phone-result h1:focus { outline: none; }
@@ -150,8 +200,11 @@
   background: var(--surface); color: var(--ink); border: 1px solid var(--ghost-edge);
   border-radius: var(--radius); cursor: pointer;
 }
-.scene-replies button:hover, .scene-replies button:focus-visible { border-color: var(--ink); }
-.scene-replies button:last-child { color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; }
+.scene-replies button:focus-visible { border-color: var(--ink); }
+@media (hover: hover) { .scene-replies button:hover { border-color: var(--ink); } }
+/* 잘 모르겠어요: a quiet way out, not a suggestion. Plain small text; the 44px tap area stays. */
+.scene-replies button.quiet { background: none; border-color: transparent; color: var(--ink-2); font-size: .8rem; padding-inline: 4px; }
+@media (hover: hover) { .scene-replies button.quiet:hover { border-color: transparent; text-decoration: underline; text-underline-offset: 3px; } }
 .phone-nav:has(#resultButton:not([hidden])) { grid-template-columns: repeat(3, 1fr); }
 .phone-result .step-description { margin: -6px 0 8px; }
 .phone-result .report { border-color: var(--line); border-width: 1px; }
@@ -245,3 +298,15 @@
 .trait-responses b { display: block; }
 .trait-content .card-evidence a { margin-right: 12px; }
 .pressure-result { display: flex; justify-content: space-between; gap: 8px; padding-block: 5px; }
+
+/* Report parts: '알아낸 지표 N / 24', then '더 알아볼 지표' as one line per form. */
+.profile-section-title { display: flex; align-items: baseline; gap: 8px; margin: 22px 0 0; font-size: 1.05rem; letter-spacing: -.02em; }
+.profile-count { color: var(--ink-2); font-weight: 600; font-variant-numeric: tabular-nums; }
+.profile-todo { margin: 10px 0 18px; padding: 0; list-style: none; border-top: 1px solid var(--line); }
+.profile-todo-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px 12px; padding: 10px 4px; border-bottom: 1px solid var(--line); }
+.profile-todo-item strong { display: block; font-size: .95rem; font-weight: 650; word-break: keep-all; }
+.profile-todo-item .profile-test-detail { margin: 2px 0 0; }
+.profile-todo-item .assessment-start { min-height: 44px; white-space: nowrap; }
+.profile-todo-item .inline-error { grid-column: 1 / -1; margin: 0; }
+.landing-report .profile-section-title { margin-top: clamp(22px, 3vw, 38px); font-size: 1.22rem; }
+.landing-report .case-grid { margin-top: 14px; }

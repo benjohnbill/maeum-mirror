@@ -22,7 +22,7 @@
   height: 100dvh;
   padding: var(--stage-gutter);
   background: linear-gradient(rgb(16 13 11 / 82%), rgb(12 11 10 / 94%)),
-    #171513 url('late-night-wide.webp') center / cover;
+    radial-gradient(80% 70% at 50% 40%, #2a1712, #120c0a);
 }
 .preview-exit { display: none; }
 @media (min-width: 760px) and (min-height: 551px) {
@@ -52,7 +52,8 @@
   min-height: 0;
   /* Keep the hardware rigid and lift the controls above a real software keyboard. */
   padding-bottom: max(0px, calc(100dvh - var(--phone-visible-height, 100dvh)));
-  overflow: hidden;
+  /* clip, not hidden: focus on an element that is still sliding in must not scroll the whole screen. */
+  overflow: clip;
   border-radius: 13% / calc(13% * var(--display-ratio));
   background: var(--surface);
 }
@@ -119,7 +120,7 @@
 }
 .phone-nav button { gap: 2px; font: inherit; font-size: .875rem; color: var(--ink-2); background: none; border: 0; cursor: pointer; }
 .phone-nav button[aria-pressed="true"] { color: var(--accent-text); font-weight: 750; }
-.phone-nav button:hover { background: var(--ground); }
+@media (hover: hover) { .phone-nav button:hover { background: var(--ground); } }
 .phone-home { grid-row: 4; justify-self: center; width: min(34%, 134px); height: 4px; margin: 7px 0; border-radius: 2px; background: var(--ink); }
 
 @media (max-width: 560px) and (orientation: portrait) {

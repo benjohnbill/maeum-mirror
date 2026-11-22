@@ -19,6 +19,20 @@ export const workoutStories = [
     screeningOffer: '달리기도 보드게임도 평소만큼 내키지 않았군요. 이런 날이 얼마나 자주 있었는지, 지난 2주를 PHQ-9 아홉 문항으로 돌아볼까요?',
   },
 ];
+// The landing example person also finished every test the app can open.
+// Answers are listed in item order (tipi.1, tipi.2, …) and scored like real answers.
+// PHQ-9 reuses the example dialogue's sample answers.
+export const exampleTestAnswers = {
+  tipi: [5, 3, 6, 4, 5, 3, 6, 3, 4, 3],
+  swls: [3, 4, 3, 4, 3],
+  fs: [5, 5, 4, 5, 5, 4, 5, 5],
+  spane: [4, 4, 4, 4, 3, 4, 5, 3, 4, 4, 3, 4],
+  mlq: [4, 5, 5, 4, 4, 4, 5, 5, 3, 5],
+  cbi: [75, 50, 50, 75, 50, 25],
+  // Landing example only: total 2 (sleep and tiredness, 1 each) sits mid-pack, about 43등 among Korean adults.
+  phq9: [0, 0, 1, 1, 0, 0, 0, 0, 0],
+};
+
 const everydayStory = {
   opening: '오전엔 회의 자료를 다 썼어요. 오후엔 메일 한 통을 쓰는 데도 한참 걸렸어요.',
   question: '오후에는 메일 한 통에 시간이 걸렸군요. 일을 마치고 나서는 어떻게 보냈어요?',

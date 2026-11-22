@@ -1,5 +1,5 @@
 import { el, resultCard, resultDetails } from './report-elements.js';
-import { appendProfileCards, estimateModel } from './everyday-cards.js';
+import { appendProfileReport, estimateModel } from './everyday-cards.js';
 import { everydayTopics } from './everyday-topics.js';
 import { newEstimates, recordTraitReply, recordSignals, groundedSignals, estimateFor, cueSignals, localCues, groundedCues } from './trait-estimates.js';
 import { parseHealthFile } from './parse.js';
@@ -8,13 +8,13 @@ import { SYSTEM_PROMPT } from './prompt.js';
 import { isCrisis, isImmediateDanger, CRISIS_LINES } from './safety.js';
 import { runScreening } from './phq9-sheet.js';
 import { loadForm, scoreForm } from './screening-forms.js';
-import { screeningCommand, screeners, offlineScreeningOffer, testManifest } from './screening-router.js';
+import { demoRank } from './profile-results.js';
+import { screeningCommand, screeners, offlineScreeningOffer } from './screening-router.js';
 import { readPreviewHealth, setupPhoneAccess } from './phone-access.js';
-import { indicators } from './indicators.js';
 import { buildQuiz } from './rapport-quiz.js';
 import { detectChanges, firstQuestion, whyQuestion, whyKeyFor, recordLine } from './change-talk.js';
 
-import { workoutConcern, workoutStories, caseAnswers, previewSession, previewTurn, previewResult, recordText } from './preview-report.js';
+import { workoutConcern, workoutStories, exampleTestAnswers, caseAnswers, previewSession, previewTurn, previewResult, recordText } from './preview-report.js';
 
 const caseLinks = ['again', 'interest'];
 const MAX_TURNS = 10;
@@ -104,21 +104,40 @@ function showLandingExamples() {
     choice.addEventListener('change', showReplyResult);
     if (choice.checked) showReplyResult();
   }
-  // All 24 indicators. Cards with a result come first, then the ones to find out by a test, then pending ones.
-  const cards = [];
-  for (const row of indicators) {
-    let model = estimateModel(row, scenes[0]);
-    const test = testManifest[row.test];
-    if (model.value.main === '단서 부족' && !row.everyday) {
-      model = test?.status === 'available'
-        ? { ...model, description: test.name + ' ' + test.length + '문항으로 확인해 볼 수 있어요.' }
-        : { value: { main: '준비 중' }, description: '공식 한국어 문항을 확인하고 있어요.' };
-    }
-    const order = model.scale ? 0 : model.value.main === '준비 중' ? 2 : 1;
-    cards.push({ order, card: resultCard({ ...model, label: row.title, empty: order > 0 }) });
-  }
-  cards.sort((a, b) => a.order - b.order);
-  $('landingCases').append(...cards.map(({ card }) => card));
+  // A fixed example person: the conversation of case 0 plus every test the app can open.
+  // The landing shows every indicator as a rank ('N등'): test scores become ranks among
+  // 100 virtual answers (demoRank), and rows with no example value get a fixed example rank.
+  const rankCard = (row, rank, model = {}) => ({ ...model,
+    value: { main: rank, unit: '등' },
+    scale: { min: 1, max: 100, current: rank, unit: '등', caption: '1등에 가까울수록 ' + row.high + '이에요.' } });
+  const asRank = (row, model) => {
+    if (model.value?.unit === '등' || !model.scale) return model;
+    const { current, min, max } = model.scale;
+    const card = rankCard(row, demoRank(current, min, max), model);
+    if (card.evidence) card.evidence = { ...card.evidence, items: [el('p', '', '예시 응답의 점수를 가상 100명 기준 등수로 환산했어요.'), ...card.evidence.items] };
+    return card;
+  };
+  const exampleRank = (row) => 20 + [...row.id].reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % 60;
+  const fill = (row) => rankCard(row, exampleRank(row), { evidence: { items: [el('p', '', '랜딩 예시용 값이에요. 실제 리포트에서는 검사로 확인해요.')] } });
+  const completed = new Map();
+  Promise.all(Object.entries(exampleTestAnswers).map(async ([id, values]) => {
+    const form = await loadForm(id);
+    const answers = Object.fromEntries(values.map((value, i) => [id + '.' + (i + 1), value]));
+    completed.set(id, { ...scoreForm(form, answers), sample: true });
+  })).then(() => {
+    appendProfileReport($('landingCases'), { results: new Map(), estimates: scenes[0], completed, demo: true, fill },
+      { bigCard: (row, model) => {
+        const ranked = asRank(row, model);
+        const card = resultCard({ ...ranked, label: row.title });
+        card.dataset.rank = ranked.value.main;
+        return card;
+      } });
+    // Closest to 1등 first. Ties keep indicators.js order (sort is stable).
+    const deck = $('landingCases').querySelector('.case-grid');
+    deck.replaceChildren(...[...deck.children].sort((a, b) => a.dataset.rank - b.dataset.rank));
+  }).catch(() => {
+    $('landingCases').append(el('p', 'fine', '예시 리포트를 불러오지 못했어요.'));
+  });
 }
 
 /* ---------- Focus: the conversation points at the data ---------- */
@@ -246,7 +265,9 @@ function addMsg(role, text, actions) {
   $('chat').querySelector('.scene-replies')?.remove();
   const li = document.createElement('li');
   li.className = `msg ${role}`;
-  if (role === 'ai') li.append(Object.assign(document.createElement('span'), { className: 'who', textContent: '마음 시간표' }));
+  // A run of AI bubbles shows the speaker name once, like a chat app.
+  const previous = $('chat').lastElementChild;
+  if (role === 'ai' && !previous?.matches('.msg.ai')) li.append(Object.assign(document.createElement('span'), { className: 'who', textContent: 'Herz' }));
   li.append(Object.assign(document.createElement('p'), { textContent: text }));
   if (actions) {
     li.classList.add('with-actions');
@@ -329,7 +350,7 @@ function offerScreening(text, ids) {
   skip.onclick = () => {
     leaveOffer();
     if (state.example) { aiTurn(); return; }
-    addMsg('ai', '그럼 이야기로 이어갈게요. 방금 돌아본 장면에서 더 들려주고 싶은 게 있나요?');
+    addMsg('ai', '그럼 이야기로 이어갈게요. 방금 돌아본 장면에서 더 들려주고 싶으신 게 있나요?');
     $('msg').focus();
   };
   group.append(skip);
@@ -368,7 +389,7 @@ async function startScreening(id) {
     updateTurns();
     const followups = outcome.followups.filter((key) => !screening.results.has(key));
     if (followups.length) {
-      offerScreening('앞에서 답한 두 문항을 포함해 조금 더 살펴볼 수 있어요. 이어서 할 검사를 고르거나 대화로 돌아가세요.', followups);
+      offerScreening('앞에서 답하신 두 문항을 포함해 조금 더 살펴볼 수 있어요. 이어서 할 검사를 고르거나 대화로 돌아가세요.', followups);
       return;
     }
   }
@@ -393,15 +414,16 @@ function showError(message, retry) {
   $('chat').append(li);
 }
 
-function replyChoices(choices) {
+// `skip` adds a last button, such as 잘 모르겠어요.
+function replyChoices(choices, skip = null) {
   const group = el('div', 'scene-replies');
   group.setAttribute('role', 'group');
   group.setAttribute('aria-label', '답장 선택');
-  for (const label of [...choices, '건너뛰기']) {
-    const button = el('button', '', label);
+  for (const label of skip ? [...choices, skip] : choices) {
+    const button = el('button', label === skip ? 'quiet' : '', label);
     button.type = 'button';
     button.addEventListener('click', () => {
-      $('msg').value = label === '건너뛰기' ? '이 이야기는 건너뛸게요.' : label;
+      $('msg').value = label;
       $('composer').requestSubmit();
     });
     group.append(button);
@@ -411,8 +433,7 @@ function replyChoices(choices) {
 
 async function aiTurn() {
   busy(true);
-  const typing = addMsg('ai', '데이터를 보고 있어요');
-  typing.classList.add('typing');
+  const typing = thinking('데이터를 보고 있어요');
   try {
     const out = state.example ? await exampleTurn() : await api('turn');
     const reply = state.pendingReply;
@@ -484,6 +505,10 @@ $('composer').addEventListener('submit', (e) => {
     updateTurns();
     if (immediateDanger) showImmediateHelp();
     else addMsg('ai', '말해 주셔서 고마워요. 편한 만큼만 이야기해 주세요.');
+    return;
+  }
+  if (phonePreview && profile.step === 'opening') {
+    answerOpening(text);
     return;
   }
   if (phonePreview && profile.step === 'quiz') {
@@ -573,8 +598,7 @@ async function report() {
     return;
   }
   busy(true);
-  const typing = addMsg('ai', '지난 2주를 정리하고 있어요');
-  typing.classList.add('typing');
+  const typing = thinking('지난 2주를 정리하고 있어요');
   try {
     const r = await api('report');
     typing.remove();
@@ -588,12 +612,9 @@ async function report() {
 }
 
 function appendProfile(container, opening, records, correction = '') {
-  const deck = el('div', 'result-deck');
-  appendProfileCards(deck, {
+  appendProfileReport(container, {
     results: state.traitResults, estimates: state.estimates, completed: screening.results, demo: Boolean(state.example || state.talk),
-    takeScreening: collectScreening,
-  });
-  container.append(deck);
+  }, { takeScreening: collectScreening });
   if (correction) container.append(el('p', 'profile-correction', '바로잡은 내용 · ' + correction));
   if (records.length || opening) {
     const evidence = resultDetails('대화와 건강 기록 보기');
@@ -636,7 +657,7 @@ function talkRecords(talk) {
 function showExampleReport(container) {
   container.replaceChildren();
   if (!phonePreview) {
-    const title = el('h2', '', '마음 프로필');
+    const title = el('h2', '', 'Herz');
     title.tabIndex = -1;
     container.append(title);
   }
@@ -676,7 +697,7 @@ function showExampleReport(container) {
 
 function renderReport(r) {
   const li = el('li', 'report');
-  li.append(el('h2', 'type', '마음 프로필'));
+  li.append(el('h2', 'type', 'Herz'));
   const findings = (r.evidence || []).map((item) => ({
     label: METRIC_LABEL[item.metric] || '대화', basis: item.text, metric: item.metric,
   }));
@@ -693,7 +714,7 @@ function renderReport(r) {
 
 function shareCard(r) {
   const card = el('div', 'card');
-  card.append(el('span', 'card-brand', '마음 시간표'), el('strong', 'card-type', r.type_name), el('p', 'card-line', r.card_line));
+  card.append(el('span', 'card-brand', 'Herz'), el('strong', 'card-type', r.type_name), el('p', 'card-line', r.card_line));
   const mini = el('div', 'mini');
   for (const n of state.summary.recentNights) {
     const col = el('div');
@@ -714,33 +735,93 @@ function shareCard(r) {
 
 /* ---------- Rapport quiz: guess your own records first ---------- */
 
-function startQuiz(intro = '') {
+// Opening: one free-text answer about self-knowledge. It builds rapport and, like Q2, may move indicators.
+const OPENING = '사용자님은 스스로에 대해서 얼마나 잘 아시나요?';
+
+function startOpening() {
+  profile.step = 'opening';
+  state.history.push({ role: 'model', text: OPENING });
+  addMsg('ai', OPENING);
+  $('msg').placeholder = '내 말로 답하기';
+}
+
+async function answerOpening(text) {
+  state.history.push({ role: 'user', text });
+  busy(true);
+  const typing = thinking('답을 읽고 있어요');
+  const { cues, source } = await readFreeText(text);
+  typing.remove();
+  busy(false);
+  const signals = cueSignals(cues, text, null);
+  if (signals.length) recordSignals(state.estimates, text, signals, source);
+  addMsg('ai', '좋아요. 그럼 기록으로 한번 확인해 볼게요.');
+  startQuiz();
+}
+
+function startQuiz() {
   quiz.questions = buildQuiz(state.summary.data, state.summary.through);
   quiz.at = 0;
   quiz.correct = 0;
   if (!quiz.questions.length) return endQuiz();
   profile.step = 'quiz';
-  addMsg('ai', `${intro}이야기하기 전에 퀴즈부터 풀어 볼까요? 내 몸 기록을 얼마나 알고 있는지 ${quiz.questions.length}문제로 맞혀 봐요.`);
   askQuiz();
 }
 
+const ORDINALS = ['첫 번째', '두 번째', '세 번째', '네 번째', '다섯 번째'];
+const ordinalOf = (i) => (i === quiz.questions.length - 1 && i > 0 ? '마지막' : ORDINALS[i]);
+
 function askQuiz() {
   const question = quiz.questions[quiz.at];
-  addMsg('ai', question.text, replyChoices(question.choices));
+  addMsg('ai', `${ordinalOf(quiz.at)} 질문이에요. ${question.text}`, replyChoices(question.choices));
   $('msg').placeholder = question.choices.length ? '고르거나 숫자로 답하기' : '예) 7시간 반';
 }
 
 function answerQuiz(reply) {
   const result = quiz.questions[quiz.at].answer(reply);
   if (result.correct) quiz.correct++;
-  addMsg('ai', result.reply);
   quiz.at++;
-  if (quiz.at < quiz.questions.length) askQuiz();
-  else endQuiz();
+  if (quiz.at < quiz.questions.length) {
+    addMsg('ai', result.reply);
+    askQuiz();
+  } else {
+    endQuiz(result.reply);
+  }
 }
 
-function endQuiz() {
-  if (quiz.questions.length) addMsg('ai', `${quiz.questions.length}문제 중 ${quiz.correct}개 맞혔어요. 이제 이 기록을 같이 볼게요.`);
+// At least half right: the count with '!'. Under half: no count.
+function quizScore(total, correct) {
+  if (correct === total) return `${total}개 모두 맞히셨어요!`;
+  if (correct * 2 >= total) return `${total}개 중 ${correct}개 맞히셨어요!`;
+  return '기록이 생각과는 꽤나 달랐던 모양이에요.';
+}
+
+// A '...' bubble whose dots ripple: the one waiting indicator for every pause.
+function thinking(label = '기록을 분석하고 있어요') {
+  const li = document.createElement('li');
+  li.className = 'msg ai thinking';
+  li.setAttribute('role', 'status');
+  const dots = el('p', 'dots');
+  dots.setAttribute('aria-label', label);
+  for (let i = 0; i < 3; i++) dots.append(el('span', null, '.'));
+  li.append(dots);
+  $('chat').append(li);
+  revealChatItem(li);
+  return li;
+}
+
+// The last answer's feedback and the score share one bubble, then the dots stand in for
+// the agent reading the records, so stage 2 opens on a single question bubble.
+const THINKING_MS = 3500;
+
+async function endQuiz(lastReply = '') {
+  if (quiz.questions.length) {
+    addMsg('ai', `${lastReply} ${quizScore(quiz.questions.length, quiz.correct)}`.trim());
+    busy(true);
+    const dots = thinking();
+    await new Promise((resolve) => setTimeout(resolve, THINKING_MS));
+    dots.remove();
+    busy(false);
+  }
   $('msg').placeholder = '내 이야기로 답하기';
   state.talk = { changes: detectChanges(state.summary.data, state.summary.through), at: 0, asked: 0, log: [], current: null, stopped: false, correction: '' };
   openSession(true);
@@ -749,20 +830,28 @@ function endQuiz() {
 /* ---------- Stage 2: ask about the clearest changes in the user's own records ---------- */
 
 const MAX_TALK_QUESTIONS = 4;
-const TALK_SKIP = '이 이야기는 건너뛸게요.';
+// Q2 has no choices: the user answers in their own words or taps 잘 모르겠어요.
+const TALK_UNKNOWN = '잘 모르겠어요';
+const TALK_SKIP = /^(?:잘 모르겠어요|모르겠어요|건너뛸게요|넘어갈래요|패스|말하고 싶지 않아요|이 이야기는 건너뛸게요)[.!~ ]*$/u;
+
+// A thin line that closes the quiz; stage 2 starts below it as a new part of the talk.
+function chatDivider() {
+  const li = el('li', 'chat-divider');
+  li.setAttribute('role', 'separator');
+  $('chat').append(li);
+}
 
 function startTalk() {
   const talk = state.talk;
   profile.step = 'talk';
   updateTurns();
+  chatDivider();
   if (!talk.changes.length) {
-    addMsg('ai', '최근 기록은 평소와 크게 다르지 않았어요. 지금까지의 이야기로 마음 프로필을 보여 드릴게요.');
+    addMsg('ai', '최근 기록은 평소와 크게 다르지 않았어요. 지금까지의 이야기로 Herz에 정리했어요.');
     finishTalk();
     return;
   }
-  const count = talk.changes.length === 1 ? '한 가지' : '두 가지';
-  addMsg('ai', `기록을 평소와 비교해 보니 달라진 게 ${count} 눈에 띄어요. 왜 그랬는지 물어볼게요.`);
-  askChange();
+  askChange('다음으로, 생활기록에 특이한 사항이 있어서 여쭤볼게요. ');
 }
 
 function askChange(prefix = '') {
@@ -772,13 +861,14 @@ function askChange(prefix = '') {
   talk.current = { change, question, why: null, first: '', firstCues: [], second: '' };
   talk.asked++;
   setFocus(change.record || 'none', { scroll: false });
-  askTalk(prefix + question.text, question.choices);
+  askTalk(prefix + question.text);
 }
 
-function askTalk(text, choices) {
+// Stage 2 asks for the user's own words; the only button is 잘 모르겠어요.
+function askTalk(text) {
   state.history.push({ role: 'model', text });
-  addMsg('ai', text, replyChoices(choices.map((choice) => choice.text)));
-  $('msg').placeholder = '고르거나 내 말로 답하기';
+  addMsg('ai', text, replyChoices([], TALK_UNKNOWN));
+  $('msg').placeholder = '내 말로 답하기';
 }
 
 // Free text: Gemini reads it when the server has a key, the demo on the device.
@@ -800,8 +890,7 @@ async function readFreeText(text) {
 async function whyFor(turn, key) {
   const scripted = whyQuestion(key, state.talk.at);
   if (state.mode !== 'gemini') return scripted;
-  const typing = addMsg('ai', '다음 질문을 고르고 있어요');
-  typing.classList.add('typing');
+  const typing = thinking('다음 질문을 고르고 있어요');
   try {
     const context = { summary: state.summary, history: [{ role: 'model', text: turn.question.text }, { role: 'user', text: turn.first }] };
     const out = await api('why', context, { timeout: 8000, extra: { change: turn.change.label } });
@@ -820,7 +909,7 @@ async function answerTalk(text) {
   const turn = talk.current;
   const second = Boolean(turn.why);
   const asked = turn.why || turn.question;
-  const skipped = text === TALK_SKIP;
+  const skipped = TALK_SKIP.test(text);
   const picked = asked.choices.find((choice) => choice.text === text);
   state.history.push({ role: 'user', text });
   let cues = [];
@@ -829,8 +918,7 @@ async function answerTalk(text) {
     cues = picked.cues;
   } else if (!skipped) {
     busy(true);
-    const typing = addMsg('ai', '답을 읽고 있어요');
-    typing.classList.add('typing');
+    const typing = thinking('답을 읽고 있어요');
     ({ cues, source } = await readFreeText(text));
     typing.remove();
     busy(false);
@@ -846,19 +934,19 @@ async function answerTalk(text) {
       turn.why = await whyFor(turn, picked ? picked.why : whyKeyFor(cues));
       busy(false);
       talk.asked++;
-      askTalk((talk.at ? '그랬군요. ' : '그런 일이 있었군요. ') + turn.why.text, turn.why.choices);
+      askTalk((talk.at ? '그랬군요. ' : '그런 일이 있었군요. ') + turn.why.text);
       return;
     }
   } else {
     turn.second = skipped ? '' : text;
   }
   talk.at++;
-  const ack = skipped ? '넘어갈게요.' : signals.length ? '말해 줘서 고마워요.' : '그런 사정이 있었군요.';
+  const ack = skipped ? '괜찮아요.' : signals.length ? '말씀해 주셔서 고마워요.' : '그런 사정이 있었군요.';
   if (talk.at < talk.changes.length && talk.asked < MAX_TALK_QUESTIONS) {
     askChange(ack + ' 하나 더 볼게요. ');
     return;
   }
-  addMsg('ai', ack + ' 들려준 이야기로 마음 프로필을 정리했어요.');
+  addMsg('ai', ack + ' 들려주신 이야기로 Herz에 정리했어요.');
   finishTalk();
 }
 
@@ -879,7 +967,7 @@ function showPhonePanel(panelId) {
 }
 
 function openPhone() {
-  document.title = '스마트폰 체험 · 마음 시간표';
+  document.title = '스마트폰 체험 · Herz';
   // Stage 2 calls the AI only when the server has a key; until this answers, it stays on the device.
   fetch('/api/status').then((res) => res.json()).then((status) => { state.mode = status.mode; }).catch(() => {});
   document.body.append($('phoneTemplate').content.cloneNode(true));
@@ -909,7 +997,7 @@ function openPhone() {
     $('turnCount').hidden = true;
     $('chatPanel').tabIndex = -1;
     $('chatPanel').focus({ preventScroll: true });
-    startQuiz('선택한 건강 기록을 불러왔어요. ');
+    startOpening();
   });
   $('viewRecord').addEventListener('click', () => {
     showPhonePanel('recordPanel');

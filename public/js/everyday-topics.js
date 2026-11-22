@@ -44,7 +44,7 @@ export const topics = [
         basis: scores.join(' + ') + ' · 한국어판 PPS 4~8번 응답 합계' };
     },
     source: ['한국어판 PPS 표 8 · Kim 등 (2020)', 'https://doi.org/10.1080/23311908.2020.1809844'],
-    credit: 'PPS 원척도 Piers Steel. 한국어 문항 H. Kim, H. Kim, W.-K. Lee, S. Han, P. Carlbring, A. Rozental. CC BY 4.0. 표 8에서 실행지연 5문항을 발췌했고 응답 화면은 마음 시간표가 구성했어요.',
+    credit: 'PPS 원척도 Piers Steel. 한국어 문항 H. Kim, H. Kim, W.-K. Lee, S. Han, P. Carlbring, A. Rozental. CC BY 4.0. 표 8에서 실행지연 5문항을 발췌했고 응답 화면은 Herz가 구성했어요.',
   },
   {
     id: 'social', title: '눈치', method: '상황 선택 · 3장면',
