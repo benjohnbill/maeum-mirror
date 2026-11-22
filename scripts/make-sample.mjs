@@ -1,7 +1,8 @@
 // Generates a synthetic Apple Health export.xml for the demo persona.
 // Every value is invented. Run: node scripts/make-sample.mjs
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { writeFileSync } from 'node:fs';
 import { createCollector } from '../public/js/parse.js';
+import { writeReadFixtures } from './read-fixtures.mjs';
 
 function rng(start) {
   let seed = start;
@@ -116,14 +117,5 @@ writeFileSync(new URL('../public/sample/export.xml', import.meta.url), out.join(
 // The phone preview requests only the sample categories the visitor grants.
 const collector = createCollector();
 collector.feed(out.join('\n'));
-const { sleep, steps, rhr, hrv, workouts, stride, speed, flights, daylight, exercise } = collector.data;
-const categories = {
-  sleep, steps: [...steps].map(([day, sources]) => [day, [...sources]]), rhr: [...rhr], hrv: [...hrv], workouts,
-  stride: [...stride], speed: [...speed], flights: [...flights], daylight: [...daylight], exercise: [...exercise],
-};
-const readDir = new URL('../public/sample/read/', import.meta.url);
-mkdirSync(readDir, { recursive: true });
-for (const [name, values] of Object.entries(categories)) {
-  writeFileSync(new URL(name + '.json', readDir), JSON.stringify({ through: end.toISOString().slice(0, 10), values }) + '\n');
-}
+writeReadFixtures(collector.data, end.toISOString().slice(0, 10), new URL('../public/sample/read/', import.meta.url));
 console.log('records:', out.length);
