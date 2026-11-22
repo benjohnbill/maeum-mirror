@@ -16,7 +16,8 @@ const testName = (id) => testManifest[id]?.name ?? id.toUpperCase();
 // names one of the row's forms (phq2, gad2); a multi-trait form supplies the row's subscore.
 // Only PHQ-9 has a Korean population table, so only PHQ-9 gets a rank ('등'). Every other
 // test shows its raw score (or mean) and its band when the source publishes bands.
-export function testResult(row, completed, age) {
+// The PHQ-9 sheet asks whether the user is 19 or older (`adult`); the table covers adults only.
+export function testResult(row, completed) {
   const forms = [row.test, ...(row.alt || [])].filter(Boolean);
   const related = forms.map((id) => completed.get(id)).filter(Boolean);
   const [test] = related;
@@ -27,17 +28,16 @@ export function testResult(row, completed, age) {
   const instrument = key && key !== row.subscore ? testName(test.id) + ' 중 ' + testName(key) : testName(test.id);
   const measured = { test, related, instrument, score, min, max, method: (key ? test.subscoreMethods?.[key] : test.method) || 'sum', band: key ? null : test.band, rank: null };
   if (test.id === 'phq9' && !key) {
-    const inRange = age == null || age >= 19;
-    if (inRange && Number.isFinite(test.populationPercentile)) measured.rank = rankFromPercentile(test.populationPercentile);
+    if (test.adult !== false && Number.isFinite(test.populationPercentile)) measured.rank = rankFromPercentile(test.populationPercentile);
     Object.assign(measured, { group: '국내 성인', source: test.source, label: test.sourceLabel });
   }
   return measured;
 }
 
 // Kept for callers that name a card by its indicator id.
-export function clinicalResult(topic, completed, age) {
+export function clinicalResult(topic, completed) {
   const row = indicatorById.get(topic);
-  return row ? testResult(row, completed, age) : null;
+  return row ? testResult(row, completed) : null;
 }
 
 // This comparison group exists only in the prototype. Its 100 example scores are

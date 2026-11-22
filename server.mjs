@@ -14,7 +14,8 @@ const envFile = fileURLToPath(new URL('./.env', import.meta.url));
 if (existsSync(envFile)) {
   for (const line of readFileSync(envFile, 'utf8').split('\n')) {
     const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
-    if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, '');
+    // A variable set in the shell wins, even when set to empty (GEMINI_API_KEY= runs the demo).
+    if (m && !(m[1] in process.env)) process.env[m[1]] = m[2].replace(/^["']|["']$/g, '');
   }
 }
 // Extra keys are tried when one key's quota runs out (429).

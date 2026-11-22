@@ -15,9 +15,10 @@ test('PHQ-9 ranks use the same descending direction at low and high scores, with
   for (let total = 0; total <= 27; total++) {
     const answers = Object.fromEntries(form.items.map((item, index) => [item.id, Math.max(0, Math.min(3, total - 3 * index))]));
     const completed = new Map([['phq9', scoreForm(form, answers)]]);
-    ranks.push(clinicalResult('mood', completed, 25).rank);
-    assert.equal(clinicalResult('mood', completed, 17).rank, null);
-    assert.equal(clinicalResult('worry', completed, 25), null);
+    ranks.push(clinicalResult('mood', completed).rank);
+    assert.equal(clinicalResult('mood', new Map([['phq9', { ...completed.get('phq9'), adult: false }]])).rank, null);
+    assert.equal(clinicalResult('mood', new Map([['phq9', { ...completed.get('phq9'), adult: true }]])).rank, ranks.at(-1));
+    assert.equal(clinicalResult('worry', completed), null);
   }
   assert.deepEqual(ranks, [...ranks].sort((a, b) => b - a));
   assert.deepEqual([ranks[0], ranks[10], ranks[26]], [83, 6, 1]);
@@ -31,17 +32,17 @@ test('only PHQ-9 gets a rank: GAD-7, GAD-2, PHQ-4 parts and other tests show raw
   const tests = [combined, anxiety, full];
   for (const order of [tests, [...tests].reverse()]) {
     const completed = new Map(order.map(t => [t.id, t]));
-    const depression = clinicalResult('mood', completed, 25);
+    const depression = clinicalResult('mood', completed);
     assert.deepEqual([depression.score, depression.min, depression.max, depression.rank], [5, 0, 6, null]);
     assert.match(depression.instrument, /^PHQ-4 중 PHQ-?2$/);
-    assert.equal(clinicalResult('worry', completed, 25).test, full);
-    assert.equal(clinicalResult('worry', completed, 25).rank, null);
-    assert.equal(clinicalResult('worry', completed, 25).band, '중등도');
+    assert.equal(clinicalResult('worry', completed).test, full);
+    assert.equal(clinicalResult('worry', completed).rank, null);
+    assert.equal(clinicalResult('worry', completed).band, '중등도');
     completed.delete('gad7');
-    assert.equal(clinicalResult('worry', completed, 25).test, anxiety);
+    assert.equal(clinicalResult('worry', completed).test, anxiety);
     completed.delete('gad2');
-    assert.equal(clinicalResult('worry', completed, 25).score, 3);
-    assert.equal(clinicalResult('worry', completed, 25).band, null);
+    assert.equal(clinicalResult('worry', completed).score, 3);
+    assert.equal(clinicalResult('worry', completed).band, null);
   }
 });
 
@@ -65,7 +66,7 @@ test('generic scoring handles reverse items, mean method, subscores and a derive
   assert.equal(result.summary, '균형 9.5');
 
   const row = { id: 'x', test: 'demo', subscore: 'down' };
-  const measured = testResult(row, new Map([['demo', result]]), 25);
+  const measured = testResult(row, new Map([['demo', result]]));
   assert.deepEqual([measured.score, measured.min, measured.max, measured.method, measured.rank, measured.band], [3.5, 1, 7, 'mean', null, null]);
 
   const plain = scoreForm(withOptions({ ...form, scoring: { method: 'sum', reverse_items: [] }, subscores: {}, subscore_rules: undefined }), { 'demo.a': 1, 'demo.b': 2, 'demo.c': 3, 'demo.d': 4 });
@@ -81,7 +82,7 @@ test('every available test file loads, scores at both ends inside its range, and
       const result = scoreForm(form, answers);
       assert.ok(result.score >= result.min && result.score <= result.max, id);
       for (const row of indicators.filter(r => r.test === id)) {
-        const measured = testResult(row, new Map([[id, result]]), 30);
+        const measured = testResult(row, new Map([[id, result]]));
         assert.ok(Number.isFinite(measured.score) && measured.score >= measured.min && measured.score <= measured.max, row.id);
         if (id !== 'phq9') assert.equal(measured.rank, null, row.id);
       }

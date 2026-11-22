@@ -6,7 +6,6 @@ import { parseHealthFile } from './parse.js';
 import { computeSummary, hhmm } from './metrics.js';
 import { SYSTEM_PROMPT } from './prompt.js';
 import { isCrisis, isImmediateDanger, CRISIS_LINES } from './safety.js';
-import { readName, readAge } from './preview-profile.js';
 import { runScreening } from './phq9-sheet.js';
 import { loadForm, scoreForm } from './screening-forms.js';
 import { screeningCommand, screeners, offlineScreeningOffer, testManifest } from './screening-router.js';
@@ -25,7 +24,7 @@ const $ = (id) => document.getElementById(id);
 const phonePreview = document.documentElement.classList.contains('phone-preview');
 
 const state = { summary: null, history: [], turns: 0, busy: false, finished: false, supportRelevant: false, example: null, talk: null, pendingReply: null, editing: false, traitResults: new Map(), estimates: newEstimates() };
-const profile = { step: null, name: null, age: null };
+const profile = { step: null };
 const quiz = { questions: [], at: 0, correct: 0 };
 const screening = { status: 'available', offered: [], results: new Map() };
 
@@ -498,10 +497,7 @@ $('composer').addEventListener('submit', (e) => {
     answerTalk(text);
     return;
   }
-  if (phonePreview && profile.step !== 'conversation') {
-    answerProfile(text);
-    return;
-  }
+  if (phonePreview && profile.step !== 'conversation') return;
   const command = screeningCommand(text, screening.offered[0] || 'phq9');
   if (!state.editing && command) {
     startScreening(command);
@@ -597,7 +593,7 @@ async function report() {
 function appendProfile(container, opening, records, correction = '') {
   const deck = el('div', 'result-deck');
   appendProfileCards(deck, {
-    results: state.traitResults, estimates: state.estimates, completed: screening.results, age: profile.age, demo: Boolean(state.example || state.talk),
+    results: state.traitResults, estimates: state.estimates, completed: screening.results, demo: Boolean(state.example || state.talk),
     takeScreening: collectScreening,
   });
   container.append(deck);
@@ -719,43 +715,15 @@ function shareCard(r) {
 
 /* ---------- Wire up ---------- */
 
-function askProfile(question) {
-  const example = profile.step === 'name' ? '하루라고 불러 주세요.' : '만 25살이에요.';
-  addMsg('ai', question, replyChoices([example]));
-}
-
-function answerProfile(reply) {
-  const skip = /^(?:건너뛰기|(?:이 이야기는 )?건너뛸게요|비밀|비밀이에요)[.!]?$/u.test(reply);
-  if (profile.step === 'name') {
-    profile.name = skip ? null : readName(reply);
-    if (!skip && !profile.name) {
-      askProfile('제가 부르면 좋을 이름이나 별명을 알려주세요. 건너뛰셔도 돼요.');
-      return;
-    }
-    profile.step = 'age';
-    const greeting = profile.name ? profile.name + '님, 반가워요. ' : '';
-    askProfile(greeting + '만으로 몇 살이세요?');
-    $('msg').placeholder = '예) 스물다섯 살이에요.';
-    return;
-  }
-  if (profile.step !== 'age') return;
-  profile.age = skip ? null : readAge(reply);
-  if (!skip && profile.age === null) {
-    askProfile('만 나이를 25살처럼 알려주세요. 건너뛰셔도 돼요.');
-    return;
-  }
-  startQuiz();
-}
-
 /* ---------- Rapport quiz: guess your own records first ---------- */
 
-function startQuiz() {
+function startQuiz(intro = '') {
   quiz.questions = buildQuiz(state.summary.data, state.summary.through);
   quiz.at = 0;
   quiz.correct = 0;
   if (!quiz.questions.length) return endQuiz();
   profile.step = 'quiz';
-  addMsg('ai', `이야기하기 전에 퀴즈부터 풀어 볼까요? 내 몸 기록을 얼마나 알고 있는지 ${quiz.questions.length}문제로 맞혀 봐요.`);
+  addMsg('ai', `${intro}이야기하기 전에 퀴즈부터 풀어 볼까요? 내 몸 기록을 얼마나 알고 있는지 ${quiz.questions.length}문제로 맞혀 봐요.`);
   askQuiz();
 }
 
@@ -920,12 +888,10 @@ function openPhone() {
     state.summary = summary;
     $('session').hidden = false;
     showPhonePanel('chatPanel');
-    profile.step = 'name';
     $('turnCount').hidden = true;
-    askProfile('선택한 건강 기록을 불러왔어요. 어떤 이름으로 불러드릴까요? 별명도 좋아요.');
-    $('msg').placeholder = '이름이나 별명을 적어 주세요.';
     $('chatPanel').tabIndex = -1;
     $('chatPanel').focus({ preventScroll: true });
+    startQuiz('선택한 건강 기록을 불러왔어요. ');
   });
   $('viewRecord').addEventListener('click', () => {
     showPhonePanel('recordPanel');

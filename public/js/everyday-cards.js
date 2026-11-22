@@ -173,13 +173,13 @@ function actionButton(footer, { label, detail, disabled, run }) {
 
 // One card per indicators.js row, in that order. Each card shows one source:
 // a finished test, else a finished everyday exercise, else the conversation estimate.
-export function appendProfileCards(deck, { results, estimates, completed, age, demo, takeScreening }) {
+export function appendProfileCards(deck, { results, estimates, completed, demo, takeScreening }) {
   for (const row of indicators) {
     const topic = everydayById.get(row.everyday);
     const card = el('details', 'result-card profile-result');
     function render(focus = false) {
       const record = topic && results.get(topic.id);
-      const measured = row.test && testResult(row, completed, age);
+      const measured = row.test && testResult(row, completed);
       let model;
       if (measured) model = screeningModel(measured);
       else if (record) model = exerciseModel(topic, record, demo, row);
