@@ -226,6 +226,29 @@ export function groundedSignals(text, signals) {
   return strongest(valid);
 }
 
+/* ---------- Stage 2 cues ---------- */
+
+// The phone demo's change talk names cues { indicator, item, dir } and never a size; this is
+// its only scoring rule. Answer 1 moves each cue 6. Answer 2 (`first` = answer 1's cues) moves it
+// 12 when answer 1 pointed the same way on that indicator, else 8. A cue may carry its own quote
+// (free text); otherwise `quote` (the picked choice) is used. One cue per indicator, unknown cues dropped.
+export function cueSignals(cues, quote, first = null) {
+  const out = [];
+  for (const cue of cues) {
+    if (!cuesByIndicator.get(cue.indicator)?.has(cue.item) || ![1, -1].includes(cue.dir)) continue;
+    if (out.some((signal) => signal.indicator === cue.indicator)) continue;
+    const size = !first ? 6 : first.some((f) => f.indicator === cue.indicator && f.dir === cue.dir) ? 12 : 8;
+    out.push({ indicator: cue.indicator, item: cue.item, delta: cue.dir * size, quote: cue.quote || quote });
+  }
+  return out;
+}
+
+// Free text read on the device: the offline classifier's clues as cues with their own quotes.
+export function localCues(text) {
+  return localTraitSignals(text).filter((signal) => signal.item)
+    .map(({ indicator, item, delta, quote }) => ({ indicator, item, dir: Math.sign(delta), quote }));
+}
+
 export function newEstimates() {
   return { replies: [], last: null };
 }

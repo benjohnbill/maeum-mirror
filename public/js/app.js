@@ -1,7 +1,7 @@
 import { el, resultCard, resultDetails } from './report-elements.js';
 import { appendProfileCards, estimateModel } from './everyday-cards.js';
 import { everydayTopics } from './everyday-topics.js';
-import { newEstimates, recordTraitReply, recordSignals, groundedSignals, estimateFor } from './trait-estimates.js';
+import { newEstimates, recordTraitReply, recordSignals, groundedSignals, estimateFor, cueSignals, localCues } from './trait-estimates.js';
 import { parseHealthFile } from './parse.js';
 import { computeSummary, hhmm } from './metrics.js';
 import { SYSTEM_PROMPT } from './prompt.js';
@@ -12,7 +12,7 @@ import { screeningCommand, screeners, offlineScreeningOffer, testManifest } from
 import { readPreviewHealth, setupPhoneAccess } from './phone-access.js';
 import { indicators } from './indicators.js';
 import { buildQuiz } from './rapport-quiz.js';
-import { detectChanges, firstQuestion, followUp, recordLine } from './change-talk.js';
+import { detectChanges, firstQuestion, whyQuestion, whyKeyFor, recordLine } from './change-talk.js';
 
 import { workoutConcern, workoutStories, caseAnswers, previewSession, previewTurn, previewResult, recordText } from './preview-report.js';
 
@@ -23,7 +23,7 @@ const SPAN = 14 * 60; // to 11:00
 const $ = (id) => document.getElementById(id);
 const phonePreview = document.documentElement.classList.contains('phone-preview');
 
-const state = { summary: null, history: [], turns: 0, busy: false, finished: false, supportRelevant: false, example: null, talk: null, pendingReply: null, editing: false, traitResults: new Map(), estimates: newEstimates() };
+const state = { mode: 'demo', summary: null, history: [], turns: 0, busy: false, finished: false, supportRelevant: false, example: null, talk: null, pendingReply: null, editing: false, traitResults: new Map(), estimates: newEstimates() };
 const profile = { step: null };
 const quiz = { questions: [], at: 0, correct: 0 };
 const screening = { status: 'available', offered: [], results: new Map() };
@@ -772,7 +772,7 @@ function askChange(prefix = '') {
   const talk = state.talk;
   const change = talk.changes[talk.at];
   const question = firstQuestion(change, talk.at);
-  talk.current = { change, question, follow: null, first: '', firstSignals: [], second: '' };
+  talk.current = { change, question, why: null, first: '', firstCues: [], second: '' };
   talk.asked++;
   setFocus(change.record || 'none', { scroll: false });
   askTalk(prefix + question.text, question.choices);
@@ -784,53 +784,48 @@ function askTalk(text, choices) {
   $('msg').placeholder = '고르거나 내 말로 답하기';
 }
 
-function recordTalkSignals(text, signals, source) {
-  const grounded = groundedSignals(text, signals);
-  recordSignals(state.estimates, text, grounded, source);
-  return grounded;
+// Free text: the demo reads it on the device. Returns cues { indicator, item, dir, quote }.
+async function readFreeText(text) {
+  return { cues: localCues(text), source: '기기 내 문장 분류' };
 }
 
-// Free text: the AI reads it when the server has a key; otherwise the on-device classifier.
-async function readFreeText(text) {
-  try {
-    // A slow model must not stall the conversation; the offline classifier answers instead.
-    const out = await api('signals', state, { timeout: 8000 });
-    // A first mention is never a confirmed clue (6~9 at most); only a follow-up answer reaches 10~15.
-    const capped = (out.signals || []).map((s) => ({ ...s, delta: Math.sign(s.delta) * Math.min(Math.abs(s.delta), state.talk?.current?.follow ? 15 : 9) }));
-    if (out.mode !== 'demo' && Array.isArray(out.signals)) return recordTalkSignals(text, capped, 'AI 대화 해석');
-  } catch {
-    // Fall through to the offline classifier.
-  }
-  return recordTraitReply(state.estimates, text).signals;
+// Q2: why about the first answer, from the scripted WHY bank.
+async function whyFor(turn, key) {
+  return whyQuestion(key, state.talk.at);
 }
 
 async function answerTalk(text) {
   const talk = state.talk;
   const turn = talk.current;
-  const asked = turn.follow || turn.question;
+  const second = Boolean(turn.why);
+  const asked = turn.why || turn.question;
   const skipped = text === TALK_SKIP;
   const picked = asked.choices.find((choice) => choice.text === text);
   state.history.push({ role: 'user', text });
-  let signals = [];
+  let cues = [];
+  let source = '선택한 이유';
   if (picked) {
-    signals = recordTalkSignals(text, picked.signals, '선택한 이유');
+    cues = picked.cues;
   } else if (!skipped) {
     busy(true);
     const typing = addMsg('ai', '답을 읽고 있어요');
     typing.classList.add('typing');
-    signals = await readFreeText(text);
+    ({ cues, source } = await readFreeText(text));
     typing.remove();
     busy(false);
   }
-  if (!turn.follow) {
+  const signals = skipped ? [] : cueSignals(cues, text, second ? turn.firstCues : null);
+  if (!skipped) recordSignals(state.estimates, text, signals, source);
+  if (!second) {
     turn.first = skipped ? '' : text;
-    turn.firstSignals = signals;
+    turn.firstCues = cues;
     talk.log.push(turn);
-    const follow = talk.asked < MAX_TALK_QUESTIONS ? followUp(signals, picked?.follow, talk.at) : null;
-    if (follow) {
-      turn.follow = follow;
+    if (!skipped && talk.asked < MAX_TALK_QUESTIONS) {
+      busy(true);
+      turn.why = await whyFor(turn, picked ? picked.why : whyKeyFor(cues));
+      busy(false);
       talk.asked++;
-      askTalk((talk.at ? '그랬군요. ' : '그런 일이 있었군요. ') + follow.text, follow.choices);
+      askTalk((talk.at ? '그랬군요. ' : '그런 일이 있었군요. ') + turn.why.text, turn.why.choices);
       return;
     }
   } else {
@@ -864,6 +859,8 @@ function showPhonePanel(panelId) {
 
 function openPhone() {
   document.title = '스마트폰 체험 · 마음 시간표';
+  // Stage 2 calls the AI only when the server has a key; until this answers, it stays on the device.
+  fetch('/api/status').then((res) => res.json()).then((status) => { state.mode = status.mode; }).catch(() => {});
   document.body.append($('phoneTemplate').content.cloneNode(true));
   $('intro').hidden = true;
   $('phoneViewport').append($('session'));

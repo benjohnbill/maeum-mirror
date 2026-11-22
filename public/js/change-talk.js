@@ -1,6 +1,6 @@
 // Stage 2 of the phone demo: find the one or two clearest changes in the user's own
-// health records, then ask about them with pre-written reasons. Each reason carries
-// signals in the indicators.js contract: { indicator, item, delta, quote }.
+// health records, then ask why (Q1) and why again about the answer (Q2). Each choice carries
+// cues { indicator, item, dir }; trait-estimates.js cueSignals turns them into ledger signals.
 import { nights, onsetOf, shift, keyToMin, WD } from './metrics.js';
 import { daily } from './rapport-quiz.js';
 
@@ -285,61 +285,191 @@ export function recordLine(change) {
 
 // Item ids are cue ids from trait-estimates.js cueTable(): test items ('cbi.1', 'tipi.3')
 // and everyday questions ('recovery.2' = tension right after resting, 0-based).
-// phq9/gad7 items need a `cue` in their test file, and auditc needs its test file,
-// before groundedSignals accepts them.
+// A cue names a row of the table and the direction (1 toward `high`, -1 toward `low`); it has no size.
+const c = (indicator, item, dir) => ({ indicator, item, dir });
 
-// Follow-ups confirm or undo the first answer. `indicators` lists what the follow-up
-// probes; `item` is the cue it asks about (for the first of those indicators). Yes confirms
-// the first answer's direction at 12, no reverses the first answer's signals for those indicators.
-const FOLLOW = {
-  mood: { indicators: ['mood', 'flourishing', 'affect'], item: 'phq9.1', asks: ['좋아하던 것도 예전만큼 재미가 덜했어요?', '평소 즐기던 일에도 손이 덜 갔어요?'], yes: '네, 좋아하던 것도 시들했어요', no: '아니요, 좋아하는 건 여전히 즐거웠어요' },
-  fatigue: { indicators: ['mood', 'burnout'], item: 'phq9.4', asks: ['쉬고 나서도 피곤함이 잘 안 풀렸어요?', '깨어 있는 동안에도 기운이 거의 없었어요?'], yes: '네, 쉬어도 계속 기운이 없었어요', no: '아니요, 쉬고 나면 괜찮아졌어요' },
-  burnout: { indicators: ['burnout'], item: 'cbi.3', asks: ['일이 끝난 뒤에도 마음까지 지친 느낌이었어요?', '하루가 끝나면 녹초가 된 느낌이었어요?'], yes: '네, 하루가 끝나면 녹초였어요', no: '아니요, 바빴을 뿐 기운은 남아 있었어요' },
-  worry: { indicators: ['worry', 'stability'], item: 'gad7.2', asks: ['그 생각이 낮에도 자꾸 떠올라 하던 일을 방해했어요?', '걱정을 멈추고 싶어도 잘 안 멈춰졌어요?'], yes: '네, 낮에도 그 생각이 자꾸 떠올랐어요', no: '아니요, 하던 일을 하면 잊혔어요' },
-  restless: { indicators: ['worry'], item: 'gad7.5', asks: ['가만히 있기 힘들 만큼 마음이 들떴어요?'], yes: '네, 가만히 있기가 힘들었어요', no: '아니요, 걷고 싶었을 뿐이에요' },
-  phone: { indicators: ['phone'], item: 'sassv.9', asks: ['내려놓으려 해도 생각보다 오래 보게 됐어요?', '잠깐 보려다 한참 지나 있던 날이 많았어요?'], yes: '네, 계획보다 훨씬 오래 봤어요', no: '아니요, 그날따라 그랬어요' },
-  recovery: { indicators: ['recovery', 'affect'], item: 'recovery.2', asks: ['그러고 나면 긴장이 좀 풀렸어요?', '그 시간 뒤엔 마음이 한결 가벼웠어요?'], yes: '네, 하고 나면 한결 가벼웠어요', no: '아니요, 해도 마음은 그대로였어요' },
-  tension: { indicators: ['recovery', 'burnout'], item: 'recovery.2', asks: ['그렇게 늦게까지 있어도 긴장은 잘 안 풀렸어요?'], yes: '네, 쉬어도 긴장이 남았어요', no: '아니요, 그 시간에 많이 풀렸어요' },
-  rested: { indicators: ['recovery'], item: 'recovery.2', asks: ['자고 일어나면 개운했어요?', '푹 자고 나면 몸이 가뿐했어요?'], yes: '네, 아침이 한결 개운했어요', no: '아니요, 자도 개운하지 않았어요' },
-  energy: { indicators: ['affect', 'openness'], item: 'spane.1', asks: ['요즘 기분 좋은 날이 많았어요?', '그 덕에 기분이 좀 나아졌어요?'], yes: '네, 요즘 기분이 좋아요', no: '아니요, 기분은 평소와 비슷해요' },
-  joy: { indicators: ['affect', 'extraversion'], item: 'spane.10', asks: ['요즘 즐거운 일이 많았어요?', '같이 하니까 더 즐거웠어요?'], yes: '네, 즐거운 날이 많았어요', no: '아니요, 즐거운 건 평소만큼이었어요' },
-  calm: { indicators: ['stability', 'worry'], item: 'tipi.9', asks: ['요즘 마음이 차분하고 덜 흔들려요?'], yes: '네, 요즘 마음이 차분해요', no: '아니요, 그렇진 않아요' },
-  routine: { indicators: ['conscientiousness', 'affect'], item: 'tipi.3', asks: ['정한 대로 꾸준히 지키고 있어요?', '마음먹은 걸 거의 매일 지켰어요?'], yes: '네, 거의 매일 지켰어요', no: '아니요, 마음만 먹고 잘 안 됐어요' },
-  delay: { indicators: ['delay'], item: 'delay.3', asks: ['다른 할 일도 자꾸 내일로 미뤄졌어요?'], yes: '네, 다른 일도 자꾸 미뤘어요', no: '아니요, 운동만 그랬어요' },
-  drinking: { indicators: ['alcohol'], item: 'auditc.2', asks: ['한 번 마실 때 평소보다 많이 마셨어요?'], yes: '네, 마시면 많이 마셨어요', no: '아니요, 양은 평소와 비슷했어요' },
+// Q2 asks why about the first answer. Keys are reason kinds; `life` covers reasons outside the
+// person (travel, illness, weather) and free text with no cue. Choices are everyday reasons, not symptoms.
+const WHY = {
+  burnout: {
+    asks: ['할 일이 그렇게 몰린 데는 이유가 있었어요?', '요즘 그렇게 바빴던 건 왜였을까요?'],
+    choices: [
+      { text: '미뤄 둔 일이 한꺼번에 몰렸어요', cues: [c('delay', 'delay.2', 1)] },
+      { text: '잘 해내고 싶어서 끝까지 붙잡고 있었어요', cues: [c('conscientiousness', 'tipi.3', 1)] },
+      { text: '쉬어도 피곤이 안 풀려서 일이 더뎠어요', cues: [c('burnout', 'cbi.1', 1)] },
+      { text: '그 시기엔 원래 일이 많아요', cues: [] },
+    ],
+  },
+  worry: {
+    asks: ['그 생각이 자꾸 떠오른 데는 이유가 있었어요?', '무엇이 그렇게 마음에 걸렸어요?'],
+    choices: [
+      { text: '결과를 기다리는 일이 있었어요', cues: [c('worry', 'gad7.1', 1)] },
+      { text: '원래 걱정이 많은 편이에요', cues: [c('worry', 'gad7.3', 1), c('stability', 'tipi.4', -1)] },
+      { text: '딱히 이유 없이 생각이 꼬리를 물었어요', cues: [c('worry', 'gad7.2', 1)] },
+      { text: '사람 사이에 마음 쓰이는 일이 있었어요', cues: [c('affect', 'spane.2', -1)] },
+    ],
+  },
+  phone: {
+    asks: ['휴대폰을 오래 보게 된 데는 이유가 있었어요?', '그 시간엔 왜 휴대폰을 붙잡게 됐을까요?'],
+    choices: [
+      { text: '보다 보면 시간 가는 줄 몰랐어요', cues: [c('phone', 'sassv.9', 1)] },
+      { text: '연락이나 알림을 놓칠까 봐 계속 봤어요', cues: [c('phone', 'sassv.8', 1)] },
+      { text: '잠이 안 와서 그냥 들고 있었어요', cues: [c('mood', 'phq9.3', 1)] },
+      { text: '하루 중 쉬는 시간이 그때뿐이었어요', cues: [] },
+    ],
+  },
+  fatigue: {
+    asks: ['그렇게 지친 데는 짚이는 이유가 있었어요?', '기운이 빠진 건 무엇 때문이었을까요?'],
+    choices: [
+      { text: '일이나 공부에 힘을 많이 쏟았어요', cues: [c('burnout', 'cbi.1', 1)] },
+      { text: '마음 쓰이는 일이 있어서 더 지쳤어요', cues: [c('burnout', 'cbi.3', 1)] },
+      { text: '쉬는 날에도 제대로 못 쉬었어요', cues: [c('recovery', 'recovery.2', -1)] },
+      { text: '감기 기운이 있었어요', cues: [] },
+    ],
+  },
+  mood: {
+    asks: ['그렇게 내키지 않았던 데는 이유가 있었어요?', '마음이 잘 안 움직인 건 왜였을까요?'],
+    choices: [
+      { text: '요즘 재미있는 일이 별로 없었어요', cues: [c('mood', 'phq9.1', 1), c('flourishing', 'fs.3', -1)] },
+      { text: '기운이 없어서 다 귀찮았어요', cues: [c('mood', 'phq9.4', 1)] },
+      { text: '혼자 조용히 쉬고 싶었어요', cues: [c('extraversion', 'tipi.6', -1)] },
+      { text: '날씨나 일정 때문이었어요', cues: [] },
+    ],
+  },
+  rested: {
+    asks: ['푹 자려고 마음먹은 계기가 있었어요?', '잠을 챙기게 된 이유가 있었어요?'],
+    choices: [
+      { text: '그동안 너무 지쳐 있었어요', cues: [c('burnout', 'cbi.1', 1)] },
+      { text: '잘 자고 나면 마음이 풀리더라고요', cues: [c('recovery', 'recovery.2', 1)] },
+      { text: '중요한 일을 앞두고 컨디션을 챙겼어요', cues: [c('conscientiousness', 'tipi.3', 1)] },
+      { text: '시간이 나서 늦잠을 잤어요', cues: [] },
+    ],
+  },
+  tension: {
+    asks: ['낮에는 내 시간이 없었던 이유가 있었어요?', '하루가 그렇게 빠듯했던 건 왜였을까요?'],
+    choices: [
+      { text: '일과 할 일이 낮을 다 채웠어요', cues: [c('burnout', 'cbi.1', 1)] },
+      { text: '퇴근해도 머리가 계속 일 생각이었어요', cues: [c('worry', 'gad7.4', 1)] },
+      { text: '밤이 돼야 마음이 좀 놓였어요', cues: [c('worry', 'gad7.1', 1)] },
+      { text: '집안일이나 가족을 챙기느라 바빴어요', cues: [] },
+    ],
+  },
+  recovery: {
+    asks: ['머리를 식힐 시간이 필요했던 이유가 있었어요?', '그렇게 쉬어 가게 된 계기가 있었어요?'],
+    choices: [
+      { text: '일이 많아서 잠깐이라도 벗어나고 싶었어요', cues: [c('burnout', 'cbi.1', 1)] },
+      { text: '움직이고 나면 마음이 풀리더라고요', cues: [c('recovery', 'recovery.2', 1)] },
+      { text: '새로운 길을 걸어 보는 게 좋았어요', cues: [c('openness', 'tipi.5', 1)] },
+      { text: '날이 좋아서요', cues: [] },
+    ],
+  },
+  restless: {
+    asks: ['마음이 답답했던 데는 이유가 있었어요?', '무엇 때문에 그렇게 답답했을까요?'],
+    choices: [
+      { text: '신경 쓰이는 일이 머리에서 안 떠났어요', cues: [c('worry', 'gad7.2', 1)] },
+      { text: '가만히 있으면 더 초조했어요', cues: [c('worry', 'gad7.5', 1)] },
+      { text: '누군가와 서운한 일이 있었어요', cues: [c('affect', 'spane.2', -1)] },
+      { text: '이유는 잘 모르겠어요', cues: [] },
+    ],
+  },
+  energy: {
+    asks: ['새로 해 보게 된 계기가 있었어요?', '그걸 시작하게 된 이유가 있었어요?'],
+    choices: [
+      { text: '새로운 걸 해 보고 싶었어요', cues: [c('openness', 'tipi.5', 1)] },
+      { text: '사람들과 어울리는 게 좋아서요', cues: [c('extraversion', 'tipi.1', 1)] },
+      { text: '요즘 기분이 좋아서 뭐든 해 보고 싶었어요', cues: [c('affect', 'spane.3', 1)] },
+      { text: '친구가 같이 하자고 했어요', cues: [] },
+    ],
+  },
+  routine: {
+    asks: ['그렇게 마음먹은 계기가 있었어요?', '꾸준히 하게 된 이유가 있었어요?'],
+    choices: [
+      { text: '한번 정한 건 지키는 편이에요', cues: [c('conscientiousness', 'tipi.3', 1)] },
+      { text: '몸이 예전 같지 않아서 챙기기로 했어요', cues: [c('burnout', 'cbi.6', 1)] },
+      { text: '하고 나면 기분이 좋아서요', cues: [c('affect', 'spane.3', 1)] },
+      { text: '건강검진 결과를 보고 시작했어요', cues: [] },
+    ],
+  },
+  joy: {
+    asks: ['요즘 사람들을 자주 만난 이유가 있었어요?', '같이 하게 된 계기가 있었어요?'],
+    choices: [
+      { text: '사람들과 있으면 힘이 나요', cues: [c('extraversion', 'tipi.1', 1), c('flourishing', 'fs.2', 1)] },
+      { text: '오랜만에 여유가 생겼어요', cues: [c('burnout', 'cbi.1', -1)] },
+      { text: '혼자 있으면 기분이 가라앉아서요', cues: [c('affect', 'spane.2', -1)] },
+      { text: '모임 일정이 우연히 겹쳤어요', cues: [] },
+    ],
+  },
+  calm: {
+    asks: ['마음이 편해진 데는 이유가 있었어요?', '무엇 덕분에 차분해졌을까요?'],
+    choices: [
+      { text: '신경 쓰던 일이 잘 마무리됐어요', cues: [c('worry', 'gad7.3', -1)] },
+      { text: '쉬는 시간을 잘 챙겼어요', cues: [c('recovery', 'recovery.2', 1)] },
+      { text: '원래 크게 흔들리지 않는 편이에요', cues: [c('stability', 'tipi.9', 1)] },
+      { text: '일이 좀 줄었어요', cues: [c('burnout', 'cbi.1', -1)] },
+    ],
+  },
+  delay: {
+    asks: ['자꾸 미루게 된 데는 이유가 있었어요?', '손이 잘 안 간 건 왜였을까요?'],
+    choices: [
+      { text: '시작하기까지가 제일 힘들었어요', cues: [c('delay', 'delay.4', 1)] },
+      { text: '내일 하면 되지 싶었어요', cues: [c('delay', 'delay.3', 1)] },
+      { text: '할 일이 많아 지쳐 있었어요', cues: [c('burnout', 'cbi.1', 1)] },
+      { text: '날씨나 일정이 안 맞았어요', cues: [] },
+    ],
+  },
+  drinking: {
+    asks: ['술자리가 늘어난 데는 이유가 있었어요?', '요즘 자주 마시게 된 건 왜였을까요?'],
+    choices: [
+      { text: '한잔하면 긴장이 좀 풀려서요', cues: [c('worry', 'gad7.4', 1)] },
+      { text: '마시다 보면 양이 늘었어요', cues: [c('alcohol', 'auditc.2', 1)] },
+      { text: '사람들과 어울리는 게 좋아서요', cues: [c('extraversion', 'tipi.1', 1)] },
+      { text: '모임이나 회식이 많은 시기였어요', cues: [] },
+    ],
+  },
+  life: {
+    asks: ['그 일이 있던 동안은 어떻게 지냈어요?', '그동안 마음은 좀 어땠어요?'],
+    choices: [
+      { text: '오랜만에 기분 전환이 됐어요', cues: [c('affect', 'spane.3', 1)] },
+      { text: '정신없이 바빠서 좀 지쳤어요', cues: [c('burnout', 'cbi.1', 1)] },
+      { text: '생활 리듬이 흐트러져서 신경 쓰였어요', cues: [c('stability', 'tipi.4', -1)] },
+      { text: '별일 없이 지나갔어요', cues: [] },
+    ],
+  },
 };
 
-// Free-text answers pick the follow-up by the strongest signal's indicator.
-// A follow-up confirms the first answer in its own direction, so the pick depends on the sign:
-// [follow when the clue points to `high`, follow when it points to `low`]. null = no follow-up.
-const FOLLOW_BY_INDICATOR = {
+// Free-text answers pick the WHY entry by their first cue: [when dir is 1, when dir is -1].
+// Indicators not listed here, and null entries, use `life`.
+const WHY_BY_INDICATOR = {
   mood: ['mood', null], burnout: ['burnout', null], worry: ['worry', 'calm'], phone: ['phone', null],
   recovery: ['recovery', 'tension'], affect: ['energy', 'mood'], delay: ['delay', null], alcohol: ['drinking', null],
   stability: ['calm', 'worry'], conscientiousness: ['routine', null], extraversion: ['joy', null], flourishing: [null, 'mood'],
 };
 
-const s = (indicator, item, delta) => ({ indicator, item, delta });
-const LIFE = []; // a pure life reason carries no signals
+export function whyKeyFor(cues) {
+  const [first] = cues;
+  return (first && WHY_BY_INDICATOR[first.indicator]?.[first.dir > 0 ? 0 : 1]) || 'life';
+}
 
-// metric × direction -> questions and 3–4 reasons. `follow` names a FOLLOW entry.
+// metric × direction -> Q1 asks and 3–4 reasons. dir is the sign the reason points on that indicator;
+// `why` names the WHY entry for Q2.
 const BANK = {
   sleep: {
     down: {
       asks: ['잠이 줄어든 데 이유가 있었을까요?', '무엇 때문에 잠이 줄었을까요?'],
       choices: [
-        { text: '할 일이 많아서 늦게까지 깨어 있었어요', signals: [s('burnout', 'cbi.1', 4)], follow: 'burnout' },
-        { text: '누워도 생각이 많아 잠이 안 왔어요', signals: [s('worry', 'gad7.2', 5), s('mood', 'phq9.3', 3)], follow: 'worry' },
-        { text: '휴대폰을 보다가 늦게 잤어요', signals: [s('phone', 'sassv.9', 4)], follow: 'phone' },
-        { text: '여행이나 일정 때문이었어요', signals: LIFE },
+        { text: '할 일이 많아서 늦게까지 깨어 있었어요', cues: [c('burnout', 'cbi.1', 1)], why: 'burnout' },
+        { text: '누워도 생각이 많아 잠이 안 왔어요', cues: [c('worry', 'gad7.2', 1), c('mood', 'phq9.3', 1)], why: 'worry' },
+        { text: '휴대폰을 보다가 늦게 잤어요', cues: [c('phone', 'sassv.9', 1)], why: 'phone' },
+        { text: '여행이나 일정 때문이었어요', cues: [], why: 'life' },
       ],
     },
     up: {
       asks: ['잠이 늘어난 건 어떤 이유였을까요?', '요즘 더 오래 자게 된 이유가 있을까요?'],
       choices: [
-        { text: '피곤해서 자도 자도 졸렸어요', signals: [s('mood', 'phq9.4', 4), s('burnout', 'cbi.1', 3)], follow: 'fatigue' },
-        { text: '딱히 할 게 없어서 오래 누워 있었어요', signals: [s('mood', 'phq9.1', 4), s('flourishing', 'fs.3', -3)], follow: 'mood' },
-        { text: '일부러 푹 자려고 했어요', signals: [s('recovery', 'recovery.2', 3)], follow: 'rested' },
-        { text: '아파서 쉬었어요', signals: LIFE },
+        { text: '피곤해서 자도 자도 졸렸어요', cues: [c('mood', 'phq9.4', 1), c('burnout', 'cbi.1', 1)], why: 'fatigue' },
+        { text: '딱히 할 게 없어서 오래 누워 있었어요', cues: [c('mood', 'phq9.1', 1), c('flourishing', 'fs.3', -1)], why: 'mood' },
+        { text: '일부러 푹 자려고 했어요', cues: [c('recovery', 'recovery.2', 1)], why: 'rested' },
+        { text: '아파서 쉬었어요', cues: [], why: 'life' },
       ],
     },
   },
@@ -347,19 +477,19 @@ const BANK = {
     up: {
       asks: ['늦게 잠드는 날이 이어진 이유가 있을까요?', '밤이 길어진 데 무슨 일이 있었어요?'],
       choices: [
-        { text: '일이나 공부가 밤까지 이어졌어요', signals: [s('burnout', 'cbi.1', 4)], follow: 'burnout' },
-        { text: '밤에만 내 시간이 있어서 늦게까지 버텼어요', signals: [s('recovery', 'recovery.2', -3), s('burnout', 'cbi.3', 3)], follow: 'tension' },
-        { text: '누워도 걱정이 많아 잠이 늦게 들었어요', signals: [s('worry', 'gad7.1', 5), s('mood', 'phq9.3', 3)], follow: 'worry' },
-        { text: '휴대폰이나 영상을 보다 보니 늦어졌어요', signals: [s('phone', 'sassv.9', 4)], follow: 'phone' },
+        { text: '일이나 공부가 밤까지 이어졌어요', cues: [c('burnout', 'cbi.1', 1)], why: 'burnout' },
+        { text: '밤에만 내 시간이 있어서 늦게까지 버텼어요', cues: [c('recovery', 'recovery.2', -1), c('burnout', 'cbi.3', 1)], why: 'tension' },
+        { text: '누워도 걱정이 많아 잠이 늦게 들었어요', cues: [c('worry', 'gad7.1', 1), c('mood', 'phq9.3', 1)], why: 'worry' },
+        { text: '휴대폰이나 영상을 보다 보니 늦어졌어요', cues: [c('phone', 'sassv.9', 1)], why: 'phone' },
       ],
     },
     down: {
       asks: ['일찍 잠들게 된 이유가 있을까요?', '잠드는 시간이 당겨진 데 무슨 일이 있었어요?'],
       choices: [
-        { text: '저녁이면 금방 지쳐서 일찍 눕게 돼요', signals: [s('burnout', 'cbi.1', 4)], follow: 'burnout' },
-        { text: '일찍 자고 일찍 일어나려고 마음먹었어요', signals: [s('conscientiousness', 'tipi.3', 3)], follow: 'routine' },
-        { text: '저녁에 할 게 없어서 일찍 누워요', signals: [s('mood', 'phq9.1', 3), s('flourishing', 'fs.3', -2)], follow: 'mood' },
-        { text: '아침 일정이 생겼어요', signals: LIFE },
+        { text: '저녁이면 금방 지쳐서 일찍 눕게 돼요', cues: [c('burnout', 'cbi.1', 1)], why: 'burnout' },
+        { text: '일찍 자고 일찍 일어나려고 마음먹었어요', cues: [c('conscientiousness', 'tipi.3', 1)], why: 'routine' },
+        { text: '저녁에 할 게 없어서 일찍 누워요', cues: [c('mood', 'phq9.1', 1), c('flourishing', 'fs.3', -1)], why: 'mood' },
+        { text: '아침 일정이 생겼어요', cues: [], why: 'life' },
       ],
     },
   },
@@ -367,19 +497,19 @@ const BANK = {
     down: {
       asks: ['무슨 일이 있었어요?', '덜 걷게 된 이유가 있었을까요?'],
       choices: [
-        { text: '나가기가 싫었어요', signals: [s('mood', 'phq9.1', 4), s('affect', 'spane.1', -3)], follow: 'mood' },
-        { text: '일이 많아 책상 앞에만 있었어요', signals: [s('burnout', 'cbi.1', 3)], follow: 'burnout' },
-        { text: '몸이 무겁고 기운이 없었어요', signals: [s('mood', 'phq9.4', 4), s('burnout', 'cbi.2', 3)], follow: 'fatigue' },
-        { text: '날씨가 춥거나 비가 왔어요', signals: LIFE },
+        { text: '나가기가 싫었어요', cues: [c('mood', 'phq9.1', 1), c('affect', 'spane.1', -1)], why: 'mood' },
+        { text: '일이 많아 책상 앞에만 있었어요', cues: [c('burnout', 'cbi.1', 1)], why: 'burnout' },
+        { text: '몸이 무겁고 기운이 없었어요', cues: [c('mood', 'phq9.4', 1), c('burnout', 'cbi.2', 1)], why: 'fatigue' },
+        { text: '날씨가 춥거나 비가 왔어요', cues: [], why: 'life' },
       ],
     },
     up: {
       asks: ['많이 걷게 된 이유가 있었어요?', '어디를 그렇게 다녔어요?'],
       choices: [
-        { text: '산책하면서 머리를 식혔어요', signals: [s('recovery', 'recovery.2', 4), s('affect', 'spane.1', 3)], follow: 'recovery' },
-        { text: '마음이 답답해서 무작정 걸었어요', signals: [s('worry', 'gad7.5', 4), s('affect', 'spane.2', -3)], follow: 'restless' },
-        { text: '새로 시작한 운동이나 모임이 있어요', signals: [s('openness', 'tipi.5', 3), s('affect', 'spane.1', 3)], follow: 'energy' },
-        { text: '여행이나 이사로 많이 다녔어요', signals: LIFE },
+        { text: '산책하면서 머리를 식혔어요', cues: [c('recovery', 'recovery.2', 1), c('affect', 'spane.1', 1)], why: 'recovery' },
+        { text: '마음이 답답해서 무작정 걸었어요', cues: [c('worry', 'gad7.5', 1), c('affect', 'spane.2', -1)], why: 'restless' },
+        { text: '새로 시작한 운동이나 모임이 있어요', cues: [c('openness', 'tipi.5', 1), c('affect', 'spane.1', 1)], why: 'energy' },
+        { text: '여행이나 이사로 많이 다녔어요', cues: [], why: 'life' },
       ],
     },
   },
@@ -387,18 +517,18 @@ const BANK = {
     down: {
       asks: ['덜 움직이게 된 이유가 있었을까요?', '무슨 일이 있었어요?'],
       choices: [
-        { text: '움직이기가 귀찮았어요', signals: [s('mood', 'phq9.4', 3), s('burnout', 'cbi.2', 2)], follow: 'fatigue' },
-        { text: '바빠서 거의 앉아만 있었어요', signals: [s('burnout', 'cbi.1', 3)], follow: 'burnout' },
-        { text: '다리가 아프거나 몸이 안 좋았어요', signals: LIFE },
-        { text: '출근길이나 사는 곳이 바뀌었어요', signals: LIFE },
+        { text: '움직이기가 귀찮았어요', cues: [c('mood', 'phq9.4', 1), c('burnout', 'cbi.2', 1)], why: 'fatigue' },
+        { text: '바빠서 거의 앉아만 있었어요', cues: [c('burnout', 'cbi.1', 1)], why: 'burnout' },
+        { text: '다리가 아프거나 몸이 안 좋았어요', cues: [], why: 'life' },
+        { text: '출근길이나 사는 곳이 바뀌었어요', cues: [], why: 'life' },
       ],
     },
     up: {
       asks: ['계단을 많이 오른 이유가 있었어요?', '어디를 다녀왔어요?'],
       choices: [
-        { text: '건강 챙기려고 일부러 계단으로 다녔어요', signals: [s('conscientiousness', 'tipi.3', 3)], follow: 'routine' },
-        { text: '등산이나 나들이를 다녀왔어요', signals: [s('affect', 'spane.1', 3), s('openness', 'tipi.5', 2)], follow: 'energy' },
-        { text: '출근길이나 사는 곳이 바뀌었어요', signals: LIFE },
+        { text: '건강 챙기려고 일부러 계단으로 다녔어요', cues: [c('conscientiousness', 'tipi.3', 1)], why: 'routine' },
+        { text: '등산이나 나들이를 다녀왔어요', cues: [c('affect', 'spane.1', 1), c('openness', 'tipi.5', 1)], why: 'energy' },
+        { text: '출근길이나 사는 곳이 바뀌었어요', cues: [], why: 'life' },
       ],
     },
   },
@@ -406,18 +536,18 @@ const BANK = {
     down: {
       asks: ['밖에 덜 나가게 된 이유가 있었을까요?', '무슨 일이 있었어요?'],
       choices: [
-        { text: '집에만 있고 싶었어요', signals: [s('mood', 'phq9.1', 3), s('extraversion', 'tipi.6', -2)], follow: 'mood' },
-        { text: '실내에서 일하는 시간이 길어졌어요', signals: [s('burnout', 'cbi.1', 2)], follow: 'burnout' },
-        { text: '해가 짧아지고 추워졌어요', signals: LIFE },
-        { text: '워치를 잘 안 찼어요', signals: LIFE },
+        { text: '집에만 있고 싶었어요', cues: [c('mood', 'phq9.1', 1), c('extraversion', 'tipi.6', -1)], why: 'mood' },
+        { text: '실내에서 일하는 시간이 길어졌어요', cues: [c('burnout', 'cbi.1', 1)], why: 'burnout' },
+        { text: '해가 짧아지고 추워졌어요', cues: [], why: 'life' },
+        { text: '워치를 잘 안 찼어요', cues: [], why: 'life' },
       ],
     },
     up: {
       asks: ['밖에 있는 시간이 늘어난 이유가 있었어요?', '요즘 어디서 시간을 보냈어요?'],
       choices: [
-        { text: '일부러 밖에서 쉬는 시간을 가졌어요', signals: [s('recovery', 'recovery.2', 3), s('affect', 'spane.1', 2)], follow: 'recovery' },
-        { text: '나들이나 약속이 많았어요', signals: [s('extraversion', 'tipi.1', 3), s('affect', 'spane.10', 3)], follow: 'joy' },
-        { text: '외근이나 이동이 많았어요', signals: LIFE },
+        { text: '일부러 밖에서 쉬는 시간을 가졌어요', cues: [c('recovery', 'recovery.2', 1), c('affect', 'spane.1', 1)], why: 'recovery' },
+        { text: '나들이나 약속이 많았어요', cues: [c('extraversion', 'tipi.1', 1), c('affect', 'spane.10', 1)], why: 'joy' },
+        { text: '외근이나 이동이 많았어요', cues: [], why: 'life' },
       ],
     },
   },
@@ -425,19 +555,19 @@ const BANK = {
     down: {
       asks: ['운동이 줄어든 이유가 있었을까요?', '그 시간은 어떻게 보냈어요?'],
       choices: [
-        { text: '운동할 마음이 잘 안 생겼어요', signals: [s('mood', 'phq9.1', 4), s('flourishing', 'fs.3', -2)], follow: 'mood' },
-        { text: '일이 바빠 시간이 없었어요', signals: [s('burnout', 'cbi.1', 3)], follow: 'burnout' },
-        { text: '하려고 했는데 자꾸 미뤘어요', signals: [s('delay', 'delay.4', 4)], follow: 'delay' },
-        { text: '다치거나 아파서 쉬었어요', signals: LIFE },
+        { text: '운동할 마음이 잘 안 생겼어요', cues: [c('mood', 'phq9.1', 1), c('flourishing', 'fs.3', -1)], why: 'mood' },
+        { text: '일이 바빠 시간이 없었어요', cues: [c('burnout', 'cbi.1', 1)], why: 'burnout' },
+        { text: '하려고 했는데 자꾸 미뤘어요', cues: [c('delay', 'delay.4', 1)], why: 'delay' },
+        { text: '다치거나 아파서 쉬었어요', cues: [], why: 'life' },
       ],
     },
     up: {
       asks: ['운동을 더 하게 된 계기가 있었어요?', '요즘 운동이 늘어난 이유가 궁금해요.'],
       choices: [
-        { text: '스트레스를 풀려고 운동했어요', signals: [s('recovery', 'recovery.2', 3)], follow: 'recovery' },
-        { text: '목표가 생겨서 꾸준히 해요', signals: [s('conscientiousness', 'tipi.3', 4), s('affect', 'spane.1', 3)], follow: 'routine' },
-        { text: '친구와 같이 하게 됐어요', signals: [s('extraversion', 'tipi.1', 3), s('affect', 'spane.10', 2)], follow: 'joy' },
-        { text: '날이 좋아서요', signals: LIFE },
+        { text: '스트레스를 풀려고 운동했어요', cues: [c('recovery', 'recovery.2', 1)], why: 'recovery' },
+        { text: '목표가 생겨서 꾸준히 해요', cues: [c('conscientiousness', 'tipi.3', 1), c('affect', 'spane.1', 1)], why: 'routine' },
+        { text: '친구와 같이 하게 됐어요', cues: [c('extraversion', 'tipi.1', 1), c('affect', 'spane.10', 1)], why: 'joy' },
+        { text: '날이 좋아서요', cues: [], why: 'life' },
       ],
     },
   },
@@ -445,56 +575,33 @@ const BANK = {
     up: {
       asks: ['요즘 몸이나 마음에 무슨 일이 있었어요?', '심박이 오른 데 짚이는 게 있을까요?'],
       choices: [
-        { text: '긴장하거나 신경 쓰는 일이 많아요', signals: [s('worry', 'gad7.1', 4), s('stability', 'tipi.4', -3)], follow: 'worry' },
-        { text: '잠을 잘 못 잤어요', signals: [s('mood', 'phq9.3', 3), s('burnout', 'cbi.1', 2)], follow: 'fatigue' },
-        { text: '술자리가 잦았어요', signals: [s('alcohol', 'auditc.1', 4)], follow: 'drinking' },
-        { text: '감기 기운이 있거나 아팠어요', signals: LIFE },
+        { text: '긴장하거나 신경 쓰는 일이 많아요', cues: [c('worry', 'gad7.1', 1), c('stability', 'tipi.4', -1)], why: 'worry' },
+        { text: '잠을 잘 못 잤어요', cues: [c('mood', 'phq9.3', 1), c('burnout', 'cbi.1', 1)], why: 'fatigue' },
+        { text: '술자리가 잦았어요', cues: [c('alcohol', 'auditc.1', 1)], why: 'drinking' },
+        { text: '감기 기운이 있거나 아팠어요', cues: [], why: 'life' },
       ],
     },
     down: {
       asks: ['심박이 내려간 데 짚이는 게 있을까요?', '요즘 달라진 생활이 있어요?'],
       choices: [
-        { text: '운동을 꾸준히 했어요', signals: [s('conscientiousness', 'tipi.3', 3), s('affect', 'spane.1', 3)], follow: 'routine' },
-        { text: '요즘 마음이 편해졌어요', signals: [s('stability', 'tipi.9', 4), s('worry', 'gad7.1', -3)], follow: 'calm' },
-        { text: '쉬는 날이 많았어요', signals: LIFE },
+        { text: '운동을 꾸준히 했어요', cues: [c('conscientiousness', 'tipi.3', 1), c('affect', 'spane.1', 1)], why: 'routine' },
+        { text: '요즘 마음이 편해졌어요', cues: [c('stability', 'tipi.9', 1), c('worry', 'gad7.1', -1)], why: 'calm' },
+        { text: '쉬는 날이 많았어요', cues: [], why: 'life' },
       ],
     },
   },
 };
 BANK.workouts = BANK.exercise;
 
-const withQuote = (signals, quote) => signals.map((signal) => ({ ...signal, quote }));
-
-// The first question about one change: wording, reason choices and their signals.
+// The first question about one change: wording and reason choices.
 export function firstQuestion(change, index = 0) {
   const entry = BANK[change.id][change.direction];
-  const ask = entry.asks[index % entry.asks.length];
-  return {
-    text: `${describe(change, index)} ${ask}`,
-    choices: entry.choices.map((choice) => ({ ...choice, signals: withQuote(choice.signals, choice.text) })),
-  };
+  return { text: `${describe(change, index)} ${entry.asks[index % entry.asks.length]}`, choices: entry.choices };
 }
 
-// The follow-up for a first answer, or null when the answer carried no signals.
-// `followId` comes from a picked choice; free text picks by its strongest signal.
-export function followUp(firstSignals, followId, index = 0) {
-  if (!firstSignals.length) return null;
-  const strongest = [...firstSignals].sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta))[0];
-  const follow = FOLLOW[followId || FOLLOW_BY_INDICATOR[strongest.indicator]?.[strongest.delta > 0 ? 0 : 1]];
-  if (!follow) return null;
-  const probed = firstSignals.filter((signal) => follow.indicators.includes(signal.indicator));
-  if (!probed.length) return null;
-  const confirm = probed.map((signal) => ({
-    indicator: signal.indicator,
-    item: signal.indicator === follow.indicators[0] ? follow.item : signal.item,
-    delta: Math.sign(signal.delta) * 12,
-  }));
-  const undo = probed.map((signal) => ({ indicator: signal.indicator, item: signal.item, delta: -signal.delta }));
-  return {
-    text: follow.asks[index % follow.asks.length],
-    choices: [
-      { text: follow.yes, signals: withQuote(confirm, follow.yes) },
-      { text: follow.no, signals: withQuote(undo, follow.no) },
-    ],
-  };
+// The scripted second question: why about the first answer. `key` is a WHY key (whyKeyFor for free text).
+export function whyQuestion(key, index = 0) {
+  const entry = WHY[key] || WHY.life;
+  return { text: entry.asks[index % entry.asks.length], choices: entry.choices };
 }
+export { BANK, WHY };
