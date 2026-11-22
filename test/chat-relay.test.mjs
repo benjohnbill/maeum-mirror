@@ -76,3 +76,21 @@ test('GET /api/status on Vercel returns the status', () => {
   assert.equal(res.code, 200);
   assert.deepEqual(res.body, { mode: 'demo', model: null });
 });
+
+test('a Q2 needs a question word; yes/no forms are not open questions', async () => {
+  const { isOpenQuestion } = await import('../public/js/prompt.js');
+  for (const text of ['어쩌다 여행을 가시게 됐어요?', '요즘 어떤 일 때문에 그렇게 바쁘셨어요?', '무엇 때문에 잠을 챙기시게 됐어요?']) {
+    assert.equal(isOpenQuestion(text), true, text);
+  }
+  for (const text of ['유튜브를 그렇게 오래 보시게 된 일이 있으셨나요?', '깊은 사연이 있으셨나요?', '그렇게 바쁘셨던 이유가 있었어요?']) {
+    assert.equal(isOpenQuestion(text), false, text);
+  }
+});
+
+test('every scripted Q2 is an open question', async () => {
+  const { isOpenQuestion } = await import('../public/js/prompt.js');
+  const src = (await import('node:fs')).readFileSync(new URL('../public/js/change-talk.js', import.meta.url), 'utf8');
+  const asks = [...src.matchAll(/asks: \[([^\]]+)\]/g)].flatMap((m) => [...m[1].matchAll(/'([^']+)'/g)].map((q) => q[1]));
+  assert.ok(asks.length >= 30);
+  for (const text of asks) assert.equal(isOpenQuestion(text), true, text);
+});

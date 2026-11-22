@@ -278,7 +278,7 @@ const c = (indicator, item, dir) => ({ indicator, item, dir });
 // person (travel, illness, weather) and free text with no cue. Choices are everyday reasons, not symptoms.
 const WHY = {
   burnout: {
-    asks: ['할 일이 그렇게 몰린 데는 이유가 있었어요?', '요즘 그렇게 바쁘셨던 건 왜였을까요?'],
+    asks: ['어쩌다 할 일이 그렇게 몰렸어요?', '요즘 그렇게 바쁘셨던 건 왜였을까요?'],
     choices: [
       { text: '미뤄 둔 일이 한꺼번에 몰렸어요', cues: [c('delay', 'delay.2', 1)] },
       { text: '잘 해내고 싶어서 끝까지 붙잡고 있었어요', cues: [c('conscientiousness', 'tipi.3', 1)] },
@@ -287,7 +287,7 @@ const WHY = {
     ],
   },
   worry: {
-    asks: ['그 생각이 자꾸 떠오른 데는 이유가 있었어요?', '무엇이 그렇게 마음에 걸리셨어요?'],
+    asks: ['어떤 생각이 그렇게 자꾸 떠오르셨어요?', '무엇이 그렇게 마음에 걸리셨어요?'],
     choices: [
       { text: '결과를 기다리는 일이 있었어요', cues: [c('worry', 'gad7.1', 1)] },
       { text: '원래 걱정이 많은 편이에요', cues: [c('worry', 'gad7.3', 1), c('stability', 'tipi.4', -1)] },
@@ -296,7 +296,7 @@ const WHY = {
     ],
   },
   phone: {
-    asks: ['휴대폰을 오래 보게 된 데는 이유가 있었어요?', '그 시간엔 왜 휴대폰을 붙잡게 되셨을까요?'],
+    asks: ['어쩌다 휴대폰을 그렇게 오래 보시게 됐어요?', '그 시간엔 왜 휴대폰을 붙잡게 되셨을까요?'],
     choices: [
       { text: '보다 보면 시간 가는 줄 몰랐어요', cues: [c('phone', 'sassv.9', 1)] },
       { text: '연락이나 알림을 놓칠까 봐 계속 봤어요', cues: [c('phone', 'sassv.8', 1)] },
@@ -305,7 +305,7 @@ const WHY = {
     ],
   },
   fatigue: {
-    asks: ['그렇게 지치신 데는 짚이는 이유가 있었어요?', '기운이 빠진 건 무엇 때문이었을까요?'],
+    asks: ['어쩌다 그렇게 지치셨어요?', '기운이 빠진 건 무엇 때문이었을까요?'],
     choices: [
       { text: '일이나 공부에 힘을 많이 쏟았어요', cues: [c('burnout', 'cbi.1', 1)] },
       { text: '마음 쓰이는 일이 있어서 더 지쳤어요', cues: [c('burnout', 'cbi.3', 1)] },
@@ -314,7 +314,7 @@ const WHY = {
     ],
   },
   mood: {
-    asks: ['그렇게 내키지 않았던 데는 이유가 있었어요?', '마음이 잘 안 움직인 건 왜였을까요?'],
+    asks: ['어쩌다 그렇게 마음이 내키지 않으셨어요?', '마음이 잘 안 움직인 건 왜였을까요?'],
     choices: [
       { text: '요즘 재미있는 일이 별로 없었어요', cues: [c('mood', 'phq9.1', 1), c('flourishing', 'fs.3', -1)] },
       { text: '기운이 없어서 다 귀찮았어요', cues: [c('mood', 'phq9.4', 1)] },
@@ -323,7 +323,7 @@ const WHY = {
     ],
   },
   rested: {
-    asks: ['푹 주무시려고 마음먹으신 계기가 있었어요?', '잠을 챙기시게 된 이유가 있었어요?'],
+    asks: ['어쩌다 푹 주무시려고 마음먹으셨어요?', '무엇 때문에 잠을 챙기시게 됐어요?'],
     choices: [
       { text: '그동안 너무 지쳐 있었어요', cues: [c('burnout', 'cbi.1', 1)] },
       { text: '잘 자고 나면 마음이 풀리더라고요', cues: [c('recovery', 'recovery.2', 1)] },
@@ -332,7 +332,7 @@ const WHY = {
     ],
   },
   tension: {
-    asks: ['낮에 개인 시간이 없으셨던 이유가 있었어요?', '하루가 그렇게 빠듯했던 건 왜였을까요?'],
+    asks: ['무엇 때문에 낮에 개인 시간이 없으셨어요?', '하루가 그렇게 빠듯했던 건 왜였을까요?'],
     choices: [
       { text: '일과 할 일이 낮을 다 채웠어요', cues: [c('burnout', 'cbi.1', 1)] },
       { text: '퇴근해도 머리가 계속 일 생각이었어요', cues: [c('worry', 'gad7.4', 1)] },
@@ -341,7 +341,7 @@ const WHY = {
     ],
   },
   recovery: {
-    asks: ['머리를 식힐 시간이 필요하셨던 이유가 있었어요?', '그렇게 쉬어 가시게 된 계기가 있었어요?'],
+    asks: ['무엇 때문에 머리를 식힐 시간이 필요하셨어요?', '어쩌다 그렇게 쉬어 가시게 됐어요?'],
     choices: [
       { text: '일이 많아서 잠깐이라도 벗어나고 싶었어요', cues: [c('burnout', 'cbi.1', 1)] },
       { text: '움직이고 나면 마음이 풀리더라고요', cues: [c('recovery', 'recovery.2', 1)] },
@@ -350,7 +350,7 @@ const WHY = {
     ],
   },
   restless: {
-    asks: ['마음이 답답하셨던 데는 이유가 있었어요?', '무엇 때문에 그렇게 답답하셨을까요?'],
+    asks: ['어떤 일 때문에 마음이 답답하셨어요?', '무엇 때문에 그렇게 답답하셨을까요?'],
     choices: [
       { text: '신경 쓰이는 일이 머리에서 안 떠났어요', cues: [c('worry', 'gad7.2', 1)] },
       { text: '가만히 있으면 더 초조했어요', cues: [c('worry', 'gad7.5', 1)] },
@@ -359,7 +359,7 @@ const WHY = {
     ],
   },
   energy: {
-    asks: ['새로 해 보시게 된 계기가 있었어요?', '그걸 시작하시게 된 이유가 있었어요?'],
+    asks: ['어쩌다 새로 해 보시게 됐어요?', '무엇 때문에 그걸 시작하셨어요?'],
     choices: [
       { text: '새로운 걸 해 보고 싶었어요', cues: [c('openness', 'tipi.5', 1)] },
       { text: '사람들과 어울리는 게 좋아서요', cues: [c('extraversion', 'tipi.1', 1)] },
@@ -368,7 +368,7 @@ const WHY = {
     ],
   },
   routine: {
-    asks: ['그렇게 마음먹으신 계기가 있었어요?', '꾸준히 하시게 된 이유가 있었어요?'],
+    asks: ['어쩌다 그렇게 마음먹으셨어요?', '무엇 덕분에 꾸준히 하실 수 있었어요?'],
     choices: [
       { text: '한번 정한 건 지키는 편이에요', cues: [c('conscientiousness', 'tipi.3', 1)] },
       { text: '몸이 예전 같지 않아서 챙기기로 했어요', cues: [c('burnout', 'cbi.6', 1)] },
@@ -377,7 +377,7 @@ const WHY = {
     ],
   },
   joy: {
-    asks: ['요즘 사람들을 자주 만나신 이유가 있었어요?', '같이 하시게 된 계기가 있었어요?'],
+    asks: ['어쩌다 요즘 사람들을 자주 만나셨어요?', '어떤 계기로 같이 하시게 됐어요?'],
     choices: [
       { text: '사람들과 있으면 힘이 나요', cues: [c('extraversion', 'tipi.1', 1), c('flourishing', 'fs.2', 1)] },
       { text: '오랜만에 여유가 생겼어요', cues: [c('burnout', 'cbi.1', -1)] },
@@ -386,7 +386,7 @@ const WHY = {
     ],
   },
   calm: {
-    asks: ['마음이 편해진 데는 이유가 있었어요?', '무엇 덕분에 차분해지셨을까요?'],
+    asks: ['어쩌다 마음이 편해지셨어요?', '무엇 덕분에 차분해지셨을까요?'],
     choices: [
       { text: '신경 쓰던 일이 잘 마무리됐어요', cues: [c('worry', 'gad7.3', -1)] },
       { text: '쉬는 시간을 잘 챙겼어요', cues: [c('recovery', 'recovery.2', 1)] },
@@ -395,7 +395,7 @@ const WHY = {
     ],
   },
   delay: {
-    asks: ['자꾸 미루시게 된 데는 이유가 있었어요?', '손이 잘 안 간 건 왜였을까요?'],
+    asks: ['어쩌다 자꾸 미루시게 됐어요?', '손이 잘 안 간 건 왜였을까요?'],
     choices: [
       { text: '시작하기까지가 제일 힘들었어요', cues: [c('delay', 'delay.4', 1)] },
       { text: '내일 하면 되지 싶었어요', cues: [c('delay', 'delay.3', 1)] },
@@ -404,7 +404,7 @@ const WHY = {
     ],
   },
   drinking: {
-    asks: ['술자리가 늘어난 데는 이유가 있었어요?', '요즘 자주 마시게 되신 건 왜였을까요?'],
+    asks: ['어쩌다 술자리가 그렇게 늘었어요?', '요즘 자주 마시게 되신 건 왜였을까요?'],
     choices: [
       { text: '한잔하면 긴장이 좀 풀려서요', cues: [c('worry', 'gad7.4', 1)] },
       { text: '마시다 보면 양이 늘었어요', cues: [c('alcohol', 'auditc.2', 1)] },
@@ -413,7 +413,7 @@ const WHY = {
     ],
   },
   life: {
-    asks: ['혹시, 어떤 사연이 있었는지 더 자세하게 들어볼 수 있을까요?', '그동안 마음은 좀 어떠셨어요?'],
+    asks: ['혹시, 어떤 사연이 있었는지 더 자세하게 들어볼 수 있을까요?', '어쩌다 그렇게 지내시게 됐어요?'],
     choices: [
       { text: '오랜만에 기분 전환이 됐어요', cues: [c('affect', 'spane.3', 1)] },
       { text: '정신없이 바빠서 좀 지쳤어요', cues: [c('burnout', 'cbi.1', 1)] },
