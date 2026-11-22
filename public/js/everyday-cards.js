@@ -48,22 +48,36 @@ function runTopicQuestions(topic, previous) {
 
 const everydayById = new Map([resilienceTopic, ...everydayTopics].map(topic => [topic.id, topic]));
 
-// Conversation clues give a direction and the clues behind it, never a rank.
-export function estimateModel(topic, estimates) {
+// Conversation clues move an indicator from where it starts. Without a sample person's `prior`
+// ({ rank, basis } from sample/<persona>/profile.json) it starts at 50 and has no value until a clue arrives.
+export function estimateModel(topic, estimates, prior = null) {
   const row = indicatorById.get(topic.id) || topic;
-  const { direction, score, count, evidence } = estimateFor(estimates, row.id);
-  if (!count) return { value: { main: '단서 부족' }, meta: '대화로 추정',
+  const { direction, score, count, evidence } = estimateFor(estimates, row.id, prior ? 100 - prior.rank : 50);
+  if (!count && !prior) return { value: { main: '단서 부족' }, meta: '대화로 추정',
     description: '아직 이 항목을 추정할 만한 이야기가 없어요.' };
   // The big slot holds only the number. Direction and the clues stay in the evidence.
   const rank = Math.max(1, Math.min(100, 100 - score));
-  const side = direction > 0 ? row.high : direction < 0 ? row.low : '양쪽 단서가 비슷해요';
-  const items = [el('p', '', '대화 단서 ' + count + '개 · ' + side + (direction ? ' 쪽으로 읽었어요.' : '.'))];
+  const items = [];
+  if (count) {
+    const side = direction > 0 ? row.high : direction < 0 ? row.low : '양쪽 단서가 비슷해요';
+    items.push(el('p', '', '대화 단서 ' + count + '개 · ' + side + (direction ? ' 쪽으로 읽었어요.' : '.')));
+  }
   for (const signal of evidence) {
     items.push(el('blockquote', '', signal.quote));
     items.push(el('p', '', '→ ' + (signal.cue || signal.item) + ' → ' + row.title + ' · ' + (signal.delta > 0 ? row.high : row.low)));
   }
-  return { ...rankMetric(rank, '1등에 가까울수록 ' + row.high + '이에요.'), meta: '대화로 추정한 앱 내 순위 · 단서 ' + count + '개',
-    evidence: { label: '어떤 답변이 반영됐나요?', items } };
+  const caption = '1등에 가까울수록 ' + row.high + '이에요.';
+  if (!prior) {
+    return { ...rankMetric(rank, caption), meta: '대화로 추정한 앱 내 순위 · 단서 ' + count + '개',
+      evidence: { label: '어떤 답변이 반영됐나요?', items } };
+  }
+  const changed = count > 0 && rank !== prior.rank;
+  const metric = rankMetric(rank, caption);
+  if (changed) metric.value.prefix = prior.rank + '등 →';
+  return { ...metric, before: prior.rank, changed, quotes: evidence.map((signal) => signal.quote),
+    meta: '샘플 인물 설정값' + (count ? ' · 대화로 보정' : ''),
+    description: '기록에서 · ' + prior.basis + (changed ? ' 대화를 듣고 ' + prior.rank + '등에서 ' + rank + '등으로 옮겼어요.' : ''),
+    evidence: count ? { label: '어떤 답변이 반영됐나요?', items, open: changed } : null };
 }
 
 function rankMetric(rank, caption) {
@@ -180,15 +194,17 @@ function actionButton(footer, action) {
 }
 
 // The one place that decides whether an indicator has a value. A finished test comes first,
-// then a finished everyday exercise, then the conversation estimate. No source → null.
-export function indicatorModel(row, { results, estimates, completed, demo }) {
+// then a finished everyday exercise, then the conversation estimate (from the sample person's
+// prior rank when `prior` is given). No source → null.
+export function indicatorModel(row, { results, estimates, completed, demo, prior }) {
   const measured = row.test && completed && testResult(row, completed);
   if (measured) return { ...screeningModel(measured, row), source: 'test', test: measured.test.id };
   const topic = everydayById.get(row.everyday);
   const record = topic && results?.get(topic.id);
   if (record) return { ...exerciseModel(topic, record, demo, row), source: 'exercise' };
-  if (!estimates || !estimateFor(estimates, row.id).count) return null;
-  return { ...estimateModel(row, estimates), source: 'conversation' };
+  const start = prior?.[row.id];
+  if (!estimates || (!start && !estimateFor(estimates, row.id).count)) return null;
+  return { ...estimateModel(row, estimates, start), source: 'conversation' };
 }
 
 // The ways to measure one row: its everyday exercise, then its test. Without `takeScreening`

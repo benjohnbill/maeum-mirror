@@ -292,15 +292,16 @@ export function recordTraitReply(ledger, text, correction = false) {
   return entry;
 }
 
-// direction: -1 toward `low`, 1 toward `high`, 0 when the clues cancel out or none exist.
-export function estimateFor(ledger, indicator) {
-  let score = 50;
+// `start` is the score before any clue: 50 (the middle) unless a sample person's prior sets it.
+// direction: -1 toward `low`, 1 toward `high` from `start`, 0 when the clues cancel out or none exist.
+export function estimateFor(ledger, indicator, start = 50) {
+  let score = start;
   let evidence = [];
   const seen = new Set();
   for (const entry of ledger.replies) {
     const signal = entry.signals.find((s) => s.indicator === indicator);
     if (!signal) continue;
-    if (entry.correction) { score = 50; evidence = []; seen.clear(); }
+    if (entry.correction) { score = start; evidence = []; seen.clear(); }
     const key = signal.quote.replace(/[\s.!?]+/gu, '');
     if (seen.has(key)) continue;
     seen.add(key);
@@ -308,5 +309,5 @@ export function estimateFor(ledger, indicator) {
     evidence.push({ indicator, item: signal.item, cue: cueFor(indicator, signal.item), delta: signal.delta, quote: signal.quote,
       source: entry.source, correction: entry.correction });
   }
-  return { direction: Math.sign(score - 50), score, count: evidence.length, evidence };
+  return { direction: Math.sign(score - start), score, count: evidence.length, evidence };
 }

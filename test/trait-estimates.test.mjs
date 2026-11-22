@@ -69,6 +69,19 @@ test('recordSignals feeds estimateFor with cue text and no rank', () => {
     delta: 8, quote: '나를 피하나 싶어요', source: 'AI 대화 해석', correction: false }]);
 });
 
+test('a start value (sample person prior) is where clues add up from and where a correction returns', () => {
+  const ledger = newEstimates();
+  assert.deepEqual(estimateFor(ledger, 'burnout', 64), { direction: 0, score: 64, count: 0, evidence: [] });
+  const text = '할 일이 많아서 늦게까지 깨어 있었어요';
+  recordSignals(ledger, text, [{ indicator: 'burnout', item: 'cbi.1', delta: 6, quote: text }], '선택한 이유');
+  assert.equal(estimateFor(ledger, 'burnout', 64).score, 70);
+  assert.equal(estimateFor(ledger, 'burnout', 64).direction, 1);
+  assert.equal(estimateFor(ledger, 'burnout').score, 56);
+  const fix = '사실 일은 많지 않았어요';
+  recordSignals(ledger, fix, [{ indicator: 'burnout', item: 'cbi.1', delta: -6, quote: fix }], '바로잡기').correction = true;
+  assert.equal(estimateFor(ledger, 'burnout', 64).score, 58);
+});
+
 test('estimates saturate at 0 and 100, including after an opposing answer', () => {
   for (const sign of [1, -1]) {
     const ledger = newEstimates();

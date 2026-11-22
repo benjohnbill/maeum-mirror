@@ -23,7 +23,7 @@ const SPAN = 14 * 60; // to 11:00
 const $ = (id) => document.getElementById(id);
 const phonePreview = document.documentElement.classList.contains('phone-preview');
 
-const state = { mode: 'demo', summary: null, history: [], turns: 0, busy: false, finished: false, supportRelevant: false, example: null, talk: null, pendingReply: null, editing: false, traitResults: new Map(), estimates: newEstimates() };
+const state = { mode: 'demo', summary: null, history: [], turns: 0, busy: false, finished: false, supportRelevant: false, example: null, talk: null, pendingReply: null, editing: false, traitResults: new Map(), estimates: newEstimates(), prior: null };
 const profile = { step: null };
 const quiz = { questions: [], at: 0, correct: 0 };
 const screening = { status: 'available', offered: [], results: new Map() };
@@ -189,7 +189,8 @@ function openSession(isSample, sampleIndex, exampleScreening) {
   state.supportRelevant = false;
   if (exampleScreening) screening.results.set(exampleScreening.id, exampleScreening);
   state.traitResults = new Map();
-  state.estimates = newEstimates();
+  // Stage 2 reopens the session after the quiz; the opening answer's clues stay in the ledger.
+  if (!state.talk) state.estimates = newEstimates();
   const s = state.summary;
   state.example = isSample && !state.talk ? previewSession(s.metrics) : null;
   $('sentPanel').hidden = isSample;
@@ -613,7 +614,7 @@ async function report() {
 
 function appendProfile(container, opening, records, correction = '') {
   appendProfileReport(container, {
-    results: state.traitResults, estimates: state.estimates, completed: screening.results, demo: Boolean(state.example || state.talk),
+    results: state.traitResults, estimates: state.estimates, completed: screening.results, demo: Boolean(state.example || state.talk), prior: state.prior,
   }, { takeScreening: collectScreening });
   if (correction) container.append(el('p', 'profile-correction', '바로잡은 내용 · ' + correction));
   if (records.length || opening) {
@@ -861,14 +862,14 @@ function askChange(prefix = '') {
   talk.current = { change, question, why: null, first: '', firstCues: [], second: '' };
   talk.asked++;
   setFocus(change.record || 'none', { scroll: false });
-  askTalk(prefix + question.text);
+  askTalk(prefix + question.text, question.choices);
 }
 
-// Stage 2 asks for the user's own words; the only button is 잘 모르겠어요.
-function askTalk(text) {
+// Q1 offers its reasons as buttons; Q2 asks for the user's own words. Both offer 잘 모르겠어요.
+function askTalk(text, choices = []) {
   state.history.push({ role: 'model', text });
-  addMsg('ai', text, replyChoices([], TALK_UNKNOWN));
-  $('msg').placeholder = '내 말로 답하기';
+  addMsg('ai', text, replyChoices(choices.map((choice) => choice.text), TALK_UNKNOWN));
+  $('msg').placeholder = choices.length ? '고르거나 내 말로 답하기' : '내 말로 답하기';
 }
 
 // Free text: Gemini reads it when the server has a key, the demo on the device.
@@ -966,6 +967,17 @@ function showPhonePanel(panelId) {
   }
 }
 
+// The picked sample person's starting ranks: { <indicator id>: { rank, basis } }, or null.
+async function readPrior(persona) {
+  if (!persona) return null;
+  try {
+    const response = await fetch(`sample/${persona}/profile.json`);
+    return response.ok ? (await response.json()).indicators : null;
+  } catch {
+    return null;
+  }
+}
+
 function openPhone() {
   document.title = '스마트폰 체험 · Herz';
   // Stage 2 calls the AI only when the server has a key; until this answers, it stays on the device.
@@ -990,8 +1002,9 @@ function openPhone() {
   for (const tab of $('phoneNav').querySelectorAll('button')) {
     tab.addEventListener('click', () => showPhonePanel(tab.getAttribute('aria-controls')));
   }
-  setupPhoneAccess((summary) => {
+  setupPhoneAccess(async (summary, persona) => {
     state.summary = summary;
+    state.prior = await readPrior(persona);
     $('session').hidden = false;
     showPhonePanel('chatPanel');
     $('turnCount').hidden = true;

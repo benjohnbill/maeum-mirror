@@ -90,7 +90,7 @@ export function setupPhoneAccess(onConnected) {
       loading = false;
     }
     $('connectStep').hidden = true;
-    onConnected(summary);
+    onConnected(summary, persona);
   }
 
   // MVP: no real records yet, so the granted categories come from a sample person the user picks.
