@@ -37,7 +37,7 @@ function runlog(lines) {
   need(['rollout', 'replay'].includes(h?.mode), 'header.mode');
   need(h?.mode !== 'replay' || typeof h.prefix_id === 'string', 'header.prefix_id for replay');
   need(typeof h?.product?.requested_model === 'string' && Array.isArray(h.product.fallback_chain) && isInt(h.product.timeout_ms, 1, 1e6), 'header.product');
-  need(h?.human === true ? h.simulator === null : h?.simulator?.model && h.simulator.model !== h.product?.requested_model, 'header.simulator differs from product model (J9)');
+  need(h?.human === true || h?.mode === 'replay' ? h.simulator == null : h?.simulator?.model && h.simulator.model !== h.product?.requested_model, 'header.simulator differs from product model (J9); null for human or replay');
   need(['free', 'paid'].includes(h?.call_budget?.key_pool) && isInt(h.call_budget.planned_calls, 0, 1e6) && isInt(h.call_budget.demo_reserve_calls, 0, 1e6), 'header.call_budget');
   rest.forEach((l, i) => {
     const at = `line ${i + 2}`;
