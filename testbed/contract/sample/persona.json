@@ -1,0 +1,12 @@
+{
+  "id": "sample-discordant",
+  "archetype": "Discordant",
+  "phq8_truth": { "1": 2, "2": 1, "3": 2, "4": 2, "5": 0, "6": 1, "7": 1, "8": 0 },
+  "disclosure_gate": { "1": "indirect", "2": "never", "3": "direct", "4": "direct", "5": "direct", "6": "never", "7": "indirect", "8": "direct" },
+  "behavior_tags": ["minimising", "contradicts_data"],
+  "offer_test": "decline",
+  "expected_opener": "sleep",
+  "health": { "export": "export.xml", "generator": "scripts/make-persona-data.mjs --sleep -15% --steps -40%" },
+  "provenance": ["theme-exam-season", "theme-fine-on-the-surface"],
+  "surface_style": "짧게 답하고 '괜찮아요'로 넘기려 한다. 반말 섞인 해요체. 수면 이야기에는 비교적 편하게 답한다."
+}
