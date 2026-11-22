@@ -5,8 +5,8 @@ import { readFile, stat } from 'node:fs/promises';
 import { existsSync, readFileSync } from 'node:fs';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { SYSTEM_PROMPT, REPORT_PROMPT, SIGNALS_PROMPT, TURN_SCHEMA, REPORT_SCHEMA, SIGNALS_SCHEMA } from './public/js/prompt.js';
-import { groundedSignals } from './public/js/trait-estimates.js';
+import { SYSTEM_PROMPT, REPORT_PROMPT, SIGNALS_PROMPT, WHY_PROMPT, TURN_SCHEMA, REPORT_SCHEMA, SIGNALS_SCHEMA, WHY_SCHEMA } from './public/js/prompt.js';
+import { groundedCues, cueWire } from './public/js/trait-estimates.js';
 import { mockTurn, mockReport, mockSignals } from './mock.mjs';
 
 const root = fileURLToPath(new URL('./public/', import.meta.url));
@@ -82,8 +82,8 @@ async function readJson(req) {
 
 async function handleChat(req, res) {
   try {
-    const { kind, summary, history = [], screeningAvailable = true } = await readJson(req);
-    if (kind !== 'signals' && (typeof summary !== 'string' || summary.length > 4000)) throw new Error('summary가 올바르지 않아요');
+    const { kind, summary, history = [], screeningAvailable = true, change = '' } = await readJson(req);
+    if (kind !== 'signals' && kind !== 'why' && (typeof summary !== 'string' || summary.length > 4000)) throw new Error('summary가 올바르지 않아요');
     const clean = history.slice(-40).map((h) => ({ role: h.role, text: String(h.text).slice(0, 2000) }));
     let out;
     if (kind === 'signals') {
@@ -92,8 +92,21 @@ async function handleChat(req, res) {
       if (!KEY || last?.role !== 'user') out = mockSignals();
       else {
         const read = await gemini(SIGNALS_PROMPT, clean, SIGNALS_SCHEMA, 0.2, SIGNALS_MODELS);
-        out = { signals: groundedSignals(last.text, read.traitSignals), model: read.model };
+        out = { signals: groundedCues(read.traitSignals, last.text).map(cueWire), model: read.model };
       }
+    } else if (kind === 'why') {
+      // Stage 2's second question: why the user's first answer happened. Cues that name no
+      // cue-table row are dropped; fewer than 2 choices is a failure and the browser uses its bank.
+      const question = clean.findLast((h) => h.role !== 'user')?.text;
+      const answer = clean.findLast((h) => h.role === 'user')?.text;
+      if (!KEY || !question || !answer) throw new Error('why: needs a key, the first question and the answer');
+      const asked = `[변화] ${String(change).slice(0, 200)}\n[첫 질문] ${question}\n[사용자의 첫 답] ${answer}`;
+      const read = await gemini(WHY_PROMPT, [{ role: 'user', text: asked }], WHY_SCHEMA, 0.7, SIGNALS_MODELS);
+      const choices = (Array.isArray(read.choices) ? read.choices : [])
+        .filter((choice) => typeof choice?.text === 'string' && choice.text.trim()).slice(0, 4)
+        .map((choice) => ({ text: choice.text.trim(), cues: groundedCues(choice.cues).map(cueWire) }));
+      if (typeof read.question !== 'string' || !read.question.trim() || choices.length < 2) throw new Error('why: fewer than 2 usable choices');
+      out = { question: read.question.trim(), choices, model: read.model };
     } else if (!KEY) out = kind === 'report' ? mockReport(clean) : mockTurn(clean, undefined, screeningAvailable);
     else if (kind === 'report') {
       const transcript = clean.map((h) => `${h.role === 'user' ? '사용자' : 'AI'}: ${h.text}`).join('\n');

@@ -6,6 +6,12 @@ import { cueTable } from './trait-estimates.js';
 
 // Conversation clues, in the signal contract of indicators.js. The cue table is the only
 // list of items a clue may cite; it holds short paraphrases (cue), not the test item text.
+const CUE_TABLES = `[지표] indicator · 이름 · + 방향 / - 방향
+${indicators.map((row) => row.id + ' · ' + row.title + ' · +' + row.high + ' / -' + row.low).join('\n')}
+
+[단서 표] item · indicator · cue
+${cueTable().map((row) => row.item + ' · ' + row.indicator + ' · ' + row.cue).join('\n')}`;
+
 export const SIGNAL_RULES = `[단서 규칙]
 - traitSignals는 마지막 메시지가 사용자 답변일 때만, 그 답변에 직접 드러난 단서를 {indicator, item, delta, quote} 배열로 적어요. 해당하는 단서가 없으면 빈 배열이에요.
 - 단서는 사용자의 말이 아래 [단서 표]의 한 줄(cue)과 같은 내용을 말할 때만 적어요. 비슷한 분위기나 추측으로는 적지 않아요. item에는 그 줄의 item, indicator에는 그 줄의 indicator를 그대로 적어요.
@@ -15,11 +21,7 @@ export const SIGNAL_RULES = `[단서 규칙]
 - indicator 하나당 한 번만, 한 답변에서 많아야 ${MAX_SIGNALS_PER_REPLY}개예요. 넘치면 가장 분명한 것만 남겨요.
 - AI가 한 말, 건강 기록, 검사 응답, 다른 사람의 경험, 가정, 질문, 건너뛴 답으로는 적지 않아요.
 
-[지표] indicator · 이름 · + 방향 / - 방향
-${indicators.map((row) => row.id + ' · ' + row.title + ' · +' + row.high + ' / -' + row.low).join('\n')}
-
-[단서 표] item · indicator · cue
-${cueTable().map((row) => row.item + ' · ' + row.indicator + ' · ' + row.cue).join('\n')}`;
+${CUE_TABLES}`;
 
 export const SYSTEM_PROMPT = `당신은 "마음 시간표"의 대화 상대예요. 상담사도 의사도 아니고, 진단하지 않아요.
 사용자는 Apple 건강 데이터를 올렸고, 아래 [데이터 요약]은 사용자 브라우저가 계산한 결과예요. 원본 기록은 받지 않아요.
@@ -74,16 +76,59 @@ const SIGNALS_ARRAY = { type: 'ARRAY', items: {
   }, required: ['indicator', 'item', 'delta', 'quote'],
 } };
 
+// The phone demo's change talk (kinds 'signals' and 'why') names cues with a direction only.
+// The app sets the size (trait-estimates.js cueSignals), so the AI never writes a number.
+const CUE_ITEM = {
+  type: 'OBJECT', properties: {
+    indicator: { type: 'STRING', enum: indicators.map((row) => row.id) }, item: { type: 'STRING' },
+    direction: { type: 'STRING', enum: ['+', '-'] },
+  }, required: ['indicator', 'item', 'direction'],
+};
+
 // kind 'signals': read clues from the last user message only.
 export const SIGNALS_PROMPT = `"마음 시간표" 대화 기록의 마지막 사용자 답변에서 마음 프로필 단서만 읽어요. 답장은 쓰지 않아요.
 대화의 앞부분은 맥락으로만 참고하고, 단서는 마지막 사용자 답변에서만 찾아요.
 
-${SIGNAL_RULES}`;
+[단서 규칙]
+- traitSignals에는 그 답변에 직접 드러난 단서를 {indicator, item, direction, quote} 배열로 적어요. 해당하는 단서가 없으면 빈 배열이에요.
+- 단서는 사용자의 말이 아래 [단서 표]의 한 줄(cue)과 같은 내용을 말할 때만 적어요. 비슷한 분위기나 추측으로는 적지 않아요. item에는 그 줄의 item, indicator에는 그 줄의 indicator를 그대로 적어요.
+- direction은 사용자의 말이 그 indicator의 + 방향이면 "+", - 방향이면 "-"예요. 크기나 점수는 적지 않아요.
+- 일상 카드 단서(item이 delay.0처럼 지표 id로 시작)는 앱의 질문이나 장면이에요. 사용자의 말이 그 질문에 대한 답이 되고 그 지표의 + 또는 - 방향을 말할 때만 적어요.
+- quote에는 마지막 사용자 답변에서 근거가 되는 연속된 구절을 한 글자도 바꾸지 않고 복사해요.
+- indicator 하나당 한 번만, 한 답변에서 많아야 ${MAX_SIGNALS_PER_REPLY}개예요. 넘치면 가장 분명한 것만 남겨요.
+- AI가 한 말, 건강 기록, 다른 사람의 경험, 가정, 질문, 건너뛴 답으로는 적지 않아요.
+
+${CUE_TABLES}`;
 
 export const SIGNALS_SCHEMA = {
   type: 'OBJECT',
-  properties: { traitSignals: SIGNALS_ARRAY },
+  properties: { traitSignals: { type: 'ARRAY', items: {
+    ...CUE_ITEM, properties: { ...CUE_ITEM.properties, quote: { type: 'STRING' } }, required: [...CUE_ITEM.required, 'quote'],
+  } } },
   required: ['traitSignals'],
+};
+
+// kind 'why': the second question about one change asks why the user's first answer happened.
+export const WHY_PROMPT = `"마음 시간표" 폰 체험에서 건강 기록의 변화 하나를 두고 두 번째 질문을 써요. 상담사도 의사도 아니고, 진단하지 않아요.
+사용자는 첫 질문(그 변화가 왜 생겼는지)에 답했어요. 두 번째 질문은 그 답이 왜 그랬는지를 한 번 더 물어요.
+
+- question: 사용자의 첫 답을 받아 그 이유를 묻는 짧은 질문 하나. 해요체, 40자 안팎. 예: 첫 답이 "할 일이 많아서 늦게까지 깨어 있었어요"면 "할 일이 그렇게 몰린 데는 이유가 있었어요?"
+- 예·아니요로 확인하는 질문, 증상·횟수·심한 정도를 묻는 질문은 쓰지 않아요. "우울", "불안장애", "진단", "증상" 같은 말도 쓰지 않아요. 첫 답을 그대로 되풀이하지 않아요.
+- choices: 사용자가 고를 만한 일상의 이유 3~4개. text는 사용자가 직접 하는 말처럼 1인칭 해요체 한 문장(25자 안팎)이에요. 서로 다른 이유를 고르고, 마음과 상관없는 생활 이유(일정, 날씨, 몸살 같은 것)를 하나 넣어도 돼요.
+- cues: 그 이유가 아래 [단서 표]의 한 줄(cue)과 같은 내용을 말할 때만 {indicator, item, direction}을 적어요. item과 indicator는 표의 값을 그대로 적고, direction은 그 indicator의 + 방향이면 "+", - 방향이면 "-"예요. 맞는 줄이 없으면 빈 배열이고, 한 choice에 많아야 2개예요.
+- 숫자나 점수는 어디에도 적지 않아요.
+
+${CUE_TABLES}`;
+
+export const WHY_SCHEMA = {
+  type: 'OBJECT',
+  properties: {
+    question: { type: 'STRING' },
+    choices: { type: 'ARRAY', items: {
+      type: 'OBJECT', properties: { text: { type: 'STRING' }, cues: { type: 'ARRAY', items: CUE_ITEM } }, required: ['text', 'cues'],
+    } },
+  },
+  required: ['question', 'choices'],
 };
 
 export const TURN_SCHEMA = {

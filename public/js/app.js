@@ -1,7 +1,7 @@
 import { el, resultCard, resultDetails } from './report-elements.js';
 import { appendProfileCards, estimateModel } from './everyday-cards.js';
 import { everydayTopics } from './everyday-topics.js';
-import { newEstimates, recordTraitReply, recordSignals, groundedSignals, estimateFor, cueSignals, localCues } from './trait-estimates.js';
+import { newEstimates, recordTraitReply, recordSignals, groundedSignals, estimateFor, cueSignals, localCues, groundedCues } from './trait-estimates.js';
 import { parseHealthFile } from './parse.js';
 import { computeSummary, hhmm } from './metrics.js';
 import { SYSTEM_PROMPT } from './prompt.js';
@@ -267,12 +267,12 @@ function updateTurns() {
   if (state.example || state.talk) $('turnCount').hidden = true;
 }
 
-async function api(kind, context = state, { timeout } = {}) {
+async function api(kind, context = state, { timeout, extra } = {}) {
   const res = await fetch('/api/chat', {
     method: 'POST',
     signal: timeout ? AbortSignal.timeout(timeout) : undefined,
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ kind, summary: context.summary.text, history: context.history, screeningAvailable: screening.status === 'available' }),
+    body: JSON.stringify({ kind, summary: context.summary.text, history: context.history, screeningAvailable: screening.status === 'available', ...extra }),
   });
   const body = await res.json().catch(() => ({}));
   if (!res.ok || body.error) throw new Error(body.error || 'AI 응답을 받지 못했어요.');
@@ -784,14 +784,38 @@ function askTalk(text, choices) {
   $('msg').placeholder = '고르거나 내 말로 답하기';
 }
 
-// Free text: the demo reads it on the device. Returns cues { indicator, item, dir, quote }.
+// Free text: Gemini reads it when the server has a key, the demo on the device.
+// Returns cues { indicator, item, dir, quote }. A slow or failed AI read falls back to the device.
 async function readFreeText(text) {
+  if (state.mode === 'gemini') {
+    try {
+      const out = await api('signals', state, { timeout: 8000 });
+      if (Array.isArray(out.signals)) return { cues: groundedCues(out.signals, text), source: 'AI 대화 해석' };
+    } catch {
+      // Fall through to the on-device classifier.
+    }
+  }
   return { cues: localCues(text), source: '기기 내 문장 분류' };
 }
 
-// Q2: why about the first answer, from the scripted WHY bank.
+// Q2: why about the first answer. Gemini writes it when the server has a key; the scripted
+// WHY bank answers in the demo, and when the AI is slow (8 s) or returns too little.
 async function whyFor(turn, key) {
-  return whyQuestion(key, state.talk.at);
+  const scripted = whyQuestion(key, state.talk.at);
+  if (state.mode !== 'gemini') return scripted;
+  const typing = addMsg('ai', '다음 질문을 고르고 있어요');
+  typing.classList.add('typing');
+  try {
+    const context = { summary: state.summary, history: [{ role: 'model', text: turn.question.text }, { role: 'user', text: turn.first }] };
+    const out = await api('why', context, { timeout: 8000, extra: { change: turn.change.label } });
+    const choices = (out.choices || []).map((choice) => ({ text: choice.text, cues: groundedCues(choice.cues) }));
+    if (typeof out.question === 'string' && choices.length >= 2) return { text: out.question, choices };
+  } catch {
+    // Use the scripted question.
+  } finally {
+    typing.remove();
+  }
+  return scripted;
 }
 
 async function answerTalk(text) {

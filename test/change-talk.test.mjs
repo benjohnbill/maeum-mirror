@@ -62,3 +62,30 @@ test('on-device free text becomes cues with the user\'s own quote', () => {
     assert.ok(text.includes(cue.quote));
   }
 });
+
+test('AI cues keep only cue-table rows with a direction, and free-text cues need the user\'s own quote', async () => {
+  const { groundedCues, cueWire } = await import('../public/js/trait-estimates.js');
+  const text = '마감이 몰려서 쉬어도 피곤했어요.';
+  const wire = [
+    { indicator: 'burnout', item: 'cbi.1', direction: '+', quote: '쉬어도 피곤했어요' },
+    { indicator: 'burnout', item: 'cbi.2', direction: '+', quote: '마감이 몰려서' },
+    { indicator: 'delay', item: 'delay.9', direction: '+', quote: '마감이 몰려서' },
+    { indicator: 'worry', item: 'gad7.1', direction: '+', quote: '지어낸 말' },
+    { indicator: 'mood', item: 'phq9.4', delta: 6, quote: '쉬어도 피곤했어요' },
+  ];
+  assert.deepEqual(groundedCues(wire, text), [{ indicator: 'burnout', item: 'cbi.1', dir: 1, quote: '쉬어도 피곤했어요' }]);
+  // Choice cues (kind 'why') carry no quote: the choice text is the quote.
+  assert.deepEqual(groundedCues(wire), [{ indicator: 'burnout', item: 'cbi.1', dir: 1 }, { indicator: 'worry', item: 'gad7.1', dir: 1 }]);
+  assert.deepEqual(groundedCues('nope'), []);
+  assert.deepEqual(cueWire({ indicator: 'worry', item: 'gad7.1', dir: -1 }), { indicator: 'worry', item: 'gad7.1', direction: '-' });
+});
+
+test('the change-talk schemas carry a direction and no number; the desktop turn keeps its delta', async () => {
+  const { SIGNALS_SCHEMA, WHY_SCHEMA, TURN_SCHEMA } = await import('../public/js/prompt.js');
+  const types = (schema) => JSON.stringify(schema).match(/"type":"(\w+)"/g);
+  for (const schema of [SIGNALS_SCHEMA, WHY_SCHEMA]) {
+    assert.ok(!types(schema).some((t) => /INTEGER|NUMBER/.test(t)));
+    assert.match(JSON.stringify(schema), /"direction"/);
+  }
+  assert.equal(TURN_SCHEMA.properties.traitSignals.items.properties.delta.type, 'INTEGER');
+});

@@ -243,6 +243,29 @@ export function cueSignals(cues, quote, first = null) {
   return out;
 }
 
+// AI cues arrive as { indicator, item, direction: '+' | '-' }. Keep those whose cue exists;
+// with `text`, also require a quote of at least 3 characters copied from the user's words.
+// Returns cues { indicator, item, dir } (plus quote), one per indicator, at most MAX_SIGNALS_PER_REPLY.
+export function groundedCues(cues, text = null) {
+  if (!Array.isArray(cues)) return [];
+  const out = [];
+  for (const cue of cues) {
+    if (!cue || !cuesByIndicator.get(cue.indicator)?.has(cue.item) || !['+', '-'].includes(cue.direction)) continue;
+    if (out.some((kept) => kept.indicator === cue.indicator)) continue;
+    const grounded = { indicator: cue.indicator, item: cue.item, dir: cue.direction === '+' ? 1 : -1 };
+    if (text !== null) {
+      const quote = typeof cue.quote === 'string' ? cue.quote.trim() : '';
+      if (quote.length < 3 || !text.includes(quote)) continue;
+      grounded.quote = quote;
+    }
+    out.push(grounded);
+  }
+  return out.slice(0, MAX_SIGNALS_PER_REPLY);
+}
+
+// The wire form of a grounded cue, for the server's reply.
+export const cueWire = ({ indicator, item, dir, quote }) => ({ indicator, item, direction: dir > 0 ? '+' : '-', ...(quote ? { quote } : {}) });
+
 // Free text read on the device: the offline classifier's clues as cues with their own quotes.
 export function localCues(text) {
   return localTraitSignals(text).filter((signal) => signal.item)

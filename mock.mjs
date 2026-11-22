@@ -1,6 +1,6 @@
 export { mockTurn } from './public/js/sample-chat.js';
 
-// Demo mode reads no clues on the server; the browser falls back to its offline classifier.
+// Demo mode reads no clues on the server; the browser reads free text on the device.
 export function mockSignals() {
   return { signals: [] };
 }
