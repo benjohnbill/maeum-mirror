@@ -1,0 +1,6 @@
+{
+  "id": "opener-sample",
+  "note": "F5 opener symptom: the first AI turn on the bundled sample data. Empty history = the browser's first api('turn') call.",
+  "export": "public/sample/export.xml",
+  "history": []
+}
