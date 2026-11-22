@@ -1,0 +1,136 @@
+{
+  "id": "auditc",
+  "name": "AUDIT-C",
+  "title_ko": "알코올 사용 선별 소비 3문항",
+  "measures": "음주 빈도, 1회 음주량, 과음 빈도",
+  "recall": "최근 1년",
+  "korean_form_status": "form_available",
+  "license": {
+    "terms": "AUDIT-C는 AUDIT 1–3번 문항. WHO AUDIT 매뉴얼(Babor et al. 2001, WHO/MSD/MSB/01.6a): \"may ... be freely reviewed, abstracted, reproduced, and translated, in part or in whole but not for sale or for use in conjunction with commercial purposes.\" 한국어 문구 출처인 국민건강영양조사 조사표는 질병관리청 공개 자료",
+    "condition": "비영리 무료 사용. 판매나 상업 목적 사용은 WHO에 사전 문의",
+    "url": "https://www.who.int/publications/i/item/who-msd-msb-01.6a"
+  },
+  "korean_source": {
+    "citation": "질병관리청 국민건강영양조사 제5기 2차년도(2011) 건강설문조사표(성인), 음주 영역 문 5-1·5-2·5-3·5-4",
+    "url": "https://knhanes.kdca.go.kr/knhanes/archive/wsiSrvyForm.do",
+    "locator": "자료실 > 조사표 > '국민건강영양조사 제5기 건강설문 조사표(성인)' (파일 제5기_2차년도(2011)_건강설문조사표_성인.pdf), 인쇄면 28–29쪽"
+  },
+  "instruction": "다음은 최근 1년 동안의 음주(술) 경험에 대한 질문입니다.",
+  "items": [
+    {
+      "id": "auditc.1",
+      "text": "술을 얼마나 자주 마십니까?",
+      "cue": "음주 빈도",
+      "options": [
+        {
+          "value": 0,
+          "label": "최근 1년간 전혀 마시지 않았다"
+        },
+        {
+          "value": 1,
+          "label": "한달에 1번 미만"
+        },
+        {
+          "value": 1,
+          "label": "한달에 1번 정도"
+        },
+        {
+          "value": 2,
+          "label": "한달에 2-4번"
+        },
+        {
+          "value": 3,
+          "label": "일주일에 2-3번 정도"
+        },
+        {
+          "value": 4,
+          "label": "일주일에 4번 이상"
+        }
+      ]
+    },
+    {
+      "id": "auditc.2",
+      "text": "한번에 술을 얼마나 마십니까?",
+      "note": "※ 소주, 양주 구분 없이 각각의 술잔으로 계산합니다. 단 캔맥주 1개 (355cc)는 맥주 1.6잔과 같습니다.",
+      "cue": "한 번 마시는 양",
+      "options": [
+        {
+          "value": 0,
+          "label": "1-2잔"
+        },
+        {
+          "value": 1,
+          "label": "3-4잔"
+        },
+        {
+          "value": 2,
+          "label": "5-6잔"
+        },
+        {
+          "value": 3,
+          "label": "7-9잔"
+        },
+        {
+          "value": 4,
+          "label": "10잔 이상"
+        }
+      ]
+    },
+    {
+      "id": "auditc.3",
+      "text_by_sex": {
+        "male": "한 번의 술자리에서 소주, 양주 구분 없이 각각의 술잔으로 7잔 (또는 맥주 5캔 정도) 이상을 마시는 횟수는 어느 정도입니까?",
+        "female": "한 번의 술자리에서 소주, 양주 구분 없이 각각의 술잔으로 5잔 (또는 맥주 3캔 정도) 이상을 마시는 횟수는 어느 정도입니까?"
+      },
+      "cue": "과음 횟수",
+      "options": [
+        {
+          "value": 0,
+          "label": "전혀 없다"
+        },
+        {
+          "value": 1,
+          "label": "한달에 1번 미만"
+        },
+        {
+          "value": 2,
+          "label": "한달에 1번 정도"
+        },
+        {
+          "value": 3,
+          "label": "일주일에 1번 정도"
+        },
+        {
+          "value": 4,
+          "label": "거의 매일"
+        }
+      ]
+    }
+  ],
+  "scoring": {
+    "method": "sum",
+    "range": [
+      0,
+      12
+    ],
+    "reverse_items": [],
+    "require_all": true,
+    "skip_rule": "조사표는 1번에 '최근 1년간 전혀 마시지 않았다'(0점)를 고르면 2·3번을 건너뛴다. 이때 2·3번은 0점으로 계산한다.",
+    "value_rule": "1번의 '한달에 1번 미만'과 '한달에 1번 정도'는 AUDIT 원판 보기 'Monthly or less'(1점)에 함께 해당한다."
+  },
+  "bands": [
+    {
+      "min": 0,
+      "max": 4,
+      "label": "위험음주 선별 기준 미만"
+    },
+    {
+      "min": 5,
+      "max": 12,
+      "label": "위험음주 선별 범위"
+    }
+  ],
+  "bands_source": "Lee JH et al. (2018) Clin Exp Emerg Med 5(2):113–119, doi:10.15441/ceem.17.228 (PMC6039362), Results·Table 4 — 국민건강영양조사 4–6기 46,450명, 19세 이상 전체 AUDIT-C 절단점 5점. 같은 표의 하위집단 절단점은 남성 6, 여성 5, 65세 이상 3",
+  "attribution": "Babor, T. F., Higgins-Biddle, J. C., Saunders, J. B., & Monteiro, M. G. (2001). AUDIT: The Alcohol Use Disorders Identification Test. World Health Organization. 한국어 문구: 질병관리청 국민건강영양조사 건강설문조사표.",
+  "summary": "최근 1년 음주 습관을 직접 답한 점수는 {score}/12점으로 {band}예요."
+}

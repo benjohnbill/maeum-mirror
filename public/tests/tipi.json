@@ -1,0 +1,153 @@
+{
+  "id": "tipi",
+  "name": "TIPI",
+  "title_ko": "열개항목 성격 검사",
+  "measures": "성격 5요인(외향성, 우호성, 성실성, 정서 안정성, 개방성)의 대략적 경향",
+  "recall": "특정 회상 기간 없음. 평소의 자신을 기준으로 응답",
+  "korean_form_status": "form_available",
+  "license": {
+    "terms": "\"Anyone can use it for any purpose. No need to ask me for permission.\" 번역판은 개발자가 연구용으로 제공하며, 사용은 자유이나 번역자에게 연락하기를 권함(courtesy).",
+    "condition": "출처 표기. 한국어판 번역자(Shang E. Ha)에게 사용 사실을 알리는 것은 권장 사항",
+    "url": "https://gosling.psy.utexas.edu/scales-weve-developed/ten-item-personality-measure-tipi/"
+  },
+  "korean_source": {
+    "citation": "TIPI Korean translation (Shang E. Ha), Gosling lab 게시본",
+    "url": "http://gosling.psy.utexas.edu/wp-content/uploads/2014/09/TIPI-Korean.pdf",
+    "locator": "1쪽 전체(지시문, 7점 보기, 10문항)"
+  },
+  "instruction": "다음은 귀하의 성격 특성들에 관한 진술들입니다. 귀하가 각 진술에 동의하거나 동의하지 않는 정도를 각 진술 옆에 있는 빈칸에 숫자로 (1 - 7) 표시해 주십시오. 각 진술은 두 가지의 성격 특성들을 표현하고 있습니다. 두 개의 성격 특성들 중 하나의 성격 특성이 다른 하나의 성격 특성보다 귀하의 성격을 더 잘 표현하더라도 그 두 개의 성격 특성들 모두가 귀하에게 적용되는 정도를 아래 숫자들로 평가해 주십시오. 내가 보기에 나 자신은:",
+  "options": [
+    {
+      "value": 1,
+      "label": "전혀 동의하지 않는다"
+    },
+    {
+      "value": 2,
+      "label": "동의하지 않는다"
+    },
+    {
+      "value": 3,
+      "label": "그다지 동의하지 않는다"
+    },
+    {
+      "value": 4,
+      "label": "중간이다"
+    },
+    {
+      "value": 5,
+      "label": "어느 정도 동의한다"
+    },
+    {
+      "value": 6,
+      "label": "동의한다"
+    },
+    {
+      "value": 7,
+      "label": "매우 동의한다"
+    }
+  ],
+  "items": [
+    {
+      "id": "tipi.1",
+      "text": "외향적이다. 적극적이다.",
+      "cue": "외향적·활발함"
+    },
+    {
+      "id": "tipi.2",
+      "text": "비판적이다. 논쟁을 좋아한다.",
+      "cue": "남을 따지고 다툼"
+    },
+    {
+      "id": "tipi.3",
+      "text": "신뢰할수있다. 자기 절제를 잘한다.",
+      "cue": "믿음직·자제력"
+    },
+    {
+      "id": "tipi.4",
+      "text": "근심 걱정이 많다. 쉽게 흥분한다.",
+      "cue": "걱정 많고 예민"
+    },
+    {
+      "id": "tipi.5",
+      "text": "새로운 경험들에 개방적이다. 복잡다단하다.",
+      "cue": "새 경험에 열림"
+    },
+    {
+      "id": "tipi.6",
+      "text": "내성적이다. 조용하다.",
+      "cue": "내향적·말수 적음"
+    },
+    {
+      "id": "tipi.7",
+      "text": "동정심이 많다. 다정다감하다.",
+      "cue": "남을 아끼고 따뜻"
+    },
+    {
+      "id": "tipi.8",
+      "text": "정리정돈을 잘못한다. 덤벙댄다.",
+      "cue": "어수선·실수 잦음"
+    },
+    {
+      "id": "tipi.9",
+      "text": "차분하다. 감정의 기복이 적다.",
+      "cue": "침착·감정 안정"
+    },
+    {
+      "id": "tipi.10",
+      "text": "변화를 싫어한다. 창의적이지 못하다.",
+      "cue": "변화 꺼림·틀에 박힘"
+    }
+  ],
+  "scoring": {
+    "method": "mean",
+    "range": [
+      1,
+      7
+    ],
+    "reverse_items": [
+      "tipi.2",
+      "tipi.4",
+      "tipi.6",
+      "tipi.8",
+      "tipi.10"
+    ],
+    "require_all": true,
+    "reverse_rule": "역채점 문항은 8 − 응답값",
+    "total_meaningful": false,
+    "note": "TIPI에는 총점이 없다. 다섯 요인 점수만 해석한다."
+  },
+  "subscores": {
+    "extraversion": [
+      "tipi.1",
+      "tipi.6"
+    ],
+    "agreeableness": [
+      "tipi.2",
+      "tipi.7"
+    ],
+    "conscientiousness": [
+      "tipi.3",
+      "tipi.8"
+    ],
+    "stability": [
+      "tipi.4",
+      "tipi.9"
+    ],
+    "openness": [
+      "tipi.5",
+      "tipi.10"
+    ]
+  },
+  "subscore_rules": {
+    "method": "mean",
+    "range": [
+      1,
+      7
+    ],
+    "note": "각 요인 = 두 문항의 평균(역채점 문항은 8 − 응답값으로 바꾼 뒤). 채점 규칙 출처: Gosling 페이지의 TIPI scoring(Extraversion 1, 6R; Agreeableness 2R, 7; Conscientiousness 3, 8R; Emotional Stability 4R, 9; Openness 5, 10R)."
+  },
+  "bands_source": "없음. 원저자와 한국어판 모두 절단점을 정의하지 않음(Gosling 페이지는 국가별 규준만 제공).",
+  "attribution": "Gosling, S. D., Rentfrow, P. J., & Swann, W. B., Jr. (2003). A very brief measure of the Big-Five personality domains. Journal of Research in Personality, 37, 504-528. 한국어 번역: Shang E. Ha.",
+  "summary": "다섯 성격 요인을 두 문항씩 스스로 평가한 결과예요. 외향성 {extraversion}, 우호성 {agreeableness}, 성실성 {conscientiousness}, 정서 안정성 {stability}, 개방성 {openness}점이에요(각 1–7점 평균).",
+  "summary_note": "총점({score})은 이 척도에서 해석하지 않으므로 summary는 subscores 키를 자리표시자로 쓴다."
+}

@@ -1,0 +1,88 @@
+{
+  "id": "who5",
+  "name": "WHO-5",
+  "title_ko": "WHO-5 웰빙 지수",
+  "measures": "최근 2주간의 긍정적 정서적 안녕감",
+  "recall": "지난 2주",
+  "korean_form_status": "pending",
+  "korean_form_note": "공식·검증 한국어 문구를 읽지 못했다. 한국어판 검증 논문(한국판 WHO-5, 강원 지역 65세 이상 244명, 노인정신의학 14(2))은 초록만 공개. 근로환경조사(KWCS) 설문지는 KOSSDA에서 403, WHO-5 번역 모음(psykiatri-regionh.dk)은 captcha로 막혔다. text와 보기 label은 넣지 않았다.",
+  "license": {
+    "terms": "WHO 2024 배포판(WHO/UCN/MSD/MHE/2024.1): CC BY-NC-SA 3.0 IGO. 번역본에는 \"This translation was not created by the World Health Organization (WHO).\" 고지가 필요",
+    "condition": "비영리 사용, 출처 표기, 동일조건 변경허락, 번역 고지 필수",
+    "url": "https://cdn.who.int/media/docs/default-source/mental-health/who-5_english-original4da539d6ed4b49389e3afe47cda2326a.pdf"
+  },
+  "korean_source": {
+    "citation": "한국판 WHO-5 검증: 지역사회 거주 노인 대상, 노인정신의학 14(2) (저자·연도 미확인). 문구 원문 미확인",
+    "url": "https://scholar.kyobobook.co.kr/article/detail/4010023183248",
+    "locator": "미확인"
+  },
+  "instruction": null,
+  "options": [
+    {
+      "value": 0
+    },
+    {
+      "value": 1
+    },
+    {
+      "value": 2
+    },
+    {
+      "value": 3
+    },
+    {
+      "value": 4
+    },
+    {
+      "value": 5
+    }
+  ],
+  "options_source": "WHO 원판: 0 'At no time' ~ 5 'All of the time'. 한국어 보기 문구 미확인",
+  "items": [
+    {
+      "id": "who5.1",
+      "cue": "즐겁고 좋은 기분"
+    },
+    {
+      "id": "who5.2",
+      "cue": "차분·편안함"
+    },
+    {
+      "id": "who5.3",
+      "cue": "활력·활동성"
+    },
+    {
+      "id": "who5.4",
+      "cue": "개운한 기상"
+    },
+    {
+      "id": "who5.5",
+      "cue": "흥미로운 일상"
+    }
+  ],
+  "scoring": {
+    "method": "sum",
+    "range": [
+      0,
+      25
+    ],
+    "reverse_items": [],
+    "require_all": true,
+    "percent_rule": "원점수 × 4 = 0–100 백분율 점수"
+  },
+  "bands": [
+    {
+      "min": 0,
+      "max": 12,
+      "label": "낮은 안녕감 (추가 확인 제안)"
+    },
+    {
+      "min": 13,
+      "max": 25,
+      "label": "기준 이상"
+    }
+  ],
+  "bands_source": "WHO 2024 배포판 PDF 채점 안내: \"A percentage score below 50 (or a raw score below 13) has been suggested as a cut-off\" for poor well-being. 한국판 노인 검증(노인정신의학 14(2))도 <13을 낮은 안녕감으로 보고(초록)",
+  "attribution": "World Health Organization. The World Health Organization-Five Well-Being Index (WHO-5). Geneva: WHO; 2024 (WHO/UCN/MSD/MHE/2024.1). Licence: CC BY-NC-SA 3.0 IGO.",
+  "summary": "지난 2주간의 마음 상태를 직접 답한 점수는 {score}/25점으로 {band} 범위예요."
+}

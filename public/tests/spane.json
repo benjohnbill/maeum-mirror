@@ -1,0 +1,185 @@
+{
+  "id": "spane",
+  "name": "SPANE",
+  "title_ko": "긍정적 및 부정적 경험 척도",
+  "measures": "긍정 정서와 부정 정서를 경험한 빈도, 그리고 그 차이(정서 균형)",
+  "recall": "지난 4주",
+  "korean_form_status": "items_only",
+  "korean_form_note": "한국판 타당화 논문(구재선, 2018)은 12개 정서 단어와 7점 보기의 양 끝 표현만 본문에 싣고, 지시문과 중간 보기 표현은 싣지 않았다. Diener 공식 사이트에는 한국어판 SPANE가 없다(FS는 있음). 그래서 instruction은 비워 두었고, 보기 2–6은 숫자만 표시한다. 문항 순서는 영어 원척도 순서를 따랐다(한국판 문항 번호 순서는 논문에서 확인 불가).",
+  "license": {
+    "terms": "\"The scale is copyrighted but is free to use without permission or charge by researchers as long as credit is given to the authors of the scale.\" \"The use of this scale is permitted for non-commercial purposes only.\"",
+    "condition": "비상업적 사용만 허용. 저자 표기 필수. 별도 허락 불필요",
+    "url": "https://eddiener.com/scale-of-positive-and-negative-experience-spane/"
+  },
+  "korean_source": {
+    "citation": "구재선 (2018). 한국판 긍정적 및 부정적 경험 척도(SPANE): 요인구조 및 성별 측정 동일성. 감성과학, 21(3). 대학생 551명.",
+    "url": "https://koreascience.kr/article/JAKO201836262560075.pdf",
+    "locator": "인쇄면 107쪽, 3.2 측정 도구 단락(12개 문항 단어, 7점 리커트 1=전혀 느끼지 않았다, 7=항상 느꼈다)"
+  },
+  "instruction": null,
+  "options": [
+    {
+      "value": 1,
+      "label": "전혀 느끼지 않았다"
+    },
+    {
+      "value": 2,
+      "label": "2"
+    },
+    {
+      "value": 3,
+      "label": "3"
+    },
+    {
+      "value": 4,
+      "label": "4"
+    },
+    {
+      "value": 5,
+      "label": "5"
+    },
+    {
+      "value": 6,
+      "label": "6"
+    },
+    {
+      "value": 7,
+      "label": "항상 느꼈다"
+    }
+  ],
+  "items": [
+    {
+      "id": "spane.1",
+      "text": "긍정적인",
+      "cue": "긍정적인 기분"
+    },
+    {
+      "id": "spane.2",
+      "text": "부정적인",
+      "cue": "부정적인 기분"
+    },
+    {
+      "id": "spane.3",
+      "text": "좋은",
+      "cue": "기분 좋음"
+    },
+    {
+      "id": "spane.4",
+      "text": "나쁜",
+      "cue": "기분 나쁨"
+    },
+    {
+      "id": "spane.5",
+      "text": "유쾌한",
+      "cue": "유쾌함"
+    },
+    {
+      "id": "spane.6",
+      "text": "불쾌한",
+      "cue": "불쾌함"
+    },
+    {
+      "id": "spane.7",
+      "text": "행복한",
+      "cue": "행복감"
+    },
+    {
+      "id": "spane.8",
+      "text": "슬픈",
+      "cue": "슬픔"
+    },
+    {
+      "id": "spane.9",
+      "text": "두려운",
+      "cue": "두려움·겁남"
+    },
+    {
+      "id": "spane.10",
+      "text": "즐거운",
+      "cue": "즐거움·기쁨"
+    },
+    {
+      "id": "spane.11",
+      "text": "화난",
+      "cue": "화·분노"
+    },
+    {
+      "id": "spane.12",
+      "text": "만족스러운",
+      "cue": "만족감"
+    }
+  ],
+  "scoring": {
+    "method": "sum",
+    "range": [
+      12,
+      84
+    ],
+    "reverse_items": [],
+    "require_all": true,
+    "total_meaningful": false,
+    "note": "12문항 합계는 해석하지 않는다. positive, negative, balance만 쓴다. 원척도는 1–5점이지만 한국판(구재선, 2018)은 1–7점이라 범위가 원척도와 다르다."
+  },
+  "subscores": {
+    "positive": [
+      "spane.1",
+      "spane.3",
+      "spane.5",
+      "spane.7",
+      "spane.10",
+      "spane.12"
+    ],
+    "negative": [
+      "spane.2",
+      "spane.4",
+      "spane.6",
+      "spane.8",
+      "spane.9",
+      "spane.11"
+    ],
+    "balance": [
+      "spane.1",
+      "spane.3",
+      "spane.5",
+      "spane.7",
+      "spane.10",
+      "spane.12",
+      "spane.2",
+      "spane.4",
+      "spane.6",
+      "spane.8",
+      "spane.9",
+      "spane.11"
+    ]
+  },
+  "subscore_rules": {
+    "positive": {
+      "method": "sum",
+      "range": [
+        6,
+        42
+      ]
+    },
+    "negative": {
+      "method": "sum",
+      "range": [
+        6,
+        42
+      ]
+    },
+    "balance": {
+      "method": "difference",
+      "formula": "positive − negative",
+      "range": [
+        -36,
+        36
+      ],
+      "note": "balance는 합계가 아니다. subscores.balance의 문항 목록은 참조용이며 positive 합계에서 negative 합계를 뺀다."
+    },
+    "source": "Diener SPANE 채점 안내(SPANE-P, SPANE-N, SPANE-B). https://eddiener.com/wp-content/uploads/2025/02/SPANE-Scale.pdf"
+  },
+  "bands_source": "없음. 원저자와 한국판 모두 절단점을 정의하지 않음.",
+  "attribution": "Diener, E., Wirtz, D., Tov, W., Kim-Prieto, C., Choi, D. W., Oishi, S., & Biswas-Diener, R. (2010). New well-being measures: Short scales to assess flourishing and positive and negative feelings. Social Indicators Research, 97, 143-156. © Ed Diener and Robert Biswas-Diener, 2009. 한국판: 구재선(2018).",
+  "summary": "지난 4주 동안의 정서 균형은 {balance}점이에요(긍정 정서 {positive}점 − 부정 정서 {negative}점, −36~36). 값이 클수록 좋은 감정을 더 자주 느꼈다는 뜻이에요.",
+  "summary_note": "총점({score})은 이 척도에서 해석하지 않으므로 summary는 subscores 키를 자리표시자로 쓴다."
+}

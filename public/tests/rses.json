@@ -1,0 +1,99 @@
+{
+  "id": "rses",
+  "name": "RSES",
+  "title_ko": "로젠버그 자아존중감 척도",
+  "measures": "자기 자신에 대한 전반적 가치 평가(자존감)",
+  "recall": "특정 회상 기간 없음. 평소의 자신을 기준으로 응답",
+  "korean_form_status": "pending",
+  "korean_form_note": "검증된 한국어판 10문항 전체 문구를 읽지 못했다. 이자영 외(2009, 한국심리학회지: 상담 및 심리치료 21(1):173–189)는 '심리척도 핸드북 II'(고려대 행동과학연구소, 2001) 수록판을 썼다고만 밝히고 문항 원문은 싣지 않는다(8번 번역 문제만 논의). 한국아동·청소년패널(KCYPS) 조사표·코드북은 KOSSDA에서 403. text와 보기 label은 넣지 않았다. 문항 순서와 역채점 번호는 이자영 외(2009) 측정도구 단락의 한국어판 순서(역산 3·5·8·9·10번)를 따랐다.",
+  "license": {
+    "terms": "UMD 사회학과 FAQ: 척도는 현재 public domain, 비용·통보 없이 사용 가능 (검색 요약으로 확인, 직접 열람은 TLS 오류로 실패). 이자영 외(2009)도 Rosenberg가 1989년 저작권 없이 공개했다고 기술",
+    "condition": "자유 사용(UMD 원문 재확인 필요). 한국어 번역본의 전재 조건은 번역 출처 확정 후 확인",
+    "url": "https://socy.umd.edu/about-us/rosenberg-scale-faq"
+  },
+  "korean_source": {
+    "citation": "후보: 고려대학교 부속 행동과학연구소(2001) 심리척도 핸드북 II 수록판(전병재 1974 번역 계열), 이훈진·원호택(1995). 문구 원문 미확인",
+    "url": "https://accesson.kr/kcpa/assets/pdf/20529/journal-21-1-173.pdf",
+    "locator": "이자영 외(2009) 178쪽 '측정도구' 단락(문항 원문 없음)"
+  },
+  "instruction": null,
+  "options": [
+    {
+      "value": 1
+    },
+    {
+      "value": 2
+    },
+    {
+      "value": 3
+    },
+    {
+      "value": 4
+    },
+    {
+      "value": 5
+    }
+  ],
+  "options_source": "이자영 외(2009): 한국어판은 '전혀 그렇지 않다'(1)~'매우 그렇다'(5) 5점 척도로 실시. 원판은 4점 척도(Strongly agree–Strongly disagree). 중간 보기 문구 미확인",
+  "items": [
+    {
+      "id": "rses.1",
+      "cue": "남만큼 가치 있음"
+    },
+    {
+      "id": "rses.2",
+      "cue": "좋은 자질이 많음"
+    },
+    {
+      "id": "rses.3",
+      "cue": "실패자 같다는 느낌"
+    },
+    {
+      "id": "rses.4",
+      "cue": "남만큼 잘 해냄"
+    },
+    {
+      "id": "rses.5",
+      "cue": "내세울 게 없음"
+    },
+    {
+      "id": "rses.6",
+      "cue": "자신을 긍정적으로 봄"
+    },
+    {
+      "id": "rses.7",
+      "cue": "자기 자신에 만족"
+    },
+    {
+      "id": "rses.8",
+      "cue": "자기 존중 아쉬움"
+    },
+    {
+      "id": "rses.9",
+      "cue": "쓸모없다는 느낌"
+    },
+    {
+      "id": "rses.10",
+      "cue": "스스로 못났다 여김"
+    }
+  ],
+  "scoring": {
+    "method": "sum",
+    "range": [
+      10,
+      50
+    ],
+    "reverse_items": [
+      "rses.3",
+      "rses.5",
+      "rses.8",
+      "rses.9",
+      "rses.10"
+    ],
+    "require_all": true,
+    "reverse_rule": "역채점 문항은 6 − 응답값"
+  },
+  "bands_source": "없음. Rosenberg(1965)는 절단점을 정의하지 않았고 한국 검증 연구도 절단점을 제시하지 않음",
+  "attribution": "Rosenberg, M. (1965). Society and the adolescent self-image. Princeton, NJ: Princeton University Press.",
+  "summary": "평소 자신을 어떻게 평가하는지 직접 답한 점수는 {score}/50점이에요. 값이 클수록 자신을 더 긍정적으로 본다고 답한 거예요."
+}

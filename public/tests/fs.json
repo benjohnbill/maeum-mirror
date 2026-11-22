@@ -1,0 +1,103 @@
+{
+  "id": "fs",
+  "name": "Flourishing Scale",
+  "title_ko": "마음의 번영도",
+  "measures": "관계, 목적, 유능감, 낙관 등 주요 삶의 영역에서 스스로 느끼는 성공 정도",
+  "recall": "특정 회상 기간 없음. 현재 자신을 기준으로 응답",
+  "korean_form_status": "form_available",
+  "license": {
+    "terms": "\"The scale is copyrighted but is free to use without permission or charge by researchers as long as credit is given to the authors of the scale.\" \"The use of this scale is permitted for non-commercial purposes only.\"",
+    "condition": "비상업적 사용만 허용. 저자 표기 필수. 별도 허락 불필요",
+    "url": "https://eddiener.com/flourishing-scale-fs/"
+  },
+  "korean_source": {
+    "citation": "Flourishing Scale Korean translation, Ed Diener 공식 사이트 게시본",
+    "url": "https://eddiener.com/wp-content/uploads/2025/02/FS_Korean.pdf",
+    "locator": "1쪽 전체(지시문, 8문항, 7점 보기). 같은 내용이 https://labs.psychology.illinois.edu/~ediener/Documents/Backup/1.27.2015%20FS_French%20&%20Korean/FS_Korean.pdf 에도 있음"
+  },
+  "instruction": "아래에 귀하께서 동의하거나 (혹은 동의하지 않는) 8 개의 진술문이 있습니다. 1 부터 7 까지의 척도를 이용하여, 각 진술문에 대해서 귀하의 위치를 표시하여 주십시오.",
+  "options": [
+    {
+      "value": 1,
+      "label": "전혀 동의 하지 않음"
+    },
+    {
+      "value": 2,
+      "label": "동의 하지 않음"
+    },
+    {
+      "value": 3,
+      "label": "동의 하지 않는 편임"
+    },
+    {
+      "value": 4,
+      "label": "동의도 부정도 아님"
+    },
+    {
+      "value": 5,
+      "label": "동의 하는 편임"
+    },
+    {
+      "value": 6,
+      "label": "동의함"
+    },
+    {
+      "value": 7,
+      "label": "전적으로 동의함"
+    }
+  ],
+  "items": [
+    {
+      "id": "fs.1",
+      "text": "나는 목적이 있고 의미 있는 삶을 살고 있다.",
+      "cue": "삶에 목적·의미 있음"
+    },
+    {
+      "id": "fs.2",
+      "text": "나의 사회관계는 나에게 힘을 주고 가치가 있다.",
+      "cue": "관계가 힘이 됨"
+    },
+    {
+      "id": "fs.3",
+      "text": "나는 바쁜 일상생활을 보내고 있으며, 이러한 일상생활이 흥미롭다.",
+      "cue": "일상에 몰입·흥미"
+    },
+    {
+      "id": "fs.4",
+      "text": "나는 다른 사람들의 행복과 안녕에 적극적으로 기여하고 있다.",
+      "cue": "남의 행복에 보탬"
+    },
+    {
+      "id": "fs.5",
+      "text": "나는 능력이 있으며, 나에게 중요한 활동을 하기 위한 역량이 있다.",
+      "cue": "중요한 일 해낼 힘"
+    },
+    {
+      "id": "fs.6",
+      "text": "나는 좋은 사람이며 올바르게 살고 있다.",
+      "cue": "바르게 사는 사람"
+    },
+    {
+      "id": "fs.7",
+      "text": "나는 나의 미래에 대해서 긍정적으로 생각한다.",
+      "cue": "앞날이 밝다고 봄"
+    },
+    {
+      "id": "fs.8",
+      "text": "사람들은 나를 존중한다.",
+      "cue": "남에게 존중받음"
+    }
+  ],
+  "scoring": {
+    "method": "sum",
+    "range": [
+      8,
+      56
+    ],
+    "reverse_items": [],
+    "require_all": true
+  },
+  "bands_source": "없음. Diener et al.(2010)은 절단점을 정의하지 않음(점수가 높을수록 심리적 자원과 강점이 많다고만 해석).",
+  "attribution": "Diener, E., Wirtz, D., Tov, W., Kim-Prieto, C., Choi, D., Oishi, S., & Biswas-Diener, R. (2010). New well-being measures: Short scales to assess flourishing and positive and negative feelings. Social Indicators Research, 97, 143-156. © Ed Diener.",
+  "summary": "스스로 평가한 마음의 번영도는 {score}/56점이에요. 점수가 높을수록 관계, 목적, 유능감 같은 영역을 넉넉하게 느낀다는 뜻이에요."
+}

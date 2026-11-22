@@ -1,0 +1,120 @@
+{
+  "id": "swls",
+  "name": "SWLS",
+  "title_ko": "삶의 만족도 척도",
+  "measures": "자기 삶 전반에 대한 인지적 만족 판단",
+  "recall": "특정 회상 기간 없음. 현재 자신의 삶 전반을 기준으로 응답",
+  "korean_form_status": "form_available",
+  "license": {
+    "terms": "\"The scale is copyrighted but is free to use without permission or charge by researchers as long as credit is given to the authors of the scale\" / \"The use of this scale is permitted for non-commercial purposes only.\" (eddiener.com SWLS 페이지)",
+    "condition": "비영리 사용만 허용, 원저자 표기 필수. 유료 서비스로 전환하면 별도 허가 필요",
+    "url": "https://eddiener.com/satisfaction-with-life-scale-swls/"
+  },
+  "korean_source": {
+    "citation": "Ed Diener 공식 사이트 배포 한국어판 SWLS (SWLS_Korean.pdf). 번역 출처: 조명한·차경호(1998). 검증: 임영진(2012), 한국심리학회지: 일반 31(3):877–896",
+    "url": "https://eddiener.com/wp-content/uploads/2025/02/SWLS_Korean.pdf",
+    "locator": "1쪽 전체(지시문, 1–7 응답 척도, 문항). PDF 원본은 문항 번호를 4–8로 인쇄했으나 내용은 SWLS 1–5번 순서와 같음"
+  },
+  "instruction": "아래에는 귀하가 동의 혹은 부정 할 수 있는 5개의 문장이 있습니다. 아래의 1부터 7까지의 척도를 사용하여 각 문장에 대한 귀하의 동의여부를 나타내십시오.",
+  "options": [
+    {
+      "value": 1,
+      "label": "강한 부정"
+    },
+    {
+      "value": 2,
+      "label": "부정"
+    },
+    {
+      "value": 3,
+      "label": "약한 부정"
+    },
+    {
+      "value": 4,
+      "label": "부정도 동의도 아님"
+    },
+    {
+      "value": 5,
+      "label": "약한 동의"
+    },
+    {
+      "value": 6,
+      "label": "동의"
+    },
+    {
+      "value": 7,
+      "label": "강한 동의"
+    }
+  ],
+  "items": [
+    {
+      "id": "swls.1",
+      "text": "전반적으로 볼 때, 나의 삶은 나의 이상에 가깝다.",
+      "cue": "이상에 가까운 삶"
+    },
+    {
+      "id": "swls.2",
+      "text": "내 삶의 상황들은 아주 좋다.",
+      "cue": "삶의 여건이 좋음"
+    },
+    {
+      "id": "swls.3",
+      "text": "나는 내 삶에 만족한다.",
+      "cue": "삶 전반 만족감"
+    },
+    {
+      "id": "swls.4",
+      "text": "지금까지 내 삶에서 내가 원하는 중요한 것들을 이루어 냈다.",
+      "cue": "중요한 목표 성취"
+    },
+    {
+      "id": "swls.5",
+      "text": "만약 내 삶을 다시 살 수 있더라도, 나는 거의 아무것도 바꾸지 않을 것이다.",
+      "cue": "다시 살아도 그대로"
+    }
+  ],
+  "scoring": {
+    "method": "sum",
+    "range": [
+      5,
+      35
+    ],
+    "reverse_items": [],
+    "require_all": true
+  },
+  "bands": [
+    {
+      "min": 5,
+      "max": 9,
+      "label": "매우 불만족"
+    },
+    {
+      "min": 10,
+      "max": 14,
+      "label": "불만족"
+    },
+    {
+      "min": 15,
+      "max": 19,
+      "label": "평균보다 약간 낮음"
+    },
+    {
+      "min": 20,
+      "max": 24,
+      "label": "평균"
+    },
+    {
+      "min": 25,
+      "max": 29,
+      "label": "높음"
+    },
+    {
+      "min": 30,
+      "max": 35,
+      "label": "매우 높음"
+    }
+  ],
+  "bands_source": "원저자 해석 안내 'Understanding SWLS Scores'(Pavot & Diener), https://eddiener.com/wp-content/uploads/2024/09/Understanding-SWLS-Scores.pdf — 30–35 Very high, 25–29 High, 20–24 Average, 15–19 Slightly below average, 10–14 Dissatisfied, 5–9 Extremely dissatisfied. 미국 등 서구 표본 기준이며 한국 규준 아님. 한국어 라벨은 영어 구간명을 옮긴 것",
+  "attribution": "Diener, E., Emmons, R. A., Larsen, R. J., & Griffin, S. (1985). The Satisfaction With Life Scale. Journal of Personality Assessment, 49(1), 71-75. 한국어판: 조명한·차경호(1998).",
+  "summary": "지금 내 삶에 대해 직접 답한 만족도는 {score}/35점으로 {band} 범위예요."
+}
