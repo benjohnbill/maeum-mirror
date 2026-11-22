@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>마음 시간표 · 캐릭터 검사 데모</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+  :root {
+    --screen: #ffffff; --bot: #f1f0ec; --bot-ink: #17171a; --me: #17171a; --me-ink: #ffffff;
+    --hair: rgba(23,23,26,.08); --frame: #0c0c0d; --muted: #77777c;
+  }
+  @media (prefers-color-scheme: dark) { :root {
+    --screen: #0e0e10; --bot: #1f1f23; --bot-ink: #f1f0ec; --me: #f1f0ec; --me-ink: #17171a;
+    --hair: rgba(255,255,255,.08); --frame: #000; --muted: #8f8e8a;
+  } }
+  * { box-sizing: border-box; }
+  ::selection { background: var(--accent-soft); color: var(--ink); }
+  body { margin: 0; min-height: 100vh; background: var(--ground); color: var(--ink); font-family: var(--font);
+    word-break: keep-all; overflow-wrap: break-word; display: grid; place-items: center; padding: 32px 16px;
+    -webkit-font-smoothing: antialiased; }
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* demo control panel (outside the phone) */
+  .side { position: fixed; top: 24px; left: 24px; width: 232px; font-size: 12px; color: var(--ink-3); line-height: 1.55; }
+  .side strong { display: block; font-size: 13px; color: var(--ink); font-weight: 600; margin-bottom: 4px; }
+  .side p { margin: 0 0 14px; }
+  .side .pick { display: grid; gap: 2px; }
+  .side .pick button { text-align: left; padding: 8px 10px; border: 0; background: none; color: var(--ink-2);
+    border-radius: 8px; cursor: pointer; font-size: 13px; display: flex; gap: 8px; align-items: baseline; }
+  .side .pick button:hover { background: var(--ghost); }
+  .side .pick button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 0 0 1px var(--line); }
+  .side .pick button b { font-weight: 600; font-variant-numeric: tabular-nums; color: var(--ink-3); width: 18px; flex: none; }
+  .side .pick button[aria-pressed="true"] b { color: var(--accent-text); }
+  .side details { margin-top: 16px; } .side summary { cursor: pointer; }
+  .side pre { white-space: pre-wrap; font-size: 11px; max-height: 50vh; overflow: auto; }
+
+  /* phone */
+  .phone { width: 393px; height: 852px; border-radius: 58px; padding: 11px; background: var(--frame); position: relative;
+    box-shadow: 0 0 0 1.5px #3a3a3e, 0 40px 80px -30px rgba(0,0,0,.45), 0 12px 24px -12px rgba(0,0,0,.25); }
+  .screen { width: 100%; height: 100%; border-radius: 47px; overflow: hidden; background: var(--screen);
+    display: flex; flex-direction: column; position: relative; }
+  .island { position: absolute; top: 11px; left: 50%; transform: translateX(-50%); width: 122px; height: 35px; border-radius: 20px; background: #000; z-index: 3; }
+  .status { height: 54px; flex: none; display: flex; justify-content: space-between; align-items: center;
+    padding: 4px 30px 0 36px; font-size: 16px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .status svg { display: block; fill: currentColor; }
+  .status .icons { display: flex; gap: 6px; align-items: center; }
+
+  .head { flex: none; display: grid; grid-template-columns: 40px 1fr 40px; align-items: center; padding: 2px 12px 10px;
+    border-bottom: 1px solid var(--hair); background: var(--screen); position: relative; z-index: 2; }
+  .head .back { width: 36px; height: 36px; display: grid; place-items: center; color: var(--ink); }
+  .head .who { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .mark { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); display: grid; place-items: center; }
+  .mark svg { display: block; }
+  .head .nm { font-size: 12px; font-weight: 600; letter-spacing: -.01em; display: flex; align-items: center; gap: 2px; }
+  .head .nm svg { color: var(--muted); }
+
+  .chat { display: block; gap: 0; min-height: 0; max-height: none; margin: 0; flex: 1; overflow-y: auto; padding: 16px 14px 24px; scroll-behavior: smooth; scrollbar-width: none;
+    mask-image: linear-gradient(transparent, #000 14px, #000 calc(100% - 20px), transparent); }
+  .chat::-webkit-scrollbar { display: none; }
+  .day { text-align: center; font-size: 11px; color: var(--muted); margin: 0 0 14px; font-weight: 500; }
+  .day b { font-weight: 600; }
+  .row { display: flex; margin-top: 16px; animation: in .32s cubic-bezier(.16,1,.3,1); }
+  .row.cont { margin-top: 4px; }
+  .row.me { justify-content: flex-end; }
+  .col { max-width: 80%; display: flex; flex-direction: column; }
+  .row.wide .col { max-width: 88%; width: 88%; }
+  .b { background: var(--bot); color: var(--bot-ink); padding: 9px 14px; border-radius: 20px; font-size: 15px; line-height: 1.47; letter-spacing: -.005em; }
+  .row.bot.cont .b { border-top-left-radius: 6px; }
+  .row.bot.next .b { border-bottom-left-radius: 6px; }
+  .row.me .b { background: var(--me); color: var(--me-ink); }
+  .row.me.cont .b { border-top-right-radius: 6px; }
+  .row.me.next .b { border-bottom-right-radius: 6px; }
+  .typing .b { display: flex; gap: 4px; padding: 14px 16px; }
+  .typing .b i { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); opacity: .4; animation: dot 1.2s infinite; }
+  .typing .b i:nth-child(2) { animation-delay: .15s; } .typing .b i:nth-child(3) { animation-delay: .3s; }
+
+  .mini, .card, .crisis { border-radius: 20px; font-size: 13px; }
+  .mini { background: var(--screen); border: 1px solid var(--line); padding: 14px 14px 12px; }
+  .mini .t { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+  .mini .t b { font-size: 13px; font-weight: 600; } .mini .t span { font-size: 11px; color: var(--muted); }
+  .bars { display: grid; grid-template-columns: 16px 1fr 40px; gap: 7px 8px; align-items: center; font-variant-numeric: tabular-nums; }
+  .bars span { font-size: 11px; color: var(--muted); } .bars .v { text-align: right; color: var(--ink-2); }
+  .bars .bar { height: 8px; background: var(--ghost); border-radius: 4px; position: relative; overflow: hidden; }
+  .bars .bar i { position: absolute; inset: 0 auto 0 0; background: var(--ink); border-radius: 4px; }
+  .bars .bar.hot i { background: var(--accent); }
+  .bars .hot + .v { color: var(--accent-text); font-weight: 600; }
+  .bars .usual { position: absolute; top: -2px; bottom: -2px; width: 1.5px; background: var(--ink-3); opacity: .5; }
+
+  .card { display: block; width: auto; align-self: auto; color: var(--ink); background: var(--screen); border: 1px solid var(--line); padding: 18px 16px 6px; font-size: 14px; line-height: 1.5; }
+  .card .lbl { font-size: 11px; color: var(--muted); font-weight: 500; }
+  .card .type { font-size: 20px; font-weight: 700; letter-spacing: -.02em; margin: 4px 0 12px; line-height: 1.3; }
+  .card .type em { font-style: normal; font-weight: 500; color: var(--ink-2); }
+  .card .pair { border-top: 1px solid var(--line); padding: 11px 0; }
+  .card .pair b { display: block; font-size: 11px; color: var(--muted); font-weight: 600; margin-bottom: 2px; }
+  .card .pair q { display: block; margin-top: 4px; color: var(--ink-2); quotes: '“' '”'; }
+  .crisis { background: var(--accent-soft); color: var(--ink); padding: 14px 16px; font-size: 14px; line-height: 1.6; }
+  .crisis .ln { display: flex; gap: 10px; align-items: baseline; margin-top: 6px; }
+  .crisis .ln b { font-variant-numeric: tabular-nums; color: var(--accent-text); min-width: 42px; }
+
+  .dock { flex: none; padding: 8px 12px 30px; background: var(--screen); }
+  .chips { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; padding: 4px 2px 10px; }
+  .chips:empty { display: none; }
+  .chips button { font-size: 14px; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line);
+    background: var(--screen); color: var(--ink); cursor: pointer; letter-spacing: -.005em;
+    transition: background .15s, border-color .15s, transform .1s; animation: in .32s cubic-bezier(.16,1,.3,1) backwards; }
+  .chips button:nth-child(2) { animation-delay: .04s; } .chips button:nth-child(3) { animation-delay: .08s; } .chips button:nth-child(4) { animation-delay: .12s; }
+  .chips button:hover { border-color: var(--ink-3); }
+  .chips button:active { transform: scale(.96); background: var(--bot); }
+  .free { display: flex; align-items: center; gap: 8px; padding: 4px 4px 4px 16px; border: 1px solid var(--line); border-radius: 999px; background: var(--screen); }
+  .free:focus-within { border-color: var(--ink-3); }
+  .free input { flex: 1; font: inherit; font-size: 15px; border: 0; outline: 0; background: none; color: var(--ink); min-width: 0; padding: 6px 0; caret-color: var(--accent); }
+  .free input::placeholder { color: var(--muted); }
+  .free button { width: 32px; height: 32px; flex: none; border-radius: 50%; border: 0; background: var(--accent-fill); color: var(--on-accent);
+    display: grid; place-items: center; cursor: pointer; transition: opacity .15s, transform .1s; }
+  .free button:active { transform: scale(.92); }
+  .free input:placeholder-shown + button, .free input:disabled + button { opacity: .25; pointer-events: none; }
+  .home { width: 134px; height: 5px; border-radius: 3px; background: var(--ink); position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); opacity: .9; }
+
+  @keyframes in { from { opacity: 0; transform: translateY(8px) scale(.98); } }
+  @keyframes dot { 0%, 60%, 100% { opacity: .35; transform: none; } 30% { opacity: .9; transform: translateY(-2px); } }
+  @media (prefers-reduced-motion: reduce) { .row, .chips button, .typing .b i, .alert { animation: none; } .chat { scroll-behavior: auto; } }
+  @media (max-width: 900px) and (min-width: 701px) { .side { position: static; width: auto; max-width: 393px; margin-bottom: 20px; } body { display: flex; flex-direction: column; align-items: center; } }
+  @media (max-width: 700px) {
+    body { padding: 0; display: flex; flex-direction: column; align-items: stretch; height: 100dvh; }
+    .side { position: static; width: auto; padding: 8px 12px; background: var(--surface); border-bottom: 1px solid var(--line); }
+    .side strong, .side p, .side details { display: none; }
+    .side .pick { grid-template-columns: repeat(4, 1fr); gap: 4px; } .side .pick button { font-size: 0; justify-content: center; padding: 6px; }
+    .side .pick button b { font-size: 12px; width: auto; }
+    .phone { width: 100%; flex: 1; height: auto; min-height: 0; border-radius: 0; padding: 0; background: none; box-shadow: none; }
+    .screen { border-radius: 0; } .island, .status, .home { display: none; } .dock { padding-bottom: 14px; }
+  }
+
+  /* lobby: one bar button per validated test */
+  .lobby { flex: 1; overflow-y: auto; padding: 18px 18px 30px; display: flex; flex-direction: column; gap: 10px; }
+  .lobby h1 { font-size: 26px; line-height: 1.25; letter-spacing: -.03em; margin: 6px 0 4px; font-weight: 700; }
+  .lobby .sub { margin: 0 0 14px; color: var(--muted); font-size: 14px; }
+  .slot { display: grid; grid-template-columns: 52px 1fr; gap: 12px; align-items: center; text-align: left; padding: 12px 14px;
+    border-radius: 18px; border: 1px solid var(--line); background: var(--screen); cursor: pointer; transition: transform .1s, border-color .15s; }
+  .slot:hover { border-color: var(--ink-3); } .slot:active { transform: scale(.98); }
+  .slot[disabled] { cursor: default; opacity: .45; } .slot[disabled]:hover { border-color: var(--line); }
+  .slot .t { font-size: 16px; font-weight: 650; letter-spacing: -.02em; line-height: 1.3; }
+  .slot .m { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .slot .m b { font-weight: 600; color: var(--ink-3); }
+  .ava { width: 52px; height: 52px; border-radius: 50%; overflow: hidden; display: block; flex: none; }
+  .ava.blank { background: var(--bot); }
+  .head .ava { width: 34px; height: 34px; }
+  .head .back { cursor: pointer; border: 0; background: none; padding: 0; }
+  .view-lobby .head, .view-lobby .chat, .view-lobby .dock { display: none; }
+  .view-chat .lobby { display: none; }
+
+  /* formal sheet: original wording, no character */
+  .sheet { border: 1px solid var(--line); border-radius: 20px; padding: 16px 14px 14px; background: var(--screen); font-size: 14px; line-height: 1.5; color: var(--ink); }
+  .sheet .lbl { font-size: 11px; color: var(--muted); font-weight: 600; }
+  .sheet .ins { margin: 6px 0 12px; font-weight: 600; }
+  .sheet ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 14px; }
+  .sheet li > p { margin: 0 0 6px; }
+  .sheet .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+  .sheet .opts button { font-size: 12px; padding: 7px 6px; border-radius: 10px; border: 1px solid var(--line); background: var(--screen); cursor: pointer; line-height: 1.3; }
+  .sheet .opts button[aria-pressed="true"] { background: var(--ink); color: var(--screen); border-color: var(--ink); }
+  .sheet .go { margin-top: 14px; width: 100%; padding: 11px; border-radius: 12px; border: 0; background: var(--accent-fill); color: var(--on-accent); font-weight: 600; cursor: pointer; }
+  .sheet .go:disabled { opacity: .3; cursor: default; }
+  .sheet .score { font-size: 20px; font-weight: 700; margin: 4px 0 6px; letter-spacing: -.02em; }
+  .sheet .fine { font-size: 12px; color: var(--muted); margin: 8px 0 0; }
+  .alert { position: absolute; inset: 0; z-index: 5; background: rgba(0,0,0,.35); display: grid; place-items: center; padding: 24px; animation: in .25s ease-out; }
+  .alert[hidden] { display: none; }
+  .alert .box { background: var(--screen); color: var(--ink); border-radius: 22px; padding: 20px 18px 14px; width: 100%; font-size: 14px; line-height: 1.55; box-shadow: 0 20px 40px -12px rgba(0,0,0,.4); }
+  .alert .t { font-size: 17px; font-weight: 700; margin: 0 0 6px; letter-spacing: -.02em; }
+  .alert p { margin: 0 0 14px; color: var(--ink-2); }
+  .alert .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .alert button { padding: 12px; border-radius: 14px; border: 1px solid var(--line); background: var(--screen); font-weight: 600; cursor: pointer; }
+  .alert .yes { background: var(--accent-fill); color: var(--on-accent); border-color: transparent; }
+</style>
+</head>
+<body>
+<aside class="side">
+  <strong>캐릭터 검사 데모</strong><p>합성 사용자 · AI 호출 없음. 버튼 하나 = 검사 하나. 대화 질문은 PHQ-9 1~8번에 하나씩 대응해요. 9번은 정식 검사에서만 원문으로 물어요.</p>
+  <div class="pick" id="pick"></div>
+  <details open><summary>숨은 점수 (사용자에게 안 보임)</summary><pre id="dbg"></pre></details>
+</aside>
+<div class="phone"><div class="screen view-lobby" id="screen">
+  <div class="island"></div>
+  <div class="status"><span>9:41</span><span class="icons" aria-hidden="true">
+    <svg width="18" height="12" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+    <svg width="27" height="13" viewBox="0 0 27 13"><rect x=".5" y=".5" width="23" height="12" rx="3.5" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="18" height="9" rx="2"/><path d="M25 4.5v4c.8-.3 1.3-1.1 1.3-2s-.5-1.7-1.3-2Z" opacity=".4"/></svg>
+  </span></div>
+  <section class="lobby" aria-label="검사 고르기">
+    <h1>오늘은 누구한테<br>털어놔 볼까요?</h1>
+    <p class="sub">워치 2주 기록을 들고 캐릭터가 말을 걸어요.</p>
+    <div id="slots"></div>
+  </section>
+  <div class="head">
+    <button class="back" id="back" aria-label="처음으로"><svg width="12" height="20" viewBox="0 0 12 20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2 2 10l8 8"/></svg></button>
+    <div class="who"><span id="headAva"></span><span class="nm" id="headName"></span></div>
+    <span></span>
+  </div>
+  <div class="chat" id="chat"></div>
+  <div class="dock" id="dock">
+    <div class="chips" id="chips"></div>
+    <form class="free" id="free"><input placeholder="직접 쓰기" maxlength="200" aria-label="직접 쓰기" disabled><button aria-label="보내기"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 12V2M2.5 6.5 7 2l4.5 4.5"/></svg></button></form>
+  </div>
+  <div class="alert" id="alert" hidden><div class="box" role="alertdialog" aria-labelledby="alertT"><p class="t" id="alertT">정식 검사 해 볼래요?</p><p>방금 대화는 재미로 나눈 이야기라 정확하지 않아요. 원래 검사(PHQ-9) 9문항으로 지난 2주 마음을 확인할 수 있어요. 2분쯤 걸려요.</p><div class="btns"><button class="no" type="button">✕ 안 할래요</button><button class="yes" type="button">✓ 해 볼게요</button></div></div></div>
+  <div class="home"></div>
+</div></div>
+<script type="module">
+import { isCrisis, CRISIS_LINES } from '../js/safety.js';
+import phq9 from '../spec/tests/phq9.js';
+import { scoreOf } from '../spec/tests/index.js';
+
+// Original character (not a real person): a leather-jacket tech CEO. Drawn here, no photo.
+const AVA = `<svg class="ava" viewBox="0 0 52 52" aria-hidden="true"><rect width="52" height="52" fill="#76b54a"/>
+<path d="M6 52c1-10 8-15 20-15s19 5 20 15Z" fill="#161616"/><path d="M19 38l7 9 7-9" fill="#2b2b2b"/><path d="M22 38l4 6 4-6" fill="#0c0c0c"/>
+<rect x="22" y="31" width="8" height="7" fill="#e2b48f"/><ellipse cx="26" cy="24" rx="10" ry="11.5" fill="#efc39e"/>
+<path d="M15.5 22c-1-9 5-13 11-13 7 0 11 4 10.5 12-2-4-5-6-9-6.5-4 0-9 2-12.5 7.5Z" fill="#cfcfcf"/>
+<g fill="none" stroke="#222" stroke-width="1.3"><rect x="18" y="22" width="6.5" height="4.5" rx="1.2"/><rect x="27.5" y="22" width="6.5" height="4.5" rx="1.2"/><path d="M24.5 24h3"/></g>
+<path d="M22.5 31c2 1.3 5 1.3 7 0" stroke="#9b6a4c" stroke-width="1.1" fill="none" stroke-linecap="round"/></svg>`;
+
+// One bar button = one validated test. Only PHQ-9 has a script in this demo.
+const SLOTS = [
+  { test: 'PHQ-9', title: '번아웃 겪어 본 대표랑 2주 돌아보기', who: '칩 대표', ava: AVA, ready: true },
+  { test: 'BRS', title: '넘어져도 일어나는 사람 테스트', who: '캐릭터 미정', ready: false },
+  { test: 'RSES', title: '나를 얼마나 좋아하나 테스트', who: '캐릭터 미정', ready: false },
+  { test: 'GAD-7', title: '머릿속 탭이 몇 개 열려 있나', who: '캐릭터 미정', ready: false },
+];
+
+// Health-data facts per synthetic persona (testbed/personas/README.md). Lines only state what the data shows.
+const P = {
+  p4: { name: '대학원생 · 26 (괜찮은 사람)', usualSleep: 7.2, nights: [['월',7.1],['화',7.3],['수',7.0],['목',7.2],['금',6.9],['토',7.6],['일',7.2]],
+    sleep: '2주 내내 00시 10분 전후로 잠들었어. 토요일에도. 이렇게 한결같은 사람 드물어.', move: '주말엔 평일보다 40% 더 걸었더라.' },
+  p3: { name: '이직 2개월 · 29 (생활 변화)', usualSleep: 7.0, nights: [['월',5.4],['화',5.3],['수',5.6],['목',5.0],['금',5.9],['토',7.8],['일',6.0]],
+    sleep: '평일엔 5시간 반, 토요일엔 7시간 50분. 주말에 몰아서 잤구나.', move: '주말 걸음은 평일의 두 배야.' },
+  p2: { name: '회사 2년 차 · 25 ("괜찮아요" 화법)', usualSleep: 7.2, nights: [['월',6.2],['화',4.6],['수',5.3],['목',4.1],['금',6.0],['토',6.4],['일',6.8]],
+    sleep: '목요일엔 새벽 2시 40분에 자서 4시간 6분. 2주 중 최저 기록이야.', move: '그러고 보니 주 3번 하던 운동이 2주째 비어 있더라.' },
+  p1: { name: '취업 준비 · 28 (지친 사람)', usualSleep: 7.15, nights: [['월',4.6],['화',4.2],['수',5.4],['목',3.9],['금',5.1],['토',5.0],['일',5.6]],
+    sleep: '평소 7시간 넘게 자던 사람이 2주째 5시간을 잘 못 넘겨.', move: null },
+};
+
+// The character is a senior who burned out once: he shares his own story, then asks. No puns.
+// Each item: optional story question (what happened, not scored), then a frequency question
+// for PHQ-9 item i (chips in order 0 = 전혀 ... 3 = 거의 매일). `check` returns a data line when
+// the data and a "전혀" answer disagree; the character asks again once, softly.
+const short = (p) => p.nights.filter((n) => n[1] < 5.5).length;
+const Q = [
+  { i: 2, say: (p) => ['#bars', p.sleep],
+    story: { ask: (p) => short(p) ? '나도 회사 키울 때 그런 밤이 몇 달 이어졌거든. 그땐 그게 문제인 줄도 몰랐어. 자네는 잠 못 든 밤에 주로 뭐 하고 있었어?' : '나는 잠이 무너진 적이 있어서 이런 게 제일 먼저 눈에 들어와. 자네는 잠들기 전에 주로 뭐 해?',
+      c: [['일이나 공부', '일이 밤까지 따라왔구나.'], ['폰 보다가', '폰 보다 보면 시간이 그냥 사라지지.'], ['누워도 잠이 안 와서', '누웠는데 안 오는 밤, 그거 길게 느껴지지.'], ['딱히 기억 안 나요', '그럴 수 있어. 비슷한 밤이 많았나 보네.']] },
+    ask: '2주 동안 잠들기 어렵거나, 자다 깨거나, 반대로 너무 많이 잔 날은 며칠쯤 됐던 것 같아?',
+    c: ['그런 날 없었어요', '며칠', '일주일 넘게', '거의 매일'],
+    re: ['다행이네.', '며칠이면 누구나 있는 일이야.', '일주일 넘게면 꽤 오래 버틴 거야.', '거의 매일이었구나. 많이 지쳤겠다.'],
+    check: (p) => short(p) >= 3 ? `음, 기록에는 5시간 반을 못 잔 밤이 ${short(p)}번 있어. 괜찮다고 넘기는 거, 나도 잘 알아. 사실은 어느 쪽이었을까?` : null },
+  { i: 3, say: () => [],
+    ask: (s) => s.score[2] >= 1 ? '그렇게 잔 다음 날은 낮이 버거웠을 것 같은데. 2주 동안 피곤하거나 기운이 없던 날은 며칠쯤?' : '낮은 어땠어? 2주 동안 피곤하거나 기운이 없던 날은 며칠쯤?',
+    c: ['기운 괜찮았어요', '며칠', '일주일 넘게', '거의 매일'],
+    re: ['좋아.', '며칠은 그럴 수 있지.', '밤이 짧으면 낮이 먼저 무너지더라. 나도 그랬어.', '매일 그랬으면 하루하루가 무거웠겠다.'] },
+  { i: 0, say: (p) => p.move ? [p.move] : [],
+    story: { ask: () => '요즘 자네한테 제일 재밌는 건 뭐야?',
+      c: [['일이나 공부', '하는 일이 재밌다는 건 큰 거야.'], ['사람 만나기', '사람한테서 힘을 얻는 타입이구나.'], ['운동이나 산책', '몸 쓰면서 푸는 타입이네.'], ['요즘은 딱히 없어요', '그렇구나. 요즘 그런 시기인가 보다.']] },
+    ask: (s) => s.story[0] === 3 ? '좋아하던 것도 손이 안 가는 날이 며칠쯤 있었어?' : '그런 것도 재미없게 느껴지는 날이 며칠쯤 있었어?',
+    c: ['없었어요', '며칠', '일주일 넘게', '거의 매일'],
+    re: ['재미가 남아 있다는 건 좋은 신호야.', '며칠쯤은 다들 시들하지.', '꽤 오래 재미가 빠져 있었네.', '뭘 해도 심심한 날이 계속되면, 그게 제일 지치는 거야.'] },
+  { i: 6, say: () => ['나는 번아웃 왔을 때 회의 내용이 하나도 안 들어왔어. 앉아는 있는데 머리가 딴 데 가 있더라고.'],
+    ask: '자네는 책이나 영상처럼 평소 하던 것에 집중이 안 되던 날, 며칠쯤 있었어?',
+    c: ['집중 잘 됐어요', '며칠', '일주일 넘게', '거의 매일'],
+    re: ['좋다.', '며칠은 누구나 머리가 꽉 차지.', '오래 그랬으면 일도 더 힘들었겠다.', '매일 그랬다면 하루가 참 길었겠어.'] },
+  { i: 4, say: () => [],
+    ask: '밥은 잘 챙겨 먹어? 입맛이 없거나, 반대로 몰아서 많이 먹은 날은 며칠쯤?',
+    c: ['평소대로 먹었어요', '며칠', '일주일 넘게', '거의 매일'],
+    re: ['다행이다. 밥이 제일 기본이야.', '며칠은 그럴 수 있어.', '밥이 평소 같지 않았다는 것도 몸이 보내는 말이야.', '매일 그랬구나. 몸이 많이 힘들었겠다.'] },
+  { i: 7, say: () => [],
+    ask: '주변에서 "요즘 좀 느려졌다"거나 "왜 이렇게 안절부절해" 같은 말 들을 만한 날은 며칠쯤 있었어?',
+    c: ['평소랑 같았어요', '며칠', '일주일 넘게', '거의 매일'],
+    re: ['그렇구나.', '며칠쯤은 그럴 수 있지.', '남들 눈에도 보일 정도였다면 몸이 신호를 보낸 거야.', '매일 그랬다면 많이 버거웠겠다.'] },
+  { i: 1, say: () => ['이게 사실 제일 묻고 싶었던 거야.'],
+    ask: '기분이 가라앉거나, 우울하거나, 희망이 없다고 느낀 날은 며칠쯤 있었어?',
+    c: ['없었어요', '며칠', '일주일 넘게', '거의 매일'],
+    re: ['다행이다.', '며칠이라도 그런 날은 무겁지. 말해 줘서 고마워.', '일주일 넘게 그 기분을 들고 다녔구나.', '거의 매일이었구나. 혼자 오래 버텼네.'] },
+  { i: 5, say: () => ['회사가 어려웠을 때, 나는 다 내 탓 같았어. 나중에 보니 그게 제일 무거운 짐이더라.'],
+    ask: '자네는 스스로를 나쁘게 보거나, 누굴 실망시켰다고 느낀 날이 며칠쯤 있었어?',
+    c: ['없었어요', '며칠', '일주일 넘게', '거의 매일'],
+    re: ['자기 편을 들어 줄 줄 아는구나. 그거 큰 힘이야.', '며칠은 누구나 자기한테 엄격해지지.', '스스로한테 꽤 가혹했던 2주였네.', '매일 그랬다면 마음이 많이 지쳤을 거야.'] },
+];
+const MID = 8;  // running hidden score that triggers the nudge mid-talk (clear signal)
+const END = 4;  // at the end, nudge when the hidden score is at least this (kept low for sensitivity)
+
+const $ = (s) => document.querySelector(s);
+const chat = $('#chat'), screen = $('#screen');
+let st, run = 0, persona = 'p2';
+const wait = (ms) => new Promise((r) => setTimeout(r, matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : ms));
+
+function row(html, me = false, wide = false) {
+  const last = chat.lastElementChild;
+  const side = me ? 'me' : 'bot';
+  const cont = last && last.classList.contains(side) && !last.classList.contains('typing');
+  if (cont) last.classList.add('next');
+  const d = document.createElement('div');
+  d.className = `row ${side}${cont ? ' cont' : ''}${wide ? ' wide' : ''}`;
+  d.innerHTML = `<div class="col">${me ? '<div class="b"></div>' : html.startsWith('<div') ? html : `<div class="b">${html}</div>`}</div>`;
+  if (me) d.querySelector('.b').textContent = html; // user text is never parsed as HTML
+  chat.append(d); chat.scrollTop = chat.scrollHeight; return d;
+}
+function typing() {
+  const last = chat.lastElementChild;
+  const t = row('<div class="b" aria-label="입력 중"><i></i><i></i><i></i></div>'); t.classList.add('typing');
+  return { done() { t.remove(); if (last) last.classList.remove('next'); } };
+}
+async function say(text, id) {
+  const t = typing();
+  await wait(Math.min(1300, 400 + text.length * 16)); t.done();
+  if (id !== run) return;
+  row(text === '#bars' ? bars() : text, false, text === '#bars');
+}
+async function sayAll(list, id) { for (const x of list) { await say(x, id); if (id !== run) return false; } return true; }
+function bars() {
+  const p = P[persona], max = 9, hm = (h) => `${Math.floor(h)}h${String(Math.round((h % 1) * 60)).padStart(2, '0')}`;
+  const minIdx = p.nights.reduce((m, n, i, a) => (n[1] < a[m][1] ? i : m), 0);
+  const u = (p.usualSleep / max) * 100;
+  const rows = p.nights.map((n, i) => `<span>${n[0]}</span><div class="bar${i === minIdx ? ' hot' : ''}"><i style="width:${(n[1] / max) * 100}%"></i><s class="usual" style="left:${u}%"></s></div><span class="v">${hm(n[1])}</span>`).join('');
+  return `<div class="mini"><div class="t"><b>지난주 잠</b><span>세로선 = 평소 ${Math.floor(p.usualSleep)}시간 ${Math.round((p.usualSleep % 1) * 60)}분</span></div><div class="bars">${rows}</div></div>`;
+}
+const chips = $('#chips'), free = $('#free'), input = free.querySelector('input');
+function idle() { chips.innerHTML = ''; input.value = ''; input.disabled = true; free.onsubmit = (e) => e.preventDefault(); }
+function choose(list, id, allowFree = true) {
+  return new Promise((resolve) => {
+    if (id !== run) return;
+    chips.innerHTML = ''; input.disabled = !allowFree;
+    const send = (label, r) => { idle(); row(label, true); resolve(r); };
+    list.forEach((label, i) => {
+      const b = document.createElement('button'); b.type = 'button'; b.textContent = label;
+      b.onclick = () => send(label, { i }); chips.append(b);
+    });
+    free.onsubmit = (e) => { e.preventDefault(); const v = input.value.trim(); if (allowFree && v) send(v, { text: v }); };
+  });
+}
+// Crisis breaks character: plain voice, fixed lines from safety.js, conversation stops.
+async function crisis(id) {
+  setHead(null);
+  const t = typing(); await wait(600); t.done(); if (id !== run) return;
+  row(`<div class="crisis">많이 힘든 마음을 말해 줘서 고마워요. 지금은 이 대화보다 사람과 이야기하는 게 먼저예요.${CRISIS_LINES.map((c) => `<div class="ln"><b>${c.number}</b><span>${c.name} · ${c.note}</span></div>`).join('')}</div>`, false, true);
+}
+const total = () => st.score.reduce((a, b) => a + (b ?? 0), 0);
+
+const txt = (v) => (typeof v === 'function' ? v(st) : v);
+// Free text: crisis check first; otherwise acknowledge and fall back to the chips.
+async function pickOrTalk(list, id, after) {
+  const pick = await choose(list, id); if (id !== run) return null;
+  if (!pick.text) return pick;
+  if (isCrisis(pick.text)) { await crisis(id); return null; }
+  st.said.push(pick.text);
+  await say(after, id); if (id !== run) return null;
+  return choose(list, id, false);
+}
+async function ask(q, id) {
+  const p = P[persona];
+  if (!(await sayAll(q.say(p), id))) return false;
+  if (q.story) {
+    await say(q.story.ask(p), id); if (id !== run) return false;
+    const s = await pickOrTalk(q.story.c.map((c) => c[0]), id, '얘기해 줘서 고마워. 그 얘기 기억해 둘게. 그중에 가까운 걸 고르면?');
+    if (!s) return false;
+    st.story.push(s.i); await say(q.story.c[s.i][1], id); if (id !== run) return false;
+  }
+  await say(txt(q.ask), id); if (id !== run) return false;
+  let pick = await pickOrTalk(q.c, id, '그랬구나. 날수로 치면 어느 쪽에 가까워?');
+  if (!pick) return false;
+  const doubt = pick.i === 0 && q.check && q.check(p);
+  if (doubt) {
+    await say(doubt, id); if (id !== run) return false;
+    pick = await choose(q.c, id, false); if (id !== run) return false;
+  }
+  st.score[q.i] = pick.i;
+  await say(q.re[pick.i], id);
+  dbg(); return id === run;
+}
+
+// Nudge: a check/X alert over the chat. ✓ opens the formal sheet, ✕ ends the talk.
+async function nudge(id, mid) {
+  await say(mid ? '잠깐, 여기까지만 들어도 요즘 꽤 버거웠던 것 같아.' : '오늘 얘기 고마워. 털어놔 줘서 나도 반가웠어.', id); if (id !== run) return;
+  await wait(400); if (id !== run) return;
+  const ok = await new Promise((resolve) => {
+    const m = $('#alert'); m.hidden = false; m.querySelector('.yes').focus();
+    m.onclick = (e) => { const b = e.target.closest('button'); if (!b) return; m.hidden = true; resolve(b.classList.contains('yes')); };
+  });
+  if (id !== run) return;
+  if (ok) return sheet(id);
+  await say('알겠어. 오늘은 여기까지 하자. 쉬는 것도 일이야. 생각나면 언제든 다시 와.', id); end();
+}
+async function sheet(id) {
+  setHead(null);
+  await say('여기부터는 캐릭터 없이, 검사 원문 그대로예요.', id); if (id !== run) return;
+  const ans = Array(phq9.items.length).fill(null);
+  const box = row(`<div class="sheet"><div class="lbl">${phq9.name} · ${phq9.title}</div><p class="ins">${phq9.instruction}</p><ol></ol><button class="go" type="button" disabled>결과 보기</button></div>`, false, true);
+  const ol = box.querySelector('ol'), go = box.querySelector('.go');
+  phq9.items.forEach((text, k) => {
+    const li = document.createElement('li'); li.innerHTML = `<p>${k + 1}. ${text}</p><div class="opts"></div>`;
+    phq9.options.forEach((o) => {
+      const b = document.createElement('button'); b.type = 'button'; b.textContent = o.label; b.setAttribute('aria-pressed', 'false');
+      b.onclick = () => { ans[k] = o.value; li.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b)); go.disabled = ans.includes(null); };
+      li.lastChild.append(b);
+    });
+    ol.append(li);
+  });
+  go.onclick = async () => {
+    const r = scoreOf(phq9, ans);
+    box.querySelector('.sheet').innerHTML = `<div class="lbl">${phq9.name} 결과</div><p class="score">${r.total}점 / ${r.max}점 · ${r.band}</p><p class="fine">${phq9.context}</p><p class="fine">${phq9.attribution}</p>`;
+    st.formal = r; dbg();
+    if (r.safety) return crisis(id);
+    end();
+  };
+}
+async function closeLow(id) {
+  await say('오늘 얘기 고마워. 기록이랑 자네 말을 같이 보니, 지금은 잘 버티고 있는 것 같아.', id); if (id !== run) return;
+  await say('2주 뒤에 새 기록으로 또 얘기하자.', id); end();
+}
+function end() {
+  const again = document.createElement('button'); again.type = 'button'; again.textContent = '처음으로';
+  again.onclick = lobby; chips.innerHTML = ''; chips.append(again);
+}
+
+function setHead(slot) {
+  $('#headAva').innerHTML = slot ? slot.ava : '<span class="mark" aria-hidden="true"></span>';
+  $('#headName').textContent = slot ? slot.who : '마음 시간표';
+}
+async function startSlot(slot) {
+  const id = ++run;
+  st = { slot: slot.test, score: Array(8).fill(null), story: [], said: [], nudged: false, formal: null };
+  screen.className = 'screen view-chat'; setHead(slot);
+  chat.innerHTML = '<div class="day"><b>오늘</b> 오후 9:41</div>'; idle(); dbg();
+  await say('반가워. 자네 워치 2주 기록을 같이 좀 봐도 될까? 나도 한때 많이 지쳐 봤던 사람이라, 이런 게 그냥 안 넘어가지더라.', id); if (id !== run) return;
+  const go = await choose(['좋아요', '다음에요'], id, false); if (id !== run) return;
+  if (go.i === 1) { await say('언제든 와. 무대는 늘 열려 있어.', id); return end(); }
+  for (const q of Q) {
+    if (!(await ask(q, id))) return;
+    if (!st.nudged && total() >= MID) { st.nudged = true; dbg(); return nudge(id, true); }
+  }
+  if (total() >= END) { st.nudged = true; dbg(); return nudge(id, false); }
+  closeLow(id);
+}
+function lobby() { run++; idle(); $('#alert').hidden = true; screen.className = 'screen view-lobby'; st = null; dbg(); }
+function dbg() {
+  $('#dbg').textContent = st ? JSON.stringify({ test: st.slot, persona, items: st.score.map((v, i) => `${i + 1}번:${v ?? '-'}`).join(' '),
+    hidden_total: `${total()} / 24`, rule: `중간 ${MID}점↑ 또는 끝 ${END}점↑ → 넛지`, nudged: st.nudged, formal: st.formal }, null, 1) : '로비';
+}
+
+for (const s of SLOTS) {
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'slot'; b.disabled = !s.ready;
+  b.innerHTML = `${s.ava || '<span class="ava blank"></span>'}<span><div class="t"></div><div class="m"><b>${s.test}</b> 기반 · ${s.ready ? s.who : '준비 중'}</div></span>`;
+  b.querySelector('.t').textContent = s.title;
+  if (s.ready) b.onclick = () => startSlot(s);
+  $('#slots').append(b);
+}
+$('#slots').style.cssText = 'display:grid;gap:10px';
+$('#back').onclick = lobby;
+for (const k of ['p4', 'p3', 'p2', 'p1']) {
+  const b = document.createElement('button'); b.dataset.k = k; b.innerHTML = `<b>${k}</b><span></span>`; b.lastChild.textContent = P[k].name;
+  b.setAttribute('aria-pressed', k === persona);
+  b.onclick = () => { persona = k; document.querySelectorAll('#pick button').forEach((x) => x.setAttribute('aria-pressed', x.dataset.k === k)); lobby(); };
+  $('#pick').append(b);
+}
+dbg();
+</script>
+</body>
+</html>

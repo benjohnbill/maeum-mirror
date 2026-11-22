@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>마음 시간표 · 캐릭터 검사 데모</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+  :root {
+    --screen: #ffffff; --bot: #f1f0ec; --bot-ink: #17171a; --me: #17171a; --me-ink: #ffffff;
+    --hair: rgba(23,23,26,.08); --frame: #0c0c0d; --muted: #77777c;
+  }
+  @media (prefers-color-scheme: dark) { :root {
+    --screen: #0e0e10; --bot: #1f1f23; --bot-ink: #f1f0ec; --me: #f1f0ec; --me-ink: #17171a;
+    --hair: rgba(255,255,255,.08); --frame: #000; --muted: #8f8e8a;
+  } }
+  * { box-sizing: border-box; }
+  ::selection { background: var(--accent-soft); color: var(--ink); }
+  body { margin: 0; min-height: 100vh; background: var(--ground); color: var(--ink); font-family: var(--font);
+    word-break: keep-all; overflow-wrap: break-word; display: grid; place-items: center; padding: 32px 16px;
+    -webkit-font-smoothing: antialiased; }
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* demo control panel (outside the phone) */
+  .side { position: fixed; top: 24px; left: 24px; width: 232px; font-size: 12px; color: var(--ink-3); line-height: 1.55; }
+  .side strong { display: block; font-size: 13px; color: var(--ink); font-weight: 600; margin-bottom: 4px; }
+  .side p { margin: 0 0 14px; }
+  .side .pick { display: grid; gap: 2px; }
+  .side .pick button { text-align: left; padding: 8px 10px; border: 0; background: none; color: var(--ink-2);
+    border-radius: 8px; cursor: pointer; font-size: 13px; display: flex; gap: 8px; align-items: baseline; }
+  .side .pick button:hover { background: var(--ghost); }
+  .side .pick button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 0 0 1px var(--line); }
+  .side .pick button b { font-weight: 600; font-variant-numeric: tabular-nums; color: var(--ink-3); width: 18px; flex: none; }
+  .side .pick button[aria-pressed="true"] b { color: var(--accent-text); }
+  .side details { margin-top: 16px; } .side summary { cursor: pointer; }
+  .side pre { white-space: pre-wrap; font-size: 11px; max-height: 50vh; overflow: auto; }
+
+  /* phone */
+  .phone { width: 393px; height: 852px; border-radius: 58px; padding: 11px; background: var(--frame); position: relative;
+    box-shadow: 0 0 0 1.5px #3a3a3e, 0 40px 80px -30px rgba(0,0,0,.45), 0 12px 24px -12px rgba(0,0,0,.25); }
+  .screen { width: 100%; height: 100%; border-radius: 47px; overflow: hidden; background: var(--screen);
+    display: flex; flex-direction: column; position: relative; }
+  .island { position: absolute; top: 11px; left: 50%; transform: translateX(-50%); width: 122px; height: 35px; border-radius: 20px; background: #000; z-index: 3; }
+  .status { height: 54px; flex: none; display: flex; justify-content: space-between; align-items: center;
+    padding: 4px 30px 0 36px; font-size: 16px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .status svg { display: block; fill: currentColor; }
+  .status .icons { display: flex; gap: 6px; align-items: center; }
+
+  .head { flex: none; display: grid; grid-template-columns: 40px 1fr 40px; align-items: center; padding: 2px 12px 10px;
+    border-bottom: 1px solid var(--hair); background: var(--screen); position: relative; z-index: 2; }
+  .head .back { width: 36px; height: 36px; display: grid; place-items: center; color: var(--ink); }
+  .head .who { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .mark { width: 34px; height: 34px; border-radius: 50%; background: var(--accent); display: grid; place-items: center; }
+  .mark svg { display: block; }
+  .head .nm { font-size: 12px; font-weight: 600; letter-spacing: -.01em; display: flex; align-items: center; gap: 2px; }
+  .head .nm svg { color: var(--muted); }
+
+  .chat { display: block; gap: 0; min-height: 0; max-height: none; margin: 0; flex: 1; overflow-y: auto; padding: 16px 14px 24px; scroll-behavior: smooth; scrollbar-width: none;
+    mask-image: linear-gradient(transparent, #000 14px, #000 calc(100% - 20px), transparent); }
+  .chat::-webkit-scrollbar { display: none; }
+  .day { text-align: center; font-size: 11px; color: var(--muted); margin: 0 0 14px; font-weight: 500; }
+  .day b { font-weight: 600; }
+  .row { display: flex; margin-top: 16px; animation: in .32s cubic-bezier(.16,1,.3,1); }
+  .row.cont { margin-top: 4px; }
+  .row.me { justify-content: flex-end; }
+  .col { max-width: 80%; display: flex; flex-direction: column; }
+  .row.wide .col { max-width: 88%; width: 88%; }
+  .b { background: var(--bot); color: var(--bot-ink); padding: 9px 14px; border-radius: 20px; font-size: 15px; line-height: 1.47; letter-spacing: -.005em; }
+  .row.bot.cont .b { border-top-left-radius: 6px; }
+  .row.bot.next .b { border-bottom-left-radius: 6px; }
+  .row.me .b { background: var(--me); color: var(--me-ink); }
+  .row.me.cont .b { border-top-right-radius: 6px; }
+  .row.me.next .b { border-bottom-right-radius: 6px; }
+  .typing .b { display: flex; gap: 4px; padding: 14px 16px; }
+  .typing .b i { width: 7px; height: 7px; border-radius: 50%; background: var(--muted); opacity: .4; animation: dot 1.2s infinite; }
+  .typing .b i:nth-child(2) { animation-delay: .15s; } .typing .b i:nth-child(3) { animation-delay: .3s; }
+
+  .mini, .card, .crisis { border-radius: 20px; font-size: 13px; }
+  .mini { background: var(--screen); border: 1px solid var(--line); padding: 14px 14px 12px; }
+  .mini .t { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+  .mini .t b { font-size: 13px; font-weight: 600; } .mini .t span { font-size: 11px; color: var(--muted); }
+  .bars { display: grid; grid-template-columns: 16px 1fr 40px; gap: 7px 8px; align-items: center; font-variant-numeric: tabular-nums; }
+  .bars span { font-size: 11px; color: var(--muted); } .bars .v { text-align: right; color: var(--ink-2); }
+  .bars .bar { height: 8px; background: var(--ghost); border-radius: 4px; position: relative; overflow: hidden; }
+  .bars .bar i { position: absolute; inset: 0 auto 0 0; background: var(--ink); border-radius: 4px; }
+  .bars .bar.hot i { background: var(--accent); }
+  .bars .hot + .v { color: var(--accent-text); font-weight: 600; }
+  .bars .usual { position: absolute; top: -2px; bottom: -2px; width: 1.5px; background: var(--ink-3); opacity: .5; }
+
+  .card { display: block; width: auto; align-self: auto; color: var(--ink); background: var(--screen); border: 1px solid var(--line); padding: 18px 16px 6px; font-size: 14px; line-height: 1.5; }
+  .card .lbl { font-size: 11px; color: var(--muted); font-weight: 500; }
+  .card .type { font-size: 20px; font-weight: 700; letter-spacing: -.02em; margin: 4px 0 12px; line-height: 1.3; }
+  .card .type em { font-style: normal; font-weight: 500; color: var(--ink-2); }
+  .card .pair { border-top: 1px solid var(--line); padding: 11px 0; }
+  .card .pair b { display: block; font-size: 11px; color: var(--muted); font-weight: 600; margin-bottom: 2px; }
+  .card .pair q { display: block; margin-top: 4px; color: var(--ink-2); quotes: '“' '”'; }
+  .crisis { background: var(--accent-soft); color: var(--ink); padding: 14px 16px; font-size: 14px; line-height: 1.6; }
+  .crisis .ln { display: flex; gap: 10px; align-items: baseline; margin-top: 6px; }
+  .crisis .ln b { font-variant-numeric: tabular-nums; color: var(--accent-text); min-width: 42px; }
+
+  .dock { flex: none; padding: 8px 12px 30px; background: var(--screen); }
+  .chips { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; padding: 4px 2px 10px; }
+  .chips:empty { display: none; }
+  .chips button { font-size: 14px; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line);
+    background: var(--screen); color: var(--ink); cursor: pointer; letter-spacing: -.005em;
+    transition: background .15s, border-color .15s, transform .1s; animation: in .32s cubic-bezier(.16,1,.3,1) backwards; }
+  .chips button:nth-child(2) { animation-delay: .04s; } .chips button:nth-child(3) { animation-delay: .08s; } .chips button:nth-child(4) { animation-delay: .12s; }
+  .chips button:hover { border-color: var(--ink-3); }
+  .chips button:active { transform: scale(.96); background: var(--bot); }
+  .free { display: flex; align-items: center; gap: 8px; padding: 4px 4px 4px 16px; border: 1px solid var(--line); border-radius: 999px; background: var(--screen); }
+  .free:focus-within { border-color: var(--ink-3); }
+  .free input { flex: 1; font: inherit; font-size: 15px; border: 0; outline: 0; background: none; color: var(--ink); min-width: 0; padding: 6px 0; caret-color: var(--accent); }
+  .free input::placeholder { color: var(--muted); }
+  .free button { width: 32px; height: 32px; flex: none; border-radius: 50%; border: 0; background: var(--accent-fill); color: var(--on-accent);
+    display: grid; place-items: center; cursor: pointer; transition: opacity .15s, transform .1s; }
+  .free button:active { transform: scale(.92); }
+  .free input:placeholder-shown + button, .free input:disabled + button { opacity: .25; pointer-events: none; }
+  .home { width: 134px; height: 5px; border-radius: 3px; background: var(--ink); position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); opacity: .9; }
+
+  @keyframes in { from { opacity: 0; transform: translateY(8px) scale(.98); } }
+  @keyframes dot { 0%, 60%, 100% { opacity: .35; transform: none; } 30% { opacity: .9; transform: translateY(-2px); } }
+  @media (prefers-reduced-motion: reduce) { .row, .chips button, .typing .b i { animation: none; } .chat { scroll-behavior: auto; } }
+  @media (max-width: 900px) and (min-width: 701px) { .side { position: static; width: auto; max-width: 393px; margin-bottom: 20px; } body { display: flex; flex-direction: column; align-items: center; } }
+  @media (max-width: 700px) {
+    body { padding: 0; display: flex; flex-direction: column; align-items: stretch; height: 100dvh; }
+    .side { position: static; width: auto; padding: 8px 12px; background: var(--surface); border-bottom: 1px solid var(--line); }
+    .side strong, .side p, .side details { display: none; }
+    .side .pick { grid-template-columns: repeat(4, 1fr); gap: 4px; } .side .pick button { font-size: 0; justify-content: center; padding: 6px; }
+    .side .pick button b { font-size: 12px; width: auto; }
+    .phone { width: 100%; flex: 1; height: auto; min-height: 0; border-radius: 0; padding: 0; background: none; box-shadow: none; }
+    .screen { border-radius: 0; } .island, .status, .home { display: none; } .dock { padding-bottom: 14px; }
+  }
+
+  /* card deck */
+  .top { flex: none; padding: 4px 20px 10px; display: flex; align-items: center; justify-content: space-between; }
+  .top b { font-size: 15px; font-weight: 650; letter-spacing: -.01em; }
+  .dots { display: flex; gap: 5px; } .dots i { width: 6px; height: 6px; border-radius: 3px; background: var(--line); transition: width .25s, background .25s; }
+  .dots i.on { width: 16px; background: var(--ink); } .dots i.done { background: var(--ink-3); }
+  .deck { flex: 1; min-height: 0; position: relative; overflow: hidden; }
+  .card2 { position: absolute; inset: 0; overflow-y: auto; padding: 8px 20px 28px; display: flex; flex-direction: column; animation: slide .38s cubic-bezier(.16,1,.3,1); scrollbar-width: none; }
+  .card2::-webkit-scrollbar { display: none; }
+  @keyframes slide { from { opacity: 0; transform: translateX(28px); } }
+  .kicker { font-size: 12px; font-weight: 600; color: var(--accent-text); letter-spacing: .02em; margin: 6px 0 8px; }
+  .big { font-size: 24px; line-height: 1.32; font-weight: 700; letter-spacing: -.03em; margin: 0 0 10px; }
+  .big em { font-style: normal; color: var(--accent-text); }
+  .lede { font-size: 14px; color: var(--ink-2); line-height: 1.55; margin: 0 0 14px; }
+  .src { font-size: 11px; color: var(--muted); margin: 6px 0 0; }
+  .viz { border: 1px solid var(--line); border-radius: 18px; padding: 14px 12px 10px; margin: 4px 0 6px; }
+  .cols { display: grid; grid-template-columns: repeat(14, 1fr); gap: 4px; height: 96px; align-items: end; position: relative; }
+  .cols i { display: block; background: var(--ink); opacity: .18; border-radius: 4px 4px 2px 2px; }
+  .cols i.hit { opacity: .55; } .cols i.pick { opacity: 1; background: var(--accent); }
+  .cols .base { position: absolute; left: 0; right: 0; border-top: 1.5px dashed var(--ink-3); opacity: .6; }
+  .wds { display: grid; grid-template-columns: repeat(14, 1fr); gap: 4px; margin-top: 6px; font-size: 10px; color: var(--muted); text-align: center; }
+  .key { display: flex; gap: 12px; font-size: 11px; color: var(--muted); margin-top: 8px; flex-wrap: wrap; }
+  .key span::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; background: var(--ink); opacity: .55; }
+  .key .p::before { background: var(--accent); opacity: 1; } .key .d::before { background: none; border-top: 1.5px dashed var(--ink-3); height: 0; vertical-align: 3px; }
+  .duo { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 18px; padding: 16px; text-align: center; }
+  .duo b { display: block; font-size: 28px; font-weight: 700; letter-spacing: -.03em; font-variant-numeric: tabular-nums; } .duo span { font-size: 12px; color: var(--muted); }
+  .duo .now b { color: var(--accent-text); }
+  .ask { margin-top: auto; padding-top: 18px; }
+  .ask p { font-size: 15px; font-weight: 600; margin: 0 0 10px; line-height: 1.45; letter-spacing: -.01em; }
+  .ask + .ask { margin-top: 0; }
+  .opts2 { display: flex; flex-wrap: wrap; gap: 6px; }
+  .opts2 button { font-size: 14px; padding: 9px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--screen); color: var(--ink); cursor: pointer; transition: background .15s, border-color .15s, transform .1s; }
+  .opts2 button:hover { border-color: var(--ink-3); } .opts2 button:active { transform: scale(.96); }
+  .opts2 button[aria-pressed="true"] { background: var(--ink); color: var(--screen); border-color: var(--ink); }
+  .rows { display: grid; gap: 14px; }
+  .rows p { margin: 0 0 6px; font-size: 14px; line-height: 1.45; }
+  .seg { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .seg button { font-size: 12px; padding: 8px 2px; border: 0; border-left: 1px solid var(--line); background: var(--screen); color: var(--ink-2); cursor: pointer; }
+  .seg button:first-child { border-left: 0; } .seg button[aria-pressed="true"] { background: var(--ink); color: var(--screen); }
+  .next { margin-top: 18px; width: 100%; padding: 14px; border-radius: 16px; border: 0; background: var(--ink); color: var(--screen); font-size: 15px; font-weight: 600; cursor: pointer; }
+  .next:disabled { opacity: .2; cursor: default; }
+  .mirror { display: grid; gap: 0; border: 1px solid var(--line); border-radius: 18px; padding: 4px 16px; }
+  .mirror > div { padding: 12px 0; border-top: 1px solid var(--line); font-size: 14px; line-height: 1.5; } .mirror > div:first-child { border-top: 0; }
+  .mirror b { display: block; font-size: 11px; color: var(--muted); font-weight: 600; margin-bottom: 3px; }
+  .mirror .gap { color: var(--accent-text); }
+  .form9 { border: 1px solid var(--line); border-radius: 20px; padding: 16px 14px 14px; font-size: 14px; line-height: 1.5; }
+  .form9 .lbl { font-size: 11px; color: var(--muted); font-weight: 600; } .form9 .ins { margin: 6px 0 12px; font-weight: 600; }
+  .form9 ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 14px; } .form9 li > p { margin: 0 0 6px; }
+  .form9 .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+  .form9 .opts button { font-size: 12px; padding: 7px 6px; border-radius: 10px; border: 1px solid var(--line); background: var(--screen); color: var(--ink); cursor: pointer; line-height: 1.3; }
+  .form9 .opts button[aria-pressed="true"] { background: var(--ink); color: var(--screen); border-color: var(--ink); }
+  .form9 .score { font-size: 22px; font-weight: 700; margin: 4px 0 6px; letter-spacing: -.02em; } .form9 .fine { font-size: 12px; color: var(--muted); margin: 8px 0 0; }
+  .alert { position: absolute; inset: 0; z-index: 5; background: rgba(0,0,0,.35); display: grid; place-items: center; padding: 24px; }
+  .alert[hidden] { display: none; }
+  .alert .box { background: var(--screen); color: var(--ink); border-radius: 22px; padding: 20px 18px 14px; width: 100%; font-size: 14px; line-height: 1.55; box-shadow: 0 20px 40px -12px rgba(0,0,0,.4); }
+  .alert .t { font-size: 17px; font-weight: 700; margin: 0 0 6px; letter-spacing: -.02em; } .alert p { margin: 0 0 14px; color: var(--ink-2); }
+  .alert .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .alert button { padding: 12px; border-radius: 14px; border: 1px solid var(--line); background: var(--screen); color: var(--ink); font-weight: 600; cursor: pointer; }
+  .alert .yes { background: var(--accent-fill); color: var(--on-accent); border-color: transparent; }
+  .side .seg2 { display: flex; gap: 4px; margin: 4px 0 14px; } .side .seg2 button { flex: 1; padding: 6px; border-radius: 8px; border: 1px solid var(--line); background: none; cursor: pointer; font-size: 12px; color: var(--ink-2); }
+  .side .seg2 button[aria-pressed="true"] { background: var(--surface); color: var(--ink); font-weight: 600; }
+  @media (prefers-reduced-motion: reduce) { .card2 { animation: none; } }
+</style>
+</head>
+<body>
+<aside class="side">
+  <strong>카드형 데모</strong><p>합성 사용자 · AI 호출 없음. 순간 카드는 페르소나의 export.xml에서 기계적으로 찾았어요(평소 대비 2 표준편차, scripts/find-moments.mjs). 카드마다 PHQ-9 문항 하나가 숨어 있어요.</p>
+  <div class="pick" id="pick"></div>
+  <p style="margin:14px 0 2px">기록에 안 남는 문항</p>
+  <div class="seg2" id="split"></div>
+  <details open><summary>숨은 점수 (사용자에게 안 보임)</summary><pre id="dbg"></pre></details>
+</aside>
+<div class="phone"><div class="screen" id="screen">
+  <div class="island"></div>
+  <div class="status"><span>9:41</span><span class="icons" aria-hidden="true">
+    <svg width="18" height="12" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg>
+    <svg width="27" height="13" viewBox="0 0 27 13"><rect x=".5" y=".5" width="23" height="12" rx="3.5" fill="none" stroke="currentColor" opacity=".4"/><rect x="2" y="2" width="18" height="9" rx="2"/><path d="M25 4.5v4c.8-.3 1.3-1.1 1.3-2s-.5-1.7-1.3-2Z" opacity=".4"/></svg>
+  </span></div>
+  <div class="top"><b>지난 2주의 나</b><span class="dots" id="dots"></span></div>
+  <div class="deck" id="deck" aria-live="polite"></div>
+  <div class="alert" id="alert" hidden><div class="box" role="alertdialog" aria-labelledby="alertT"><p class="t" id="alertT">정식 검사 해 볼래요?</p><p>방금 카드는 기록을 보며 가볍게 고른 거라 정확하지 않아요. 원래 검사(PHQ-9) 9문항으로 지난 2주 마음을 확인할 수 있어요. 2분쯤 걸려요.</p><div class="btns"><button class="no" type="button">✕ 안 할래요</button><button class="yes" type="button">✓ 해 볼게요</button></div></div></div>
+  <div class="home"></div>
+</div></div>
+<script type="module">
+import { CRISIS_LINES } from '../js/safety.js';
+import { METRICS, STRENGTH_LABEL } from '../spec/metrics.js';
+import { dataFlags, hiddenScore } from '../js/moments.js';
+import phq9 from '../spec/tests/phq9.js';
+import { scoreOf } from '../spec/tests/index.js';
+
+const ALL = await (await fetch('moments.json')).json();
+const NUDGE_AT = 4; // chosen from scripts/find-moments.mjs: p1, p2 yes; p3, p4 no
+const FREQ = ['없었어요', '며칠', '7일 넘게', '거의 매일'];
+const SEG = ['없음', '며칠', '7일+', '거의 매일'];
+// PHQ-9 items 1-8 in plain words (meaning kept). Item 9 is asked only in the formal sheet.
+const ITEM = {
+  1: '일이든 노는 거든, 재미나 흥미가 안 느껴진 날',
+  2: '기분이 가라앉거나, 우울하거나, 희망이 없다고 느낀 날',
+  3: '잠들기 어렵거나, 자다 깨거나, 너무 많이 자서 힘들었던 날',
+  4: '피곤하거나 기운이 거의 없던 날',
+  5: '입맛이 없거나, 반대로 너무 많이 먹은 날',
+  6: '스스로를 나쁘게 보거나, 누군가를 실망시켰다고 느낀 날',
+  7: '책이나 영상처럼 평소 하던 것에 집중이 안 되던 날',
+  8: '남들이 알아챌 만큼 느려지거나, 반대로 안절부절못한 날',
+};
+const ROW_ORDER = [4, 1, 3, 7, 5, 8, 2, 6];
+const WD = ['일', '월', '화', '수', '목', '금', '토'];
+const $ = (s) => document.querySelector(s);
+const hhmm = (m) => { const x = ((Math.round(m) % 1440) + 1440) % 1440; return `${String(Math.floor(x / 60)).padStart(2, '0')}:${String(x % 60).padStart(2, '0')}`; };
+const dur = (m) => { const h = Math.floor(Math.abs(m) / 60), mm = Math.round(Math.abs(m) % 60); return h ? `${h}시간${mm ? ` ${mm}분` : ''}` : `${mm}분`; };
+const date = (d) => `${+d.slice(5, 7)}월 ${+d.slice(8, 10)}일 ${WD[new Date(d + 'T00:00:00Z').getUTCDay()]}요일`;
+const src = (id) => `${METRICS[id].label} · ${STRENGTH_LABEL[METRICS[id].strength]} · ${METRICS[id].source}`;
+
+let persona = 'p2', split = 'one', st;
+
+// Build the deck for one persona from its detected moments.
+function buildDeck(f) {
+  const cards = [{ type: 'intro' }];
+  const late = f.moments.filter((m) => m.kind === 'late'), short = f.moments.filter((m) => m.kind === 'short');
+  if (late.length || short.length) cards.push({ type: 'sleep', item: 3, late, short });
+  const wk = f.moments.find((m) => m.kind === 'noWorkout');
+  if (wk) cards.push({ type: 'workout', item: 1, m: wk });
+  // A data card only for an area with a clear pattern (same rule as dataFlags: 3+ days).
+  const still = f.moments.filter((m) => m.kind === 'still');
+  if (dataFlags(f).activity) cards.push({ type: 'still', item: 4, still });
+  if (cards.length === 1) cards.push({ type: 'steady' });
+  const covered = cards.map((c) => c.item).filter(Boolean);
+  const rest = ROW_ORDER.filter((i) => !covered.includes(i));
+  if (split === 'one') cards.push({ type: 'rows', items: rest });
+  else if (split === 'two') {
+    const heavy = rest.filter((i) => i === 2 || i === 6), light = rest.filter((i) => i !== 2 && i !== 6);
+    if (light.length) cards.push({ type: 'rows', items: light });
+    if (heavy.length) cards.push({ type: 'rows', items: heavy, heavy: true });
+  } else rest.forEach((i) => cards.push({ type: 'rows', items: [i] }));
+  cards.push({ type: 'mirror' });
+  return cards;
+}
+
+function sleepViz(f, pick, hitDays) {
+  const n = f.recentNights, max = Math.max(...n.map((x) => x.asleep || 0), f.normal.asleep) * 1.08;
+  const cols = n.map((x) => `<i class="${x.day === pick ? 'pick' : hitDays.has(x.day) ? 'hit' : ''}" style="height:${((x.asleep || 0) / max) * 100}%" title="${x.day} ${dur(x.asleep || 0)}"></i>`).join('');
+  return `<div class="viz"><div class="cols">${cols}<s class="base" style="bottom:${(f.normal.asleep / max) * 100}%"></s></div>
+    <div class="wds">${n.map((x) => `<span>${WD[x.wd]}</span>`).join('')}</div>
+    <div class="key"><span>눈에 띈 밤</span><span class="p">이 카드의 밤</span><span class="d">평소 ${dur(f.normal.asleep)}</span></div></div>`;
+}
+const choiceQ = (text, opts, key) => `<div class="ask"><p>${text}</p><div class="opts2" data-key="${key}">${opts.map((o, i) => `<button type="button" data-i="${i}" aria-pressed="false">${o}</button>`).join('')}</div></div>`;
+
+function render() {
+  const f = ALL[persona], c = st.cards[st.at];
+  $('#dots').innerHTML = st.cards.map((_, i) => `<i class="${i === st.at ? 'on' : i < st.at ? 'done' : ''}"></i>`).join('');
+  let h = '', needs = [];
+  if (c.type === 'intro') {
+    const n = new Set(f.moments.map((m) => m.day ?? m.kind)).size;
+    h = `<p class="kicker">${f.from.slice(5).replace('-', '.')} – ${f.last.slice(5).replace('-', '.')}</p>
+      <p class="big">최근 2주를<br>그 전 11주의 나와<br>비교해 봤어요.</p>
+      <p class="lede">${n ? `평소와 다른 순간이 <b>${n}번</b> 있었어요. 카드를 넘기면서 그때 어땠는지만 골라 주세요. 다른 사람과 비교하지 않아요.` : '눈에 띄게 달라진 순간은 없었어요. 그래도 몸 기록에 안 남는 것 몇 가지만 물어볼게요.'}</p>
+      <p class="src">워치 기록은 이 기기 밖으로 나가지 않아요.</p>`;
+  } else if (c.type === 'sleep') {
+    const hit = new Set([...c.late, ...c.short].map((m) => m.day));
+    let pick, line;
+    if (c.late.length) {
+      pick = c.late.reduce((a, b) => (b.z > a.z ? b : a));
+      line = `${date(pick.day)},<br><em>${hhmm(pick.value)}</em>에 잠들었어요.`;
+      c.lead = `평소(${hhmm(f.normal.onset)})보다 ${dur(pick.value - f.normal.onset)} 늦게요.`;
+    } else {
+      pick = c.short.reduce((a, b) => (b.z < a.z ? b : a));
+      line = `${date(pick.day)},<br><em>${dur(pick.value)}</em> 잤어요.`;
+      c.lead = `평소(${dur(f.normal.asleep)})보다 ${dur(f.normal.asleep - pick.value)} 적게요.`;
+    }
+    c.fact = [c.short.length && `평소보다 짧게 잔 밤 ${c.short.length}번`, c.late.length && `늦게 잠든 밤 ${c.late.length}번`].filter(Boolean).join(' · ');
+    h = `<p class="kicker">잠</p><p class="big">${line}</p><p class="lede">${c.lead} 2주 동안 ${c.fact}.</p>${sleepViz(f, pick.day, hit)}<p class="src">${src(c.late.length ? 'onset' : 'sleep')}</p>
+      ${choiceQ(c.late.length ? '그날 밤엔 뭐 하고 있었어요?' : '요즘 잠이 줄어든 건 어느 쪽에 가까워요?', c.late.length ? ['일이나 공부', '폰이나 영상', '누워도 잠이 안 와서', '기억 안 나요'] : ['일찍 일어나야 해서', '늦게 잠들어서', '자다 깨서', '잘 모르겠어요'], 'story')}
+      ${choiceQ(`2주 중에 ${ITEM[3]}은 며칠쯤이에요?`, FREQ, 'freq')}`;
+    needs = ['story', 'freq'];
+  } else if (c.type === 'workout') {
+    c.fact = `주 ${c.m.base.toFixed(1)}회 하던 운동 → 2주째 0회`;
+    h = `<p class="kicker">운동</p><p class="big">2주째<br>운동 기록이 <em>비어</em> 있어요.</p>
+      <div class="duo"><div><b>${c.m.base.toFixed(1)}</b><span>평소 주당 횟수</span></div><span>→</span><div class="now"><b>0</b><span>최근 2주</span></div></div><p class="src">${src('workout')}</p>
+      ${choiceQ('쉬게 된 건 어느 쪽이에요?', ['바빠서', '하기 싫어져서', '일부러 쉬는 중', '다른 걸 해요'], 'story')}
+      ${choiceQ(`2주 중에 ${ITEM[1]}은 며칠쯤이에요?`, FREQ, 'freq')}`;
+    needs = ['story', 'freq'];
+  } else if (c.type === 'still') {
+    const pick = c.still.reduce((a, b) => (b.z < a.z ? b : a));
+    c.fact = `거의 안 움직인 날 ${c.still.length}번`;
+    h = `<p class="kicker">움직임</p><p class="big">${date(pick.day)},<br><em>${Math.round(pick.value).toLocaleString('ko-KR')}보</em> 걸었어요.</p><p class="lede">평소 하루 ${Math.round(f.normal.steps).toLocaleString('ko-KR')}보예요. 2주 동안 ${c.fact}.</p><p class="src">${src('steps')}</p>
+      ${choiceQ('그날은 어떤 날이었어요?', ['집에서 쉰 날', '바빠서 못 나감', '몸이 무거워서', '기억 안 나요'], 'story')}
+      ${choiceQ(`2주 중에 ${ITEM[4]}은 며칠쯤이에요?`, FREQ, 'freq')}`;
+    needs = ['story', 'freq'];
+  } else if (c.type === 'steady') {
+    h = `<p class="kicker">리듬</p><p class="big">2주 내내<br>평소 리듬 <em>그대로</em>예요.</p>
+      <p class="lede">잠드는 시각 평균 ${hhmm(f.normal.onset)}, 잠 ${dur(f.normal.asleep)}, 걸음 ${Math.round(f.normal.steps).toLocaleString('ko-KR')}보에서 크게 벗어난 날이 없어요.</p>${sleepViz(f, null, new Set())}
+      ${choiceQ('이 리듬, 일부러 지키는 거예요?', ['네, 루틴이에요', '그냥 그렇게 돼요', '몰랐어요'], 'story')}`;
+    needs = ['story'];
+  } else if (c.type === 'rows') {
+    h = `<p class="kicker">${c.heavy ? '마음' : '기록에 안 남는 것'}</p><p class="big">${c.heavy ? '마지막으로<br>마음 얘기 두 가지만요.' : c.items.length === 1 ? '이건 워치가<br>모르는 거예요.' : '이건 워치가<br>모르는 것들이에요.'}</p>
+      <p class="lede">2주 동안 이런 날이 며칠쯤이었는지만 골라 주세요.</p>
+      <div class="rows">${c.items.map((i) => `<div><p>${ITEM[i]}</p><div class="seg" data-key="i${i}">${SEG.map((s, v) => `<button type="button" data-i="${v}" aria-pressed="false">${s}</button>`).join('')}</div></div>`).join('')}</div>`;
+    needs = c.items.map((i) => `i${i}`);
+  } else if (c.type === 'mirror') {
+    const facts = st.cards.filter((x) => x.fact), gaps = st.cards.filter((x) => x.fact && x.count >= 3 && st.score[x.item - 1] === 0);
+    h = `<p class="kicker">거울</p><p class="big">기록과 내 말을<br>나란히 놓아 봤어요.</p>
+      <div class="mirror"><div><b>기록이 말한 것</b>${facts.length ? facts.map((x) => x.fact).join('<br>') : '평소 리듬 그대로'}</div>
+      <div><b>내가 고른 것</b>${st.stories.length ? st.stories.join(' · ') : '—'}</div>
+      ${gaps.map((x) => `<div class="gap"><b>기록과 내 말이 달랐던 곳</b>${x.fact}. 그런데 ${x.item === 1 ? '재미가 안 느껴진 날' : x.item === 3 ? '잠 때문에 힘든 날' : '기운 없던 날'}은 없었다고 골랐어요. 둘 다 맞을 수 있어요.</div>`).join('')}</div>`;
+  }
+  const last = c.type === 'mirror';
+  $('#deck').innerHTML = `<section class="card2">${h}<button class="next" type="button" ${needs.length ? 'disabled' : ''}>${last ? '마치기' : c.type === 'intro' ? '시작하기' : '다음'}</button></section>`;
+  const got = {};
+  $('#deck').querySelectorAll('[data-key]').forEach((g) => g.addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    g.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b));
+    got[g.dataset.key] = { i: +b.dataset.i, label: b.textContent };
+    $('.next').disabled = !needs.every((k) => k in got);
+  }));
+  $('.next').onclick = () => {
+    if (got.story) st.stories.push(got.story.label);
+    if (got.freq) { st.score[c.item - 1] = got.freq.i; c.count = c.fact ? +(c.fact.match(/(\d+)번/) || [])[1] || 3 : 0; }
+    for (const k in got) if (k[0] === 'i') st.score[+k.slice(1) - 1] = got[k].i;
+    dbg();
+    if (last) return finish();
+    st.at++; render();
+  };
+}
+
+function finish() {
+  const s = hiddenScore(st.score, st.flags);
+  if (s.total < NUDGE_AT) return endCard('2주 뒤에<br>다시 비춰 볼게요.', '지금은 평소 리듬 안에 있어요. 새 기록이 쌓이면 또 알려 줄게요.');
+  const m = $('#alert'); m.hidden = false; m.querySelector('.yes').focus();
+  m.onclick = (e) => { const b = e.target.closest('button'); if (!b) return; m.hidden = true; st.nudge = b.classList.contains('yes') ? 'yes' : 'no'; dbg(); b.classList.contains('yes') ? sheet() : endCard('알겠어요.<br>여기까지 할게요.', '결과 카드는 그대로 남아 있어요. 생각나면 언제든 해 볼 수 있어요.'); };
+}
+function endCard(big, note) {
+  $('#deck').innerHTML = `<section class="card2"><p class="kicker">끝</p><p class="big">${big}</p><p class="lede">${note}</p><button class="next" type="button">처음으로</button></section>`;
+  $('.next').onclick = () => start();
+}
+function sheet() {
+  const ans = Array(phq9.items.length).fill(null);
+  $('#deck').innerHTML = `<section class="card2"><p class="kicker">정식 검사 · 문항 원문 그대로</p><div class="form9"><div class="lbl">${phq9.name} · ${phq9.title}</div><p class="ins">${phq9.instruction}</p><ol></ol></div><button class="next" type="button" disabled>결과 보기</button></section>`;
+  const ol = $('.form9 ol'), go = $('.next');
+  phq9.items.forEach((text, k) => {
+    const li = document.createElement('li'); li.innerHTML = `<p>${k + 1}. ${text}</p><div class="opts"></div>`;
+    phq9.options.forEach((o) => {
+      const b = document.createElement('button'); b.type = 'button'; b.textContent = o.label; b.setAttribute('aria-pressed', 'false');
+      b.onclick = () => { ans[k] = o.value; li.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b)); go.disabled = ans.includes(null); };
+      li.lastChild.append(b);
+    });
+    ol.append(li);
+  });
+  go.onclick = () => {
+    const r = scoreOf(phq9, ans); st.formal = r; dbg();
+    const crisis = r.safety ? `<div class="crisis" style="margin-top:14px">많이 힘든 마음을 알려 줘서 고마워요. 지금은 사람과 이야기하는 게 먼저예요.${CRISIS_LINES.map((c) => `<div class="ln"><b>${c.number}</b><span>${c.name} · ${c.lede}</span></div>`).join('')}</div>` : '';
+    $('#deck').innerHTML = `<section class="card2"><p class="kicker">정식 검사 결과</p><div class="form9"><div class="lbl">${phq9.name}</div><p class="score">${r.total}점 / ${r.max}점 · ${r.band}</p><p class="fine">${phq9.context}</p></div>${crisis}<button class="next" type="button">처음으로</button></section>`;
+    $('.next').onclick = () => start();
+  };
+}
+
+function start() {
+  const f = ALL[persona];
+  $('#alert').hidden = true;
+  st = { cards: buildDeck(f), at: 0, score: Array(8).fill(null), stories: [], flags: dataFlags(f), nudge: null, formal: null };
+  render(); dbg();
+}
+function dbg() {
+  const s = hiddenScore(st.score, st.flags);
+  $('#dbg').textContent = JSON.stringify({ persona: ALL[persona].id, cards: st.cards.length, items: st.score.map((v, i) => `${i + 1}:${v ?? '-'}`).join(' '),
+    said: s.said, body: `${s.body} ${JSON.stringify(st.flags)}`, total: s.total, nudge_at: NUDGE_AT, nudge: st.nudge, formal: st.formal && `${st.formal.total} ${st.formal.band}` }, null, 1);
+}
+const press = (sel, key) => document.querySelectorAll(sel).forEach((b) => b.setAttribute('aria-pressed', b.dataset.k === key));
+for (const [k, name] of [['p4', '대학원생 · 괜찮은 사람'], ['p3', '이직 2개월 · 생활 변화'], ['p2', '회사 2년 차 · "괜찮아요"'], ['p1', '취업 준비 · 지친 사람']]) {
+  const b = document.createElement('button'); b.dataset.k = k; b.innerHTML = `<b>${k}</b><span>${name}</span>`;
+  b.onclick = () => { persona = k; press('#pick button', k); start(); }; $('#pick').append(b);
+}
+for (const [k, name] of [['one', '한 장'], ['two', '두 장'], ['all', '한 문항씩']]) {
+  const b = document.createElement('button'); b.dataset.k = k; b.textContent = name;
+  b.onclick = () => { split = k; press('#split button', k); start(); }; $('#split').append(b);
+}
+const q = new URLSearchParams(location.search);
+if (q.get('p') in ALL) persona = q.get('p');
+if (['one', 'two', 'all'].includes(q.get('split'))) split = q.get('split');
+press('#pick button', persona); press('#split button', split);
+start();
+</script>
+</body>
+</html>

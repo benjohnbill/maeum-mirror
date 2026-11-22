@@ -49,3 +49,11 @@ Purpose: ground the 마음 시간표 demo (problem, conversation design, numbers
 
 ### 05-report-form: the "professional" report grammar (done in the main session)
 - Structure notes from a commercial temperament test report, mapped to mobile cards. No personal data.
+
+### 06-screening-practice: how depression, anxiety, and resilience scales are used in real settings
+- Korea: which scales, order, item counts, who asks, and what follows a positive result, in the 국가건강검진 정신건강검사, public programs (마음투자 바우처, 국가정신건강정보포털 self-test, 생명이음청진기), 정신건강복지센터 intake, psychiatry first visits, 학생정서·행동특성검사, and app onboarding (마인드카페, 트로스트, 마보; their own pages only).
+- Abroad: NHS Talking Therapies session-by-session measures, USPSTF depression and anxiety screening, NICE NG222 case-finding questions, Japan Stress Check.
+- Stepped screening and short forms: PHQ-2 → PHQ-9, GAD-2, PHQ-8, computerized adaptive tests.
+- Resilience scales (CD-RISC, BRS): routine use and license terms.
+- Evidence for and against "기존 심리 검사는 번거롭고 부담스럽다": burden, dropout, non-completion, questionnaire fatigue, labeling, and stigma.
+- Validity when wording is changed, items are asked in conversation, or items are replaced by passive data; studies that supplement or replace screening with wearable or smartphone data.

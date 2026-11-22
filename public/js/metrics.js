@@ -131,4 +131,4 @@ export function computeSummary(data) {
   return { last, recentFrom: shift(last, -(RECENT - 1)), metrics, recentNights, normal, text };
 }
 
-export { hhmm, hm };
+export { hhmm, hm, nights, dayKey, keyToMin, shift, mean, sd };
