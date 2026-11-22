@@ -24,6 +24,11 @@ Purpose: ground the 마음 시간표 demo (problem, conversation design, numbers
 ## Streams and questions
 
 ### 01-youth-mind: what young adults (20s to early 30s, Korea first) actually go through
+
+[심리검사를 시작한 이유와 결과를 받은 뒤 유익했던 점](01-youth-mind/test-user-needs.md)
+
+[한국에서 MBTI와 뱅크샐러드 유전자 검사가 퍼진 이유](01-youth-mind/test-popularity-korea.md)
+
 - Scale of depression and anxiety in this age group (국민정신건강실태조사, 청년삶실태조사, KOSIS, peer-reviewed Korean studies).
 - Evidence for the "want to know myself" demand: MBTI and psych-test popularity, surveys on why young people take such tests.
 - Why they do not seek help: counseling usage rates, stigma, cost, bother.
@@ -53,3 +58,11 @@ Purpose: ground the 마음 시간표 demo (problem, conversation design, numbers
 ### 06-screeners: 짧은 심리검사와 응답에 따른 확장
 
 [7개 검사 비교·문항·채점·해석](06-screeners/REPORT.md) · [원출처와 한국어판 이용 조건](06-screeners/sources.md) · [검사별 JSON](../spec/tests/)
+
+### 07-walking-sleep · 걸음·수면으로 대화를 시작하는 근거
+
+[기기 검증과 개인 내 변화, AI 성찰 연구](07-walking-sleep/REPORT.md) · [Apple·삼성 측정 규칙과 대한상공회의소 해커톤 시연 기준](../spec/walking-sleep.md) · [Lumi(uselumi.ai) 랜딩페이지에서 참고할 점](../docs/landing-reference-lumi.md)
+
+### 08-similar-services · 마음미러 유사 서비스
+
+[15개 서비스의 입력·결과·소요 기간과 마음미러 설계에 참고할 점](08-similar-services/REPORT.md) · [서비스별 공식 출처와 확인 범위](08-similar-services/sources.md)

@@ -1,0 +1,7 @@
+25e57183254c042592125818982096e48f2d0efa25e4db440dcf107eaa90e762  pdf/(첨부1) AI 해커톤_대회 안내문_261106.pdf
+1ce02778efc5a07d1ea0c751c906a84f9b8a66400fbd1a559ad9b0b1abc36fe9  pdf/(첨부2) AI해커톤_프로젝트소개서_양식_261103.pdf
+e3a8f883d2123d5ea81c160fcae73d75fb4a9bc4293e9a498d0773db1f1bd85e  pdf/(첨부3) AI 해커톤_AI 활용 및 출처 표기 기준_261103.pdf
+f166c05e680fada0d9cdecbd3bed720528cd69c96d9ae447c19d0d707f35ec0d  pdf/(첨부4) AI 해커톤_참가자 동의 안내_261103.pdf
+5a8025376cebe8905ad72110a277209cb21fa7026a32eb6572e86ea65f769243  pdf/AI 해커톤_참가자 동의 안내.pdf
+7f64483803777cc148bbc24f8bfd72f822fe9b44872d420df187a6ccd0aba345  pdf/AI 활용 및 출처 표기 기준.pdf
+48998adc7e6437da33b3352860e8facf4355eef1232494181ce665c8bd2145b1  pdf/[참가안내문] 2026 대한민국 청년 CAREER FAIR AI 해커톤.pdf
