@@ -1,6 +1,19 @@
 # Deploy decisions (Lane D)
 
-Status: settled 2026-11-22 (user via hub). Deploy not run yet.
+Status: settled 2026-11-22 (user via hub). First production deploy 2026-11-23.
+
+## Live
+- Production URL: https://maeum-mirror.vercel.app (public, no login).
+- Vercel project: `chobenjohn-8747s-projects/maeum-mirror`, linked locally in
+  `.vercel/` (git-ignored). Not connected to GitHub: a push does not deploy.
+- Redeploy: `vercel deploy --prod` from the repo root.
+- Preview deploys (`vercel deploy` without `--prod`) sit behind Vercel
+  Authentication and run in `demo` mode, because the keys are set for
+  production only.
+- `vercel.json` must keep `"framework": null`. Without it Vercel detects the
+  `Node` preset and deploys without `api/chat` and `api/status` (both 404).
+- Smoke 2026-11-23: `/` 200, `/api/status` `mode: gemini`, one `signals` turn
+  answered by `gemini-3.5-flash-lite` in about 1 s, bad JSON 400, `/.env` 404.
 
 ## Settled
 - Host: Vercel Hobby, deployed with the Vercel CLI from the local tree (no Next.js,
