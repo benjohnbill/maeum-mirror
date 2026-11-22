@@ -271,11 +271,65 @@ function profileCard(row, model, footer) {
   return card;
 }
 
+// One big card with the row's test and exercise buttons in its footer. `render(ids)` redraws
+// the report after a test or exercise finishes.
+function rowCard(row, model, state, takeScreening, render, open) {
+  const footer = el('div', 'profile-test-action');
+  for (const action of rowActions(row, state, { takeScreening }, () => render([row.id]))) actionButton(footer, action);
+  const card = profileCard(row, model, footer);
+  card.open = open.has(row.id);
+  return card;
+}
+
+const openCards = (container) => new Set([...container.querySelectorAll('details.profile-result[open]')].map(card => card.dataset.topic));
+
+function focusCard(container, focusIds) {
+  const target = focusIds.map(id => container.querySelector(`details.profile-result[data-topic="${id}"]`)).find(Boolean);
+  if (!target) return;
+  const summary = target.querySelector('summary') || target;
+  summary.focus({ preventScroll: true });
+  summary.scrollIntoView({ block: 'nearest' });
+}
+
+// With a sample person's prior every row has a value, so there is no '더 알아볼 지표' list.
+// '대화로 바뀐 지표': rows the conversation moved, largest rank change first.
+// '기록으로 본 지표': the rest, closest to 1등 first; a test result without a rank keeps its prior place.
+function appendPriorReport(container, state, { takeScreening }) {
+  const section = (title) => {
+    const count = el('span', 'profile-count');
+    const heading = el('h3', 'profile-section-title', title + ' ');
+    heading.append(count);
+    return { heading, count, deck: el('div', 'result-deck') };
+  };
+  const moved = section('대화로 바뀐 지표');
+  const none = el('p', 'profile-test-detail', '이번 대화로 등수가 바뀐 지표는 없어요.');
+  const rest = section('기록으로 본 지표');
+  container.append(moved.heading, moved.deck, none, rest.heading, rest.deck);
+  const rankOf = ({ row, model }) => model.value?.unit === '등' ? model.value.main : state.prior[row.id]?.rank ?? 50;
+  const shift = ({ model }) => Math.abs(model.value.main - model.before);
+
+  function render(focusIds = []) {
+    const open = openCards(container);
+    const models = indicators.map(row => ({ row, model: indicatorModel(row, state) })).filter(({ model }) => model);
+    const changed = models.filter(({ model }) => model.changed).sort((a, b) => shift(b) - shift(a));
+    const others = models.filter(({ model }) => !model.changed).sort((a, b) => rankOf(a) - rankOf(b));
+    for (const [part, list] of [[moved, changed], [rest, others]]) {
+      part.count.textContent = list.length + '개';
+      part.deck.replaceChildren(...list.map(({ row, model }) => rowCard(row, model, state, takeScreening, render, open)));
+    }
+    none.hidden = changed.length > 0;
+    focusCard(container, focusIds);
+  }
+  render();
+}
+
 // Two parts: '알아낸 지표' (one big card per indicator with a value, in indicators.js order)
 // and '더 알아볼 지표' (one line per form still to take; pending forms last).
 // Finishing a test or exercise re-renders both parts, so the indicator moves up.
 // `bigCard(row, model)` swaps the big card for another surface (the landing uses resultCard).
+// `state.prior` (the phone demo's sample person) switches to appendPriorReport.
 export function appendProfileReport(container, state, { takeScreening, bigCard } = {}) {
+  if (state.prior && !bigCard) return appendPriorReport(container, state, { takeScreening });
   const countLabel = el('span', 'profile-count');
   const foundTitle = el('h3', 'profile-section-title', '알아낸 지표 ');
   foundTitle.append(countLabel);
@@ -286,20 +340,13 @@ export function appendProfileReport(container, state, { takeScreening, bigCard }
   container.append(foundTitle, deck, empty, todoTitle, todo);
 
   function render(focusIds = []) {
-    const open = new Set([...deck.querySelectorAll('details.profile-result[open]')].map(card => card.dataset.topic));
+    const open = openCards(deck);
     // `state.fill(row)` gives a model to rows with no value (the landing example fills all 24).
     const models = indicators.map(row => [row, indicatorModel(row, state) ?? state.fill?.(row) ?? null]);
     const known = models.filter(([, model]) => model);
     countLabel.textContent = known.length + ' / ' + indicators.length;
     empty.hidden = known.length > 0;
-    deck.replaceChildren(...known.map(([row, model]) => {
-      if (bigCard) return bigCard(row, model);
-      const footer = el('div', 'profile-test-action');
-      for (const action of rowActions(row, state, { takeScreening }, () => render([row.id]))) actionButton(footer, action);
-      const card = profileCard(row, model, footer);
-      card.open = open.has(row.id);
-      return card;
-    }));
+    deck.replaceChildren(...known.map(([row, model]) => bigCard ? bigCard(row, model) : rowCard(row, model, state, takeScreening, render, open)));
     const groups = todoGroups(models.filter(([, model]) => !model).map(([row]) => row));
     const items = groups.map(rows => {
       const title = rows.map(row => row.title).join(' · ');
@@ -315,12 +362,7 @@ export function appendProfileReport(container, state, { takeScreening, bigCard }
     });
     todo.replaceChildren(...items.filter(entry => !entry.pending).map(entry => entry.item), ...items.filter(entry => entry.pending).map(entry => entry.item));
     todo.hidden = todoTitle.hidden = !items.length;
-    const target = focusIds.map(id => deck.querySelector(`[data-topic="${id}"]`)).find(Boolean);
-    if (target) {
-      const summary = target.querySelector('summary') || target;
-      summary.focus({ preventScroll: true });
-      summary.scrollIntoView({ block: 'nearest' });
-    }
+    focusCard(deck, focusIds);
   }
   render();
 }

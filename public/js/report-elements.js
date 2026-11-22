@@ -61,6 +61,7 @@ export function renderProfileResult(card, { topic, label, value, meta, descripti
   appendInterpretation(body, description, scale);
   if (evidence) {
     const sources = resultDetails(evidence.label || '응답과 채점 근거');
+    sources.open = Boolean(evidence.open);
     sources.append(...evidence.items);
     body.append(sources);
   }
