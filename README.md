@@ -1,9 +1,8 @@
 <p align="center">
-  <img src="docs/readme/banner.jpg" alt="Herz" width="100%">
+  <a href="https://maeum-mirror.vercel.app/?view=phone"><img src="docs/readme/banner.jpg" alt="Herz" width="100%"></a>
 </p>
 
 <p align="center">
-  <a href="https://maeum-mirror.vercel.app/?view=phone"><img src="https://img.shields.io/badge/demo-maeum--mirror.vercel.app-d9481c?style=flat-square" alt="데모"></a>
   <img src="https://img.shields.io/badge/Node.js-%3E%3D18-5fa04e?style=flat-square&logo=nodedotjs&logoColor=white" alt="Node.js 18 이상">
   <img src="https://img.shields.io/badge/Gemini_API-8e75b2?style=flat-square&logo=googlegemini&logoColor=white" alt="Gemini API">
   <img src="https://img.shields.io/badge/Vercel-000000?style=flat-square&logo=vercel&logoColor=white" alt="Vercel">
@@ -15,7 +14,10 @@
 <p align="center">AI 에이전트가 흩어진 생활 기록을 통해 변화를 파악, 심리 상태를 분석 및 추적하는 서비스</p>
 
 <p align="center">
-  <a href="https://maeum-mirror.vercel.app/?view=phone">데모</a> ·
+  <a href="https://maeum-mirror.vercel.app/?view=phone"><img src="https://img.shields.io/badge/%E2%96%B6%20%EB%8D%B0%EB%AA%A8%20%EC%97%B4%EA%B8%B0-e0322b?style=for-the-badge" alt="데모 열기" height="40"></a>
+</p>
+
+<p align="center">
   <a href="docs/submission/INTRO.md">서비스 소개서</a> ·
   <a href="docs/hackathon-2026/README.md">대한상공회의소 AI 해커톤 공고</a> ·
   <a href="research/README.md">조사 자료</a>
