@@ -1,0 +1,12 @@
+{
+  "id": "p1-concordant",
+  "archetype": "Concordant low mood",
+  "phq8_truth": { "1": 2, "2": 2, "3": 2, "4": 2, "5": 1, "6": 1, "7": 2, "8": 0 },
+  "disclosure_gate": { "1": "direct", "2": "indirect", "3": "direct", "4": "direct", "5": "direct", "6": "indirect", "7": "direct", "8": "direct" },
+  "behavior_tags": ["short_answers"],
+  "offer_test": "accept",
+  "expected_opener": "sleep",
+  "health": { "export": "export.xml", "generator": "scripts/make-persona-data.mjs --name 민준 --sex M --birth 1998-06-02 --seed 101 --base-workout 0 --sleep -30 --onset +40 --regularity 1.5 --steps -15 --rhr +2 --hrv -10" },
+  "provenance": ["S01-01", "theme-career-anxiety", "theme-lethargy"],
+  "surface_style": "28세 남성, 취업 준비 1년 넘김. 힘없는 해요체, 한두 문장으로 짧게 답한다. 묻는 것에는 솔직하게 답하지만 먼저 길게 꺼내지 않는다. 이모티콘 없음."
+}

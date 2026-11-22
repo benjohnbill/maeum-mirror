@@ -1,0 +1,12 @@
+{
+  "id": "p3-benign",
+  "archetype": "Benign change",
+  "phq8_truth": { "1": 0, "2": 0, "3": 1, "4": 1, "5": 0, "6": 0, "7": 0, "8": 0 },
+  "disclosure_gate": { "1": "direct", "2": "direct", "3": "direct", "4": "direct", "5": "direct", "6": "direct", "7": "direct", "8": "direct" },
+  "behavior_tags": [],
+  "offer_test": "accept",
+  "expected_opener": "sleep",
+  "health": { "export": "export.xml", "generator": "scripts/make-persona-data.mjs --name 하은 --sex F --birth 1997-09-23 --seed 303 --base-workout 0 --sleep -18 --steps -8" },
+  "provenance": ["theme-new-job-commute"],
+  "surface_style": "29세 여성, 이직 2개월 차, 통근이 왕복 3시간으로 길어져 일찍 일어난다. 새 일이 재밌다고 말하는 차분한 해요체. 피곤은 인정하지만 기분은 좋다고 구체적으로 말한다."
+}

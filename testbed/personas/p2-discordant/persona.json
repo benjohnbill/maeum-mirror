@@ -1,0 +1,12 @@
+{
+  "id": "p2-discordant",
+  "archetype": "Discordant",
+  "phq8_truth": { "1": 2, "2": 1, "3": 2, "4": 2, "5": 1, "6": 1, "7": 1, "8": 0 },
+  "disclosure_gate": { "1": "indirect", "2": "never", "3": "direct", "4": "direct", "5": "direct", "6": "never", "7": "indirect", "8": "direct" },
+  "behavior_tags": ["minimising", "contradicts_data"],
+  "offer_test": "decline",
+  "expected_opener": "sleep",
+  "health": { "export": "export.xml", "generator": "scripts/make-persona-data.mjs --name 서연 --sex F --birth 2001-02-17 --seed 202 --base-workout 3 --workout 0 --sleep -20 --onset +60 --regularity 2 --steps -20 --rhr +3 --hrv -15" },
+  "provenance": ["S01-17", "theme-fine-on-the-surface", "theme-overtime"],
+  "surface_style": "25세 여성, 회사 2년 차, 최근 야근이 잦다. '괜찮아요', '다들 그렇죠'로 넘기는 밝은 해요체, ㅋㅋ를 가끔 쓴다. 잠과 일 이야기는 편하게 하지만 기분을 물으면 화제를 돌린다."
+}

@@ -1,0 +1,12 @@
+{
+  "id": "p4-stable",
+  "archetype": "Stable healthy",
+  "phq8_truth": { "1": 0, "2": 0, "3": 1, "4": 0, "5": 0, "6": 0, "7": 1, "8": 0 },
+  "disclosure_gate": { "1": "direct", "2": "direct", "3": "direct", "4": "direct", "5": "direct", "6": "direct", "7": "direct", "8": "direct" },
+  "behavior_tags": [],
+  "offer_test": "accept",
+  "expected_opener": null,
+  "health": { "export": "export.xml", "generator": "scripts/make-persona-data.mjs --name 도윤 --sex M --birth 2000-11-08 --seed 404 --base-workout 2" },
+  "provenance": ["S01-13", "theme-curiosity-entry"],
+  "surface_style": "26세 남성, 대학원 2년 차. MBTI 결과 보듯 궁금해서 들어왔다. 가벼운 해요체에 ㅋㅋ를 자주 쓰고, 질문에 바로 답하지만 '그냥 평소랑 똑같아요'가 많다."
+}
