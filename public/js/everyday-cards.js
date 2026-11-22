@@ -312,7 +312,9 @@ function appendPriorReport(container, state, { takeScreening }) {
     const open = openCards(container);
     const models = indicators.map(row => ({ row, model: indicatorModel(row, state) })).filter(({ model }) => model);
     const changed = models.filter(({ model }) => model.changed).sort((a, b) => shift(b) - shift(a));
-    const others = models.filter(({ model }) => !model.changed).sort((a, b) => rankOf(a) - rankOf(b));
+    // Mood and anxiety rows go last so a clinical label never heads the list.
+    const clinical = ({ row }) => row.group === '기분과 불안';
+    const others = models.filter(({ model }) => !model.changed).sort((a, b) => clinical(a) - clinical(b) || rankOf(a) - rankOf(b));
     for (const [part, list] of [[moved, changed], [rest, others]]) {
       part.count.textContent = list.length + '개';
       part.deck.replaceChildren(...list.map(({ row, model }) => rowCard(row, model, state, takeScreening, render, open)));

@@ -175,7 +175,9 @@ export function detectChanges(data, through, { limit = 2 } = {}) {
       baseText: metric.show(best.base), recentText: metric.show(best.recent),
     });
   }
-  found.sort((a, b) => Math.abs(b.z) - Math.abs(a.z));
+  // A workout habit that stopped (2+ a week, now none) is the clearest story, so it goes first.
+  const stopped = (c) => c.id === 'workouts' && c.recent === 0 && c.base * 7 >= 2;
+  found.sort((a, b) => stopped(b) - stopped(a) || Math.abs(b.z) - Math.abs(a.z));
   const picked = [];
   for (const change of found) {
     if (picked.length >= limit) break;
@@ -411,7 +413,7 @@ const WHY = {
     ],
   },
   life: {
-    asks: ['그 일이 있던 동안은 어떻게 지내셨어요?', '그동안 마음은 좀 어떠셨어요?'],
+    asks: ['혹시, 어떤 사연이 있었는지 더 자세하게 들어볼 수 있을까요?', '그동안 마음은 좀 어떠셨어요?'],
     choices: [
       { text: '오랜만에 기분 전환이 됐어요', cues: [c('affect', 'spane.3', 1)] },
       { text: '정신없이 바빠서 좀 지쳤어요', cues: [c('burnout', 'cbi.1', 1)] },
