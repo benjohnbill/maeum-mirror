@@ -13,12 +13,13 @@ export async function readPreviewHealth(types) {
   types.forEach((type, i) => {
     const values = files[i].values;
     if (type === 'steps') data.steps = new Map(values.map(([day, sources]) => [day, new Map(sources)]));
-    else if (type === 'hrv' || type === 'rhr') data[type] = new Map(values);
+    else if (data[type] instanceof Map) data[type] = new Map(values);
     else data[type] = values;
   });
   const summary = computeSummary(data, files[0].through);
   if (!summary?.metrics.length) throw new Error('비교할 수 있는 기록이 없어요.');
-  return summary;
+  // The rapport quiz reads the granted records directly, up to a year back.
+  return Object.assign(summary, { data, through: files[0].through });
 }
 
 export function setupPhoneAccess(onConnected) {

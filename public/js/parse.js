@@ -5,6 +5,14 @@ const SLEEP = 'HKCategoryTypeIdentifierSleepAnalysis';
 const STEPS = 'HKQuantityTypeIdentifierStepCount';
 const RHR = 'HKQuantityTypeIdentifierRestingHeartRate';
 const HRV = 'HKQuantityTypeIdentifierHeartRateVariabilitySDNN';
+// Daily values the rapport quiz asks about. Each maps dayKey -> [values].
+const DAILY = {
+  HKQuantityTypeIdentifierWalkingStepLength: 'stride', // cm
+  HKQuantityTypeIdentifierWalkingSpeed: 'speed', // km/hr
+  HKQuantityTypeIdentifierFlightsClimbed: 'flights', // count
+  HKQuantityTypeIdentifierTimeInDaylight: 'daylight', // min
+  HKQuantityTypeIdentifierAppleExerciseTime: 'exercise', // min
+};
 
 function attr(tag, name) {
   const key = ` ${name}="`;
@@ -27,6 +35,7 @@ export function createCollector() {
     rhr: new Map(), // dayKey -> [values]
     hrv: new Map(),
     workouts: [], // dayKey
+    ...Object.fromEntries(Object.values(DAILY).map((name) => [name, new Map()])),
     records: 0,
   };
   const push = (map, day, v) => (map.has(day) ? map.get(day).push(v) : map.set(day, [v]));
@@ -48,6 +57,8 @@ export function createCollector() {
         push(data.rhr, attr(tag, 'startDate').slice(0, 10), +attr(tag, 'value'));
       } else if (type === HRV) {
         push(data.hrv, attr(tag, 'startDate').slice(0, 10), +attr(tag, 'value'));
+      } else if (DAILY[type]) {
+        push(data[DAILY[type]], attr(tag, 'startDate').slice(0, 10), +attr(tag, 'value'));
       }
     } else if (tag.startsWith('Workout ')) {
       data.workouts.push(attr(tag, 'startDate').slice(0, 10));

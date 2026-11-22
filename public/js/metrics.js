@@ -128,4 +128,4 @@ export function computeSummary(data, through) {
   return { last, metrics, recentNights, normal, text };
 }
 
-export { hhmm, hm };
+export { hhmm, hm, nights };

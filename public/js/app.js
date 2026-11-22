@@ -11,6 +11,7 @@ import { runScreening } from './phq9-sheet.js';
 import { loadForm, scoreForm } from './screening-forms.js';
 import { screeningCommand, screeners, offlineScreeningOffer } from './screening-router.js';
 import { readPreviewHealth, setupPhoneAccess } from './phone-access.js';
+import { buildQuiz } from './rapport-quiz.js';
 
 import { workoutConcern, workoutStories, caseAnswers, previewSession, previewTurn, previewResult, recordText } from './preview-report.js';
 
@@ -23,6 +24,7 @@ const phonePreview = document.documentElement.classList.contains('phone-preview'
 
 const state = { summary: null, history: [], turns: 0, busy: false, finished: false, supportRelevant: false, example: null, editing: false, traitResults: new Map(), estimates: newEstimates() };
 const profile = { step: null, name: null, age: null };
+const quiz = { questions: [], at: 0, correct: 0 };
 const screening = { status: 'available', offered: [], results: new Map() };
 
 /* ---------- Timetable ---------- */
@@ -462,6 +464,10 @@ $('composer').addEventListener('submit', (e) => {
     else addMsg('ai', '말해 주셔서 고마워요. 편한 만큼만 이야기해 주세요.');
     return;
   }
+  if (phonePreview && profile.step === 'quiz') {
+    answerQuiz(text);
+    return;
+  }
   if (phonePreview && profile.step !== 'conversation') {
     answerProfile(text);
     return;
@@ -680,6 +686,39 @@ function answerProfile(reply) {
     askProfile('만 나이를 25살처럼 알려주세요. 건너뛰셔도 돼요.');
     return;
   }
+  startQuiz();
+}
+
+/* ---------- Rapport quiz: guess your own records first ---------- */
+
+function startQuiz() {
+  quiz.questions = buildQuiz(state.summary.data, state.summary.through);
+  quiz.at = 0;
+  quiz.correct = 0;
+  if (!quiz.questions.length) return endQuiz();
+  profile.step = 'quiz';
+  addMsg('ai', `이야기하기 전에 퀴즈부터 풀어 볼까요? 내 몸 기록을 얼마나 알고 있는지 ${quiz.questions.length}문제로 맞혀 봐요.`);
+  askQuiz();
+}
+
+function askQuiz() {
+  const question = quiz.questions[quiz.at];
+  addMsg('ai', question.text, replyChoices(question.choices));
+  $('msg').placeholder = question.choices.length ? '고르거나 숫자로 답하기' : '예) 7시간 반';
+}
+
+function answerQuiz(reply) {
+  const result = quiz.questions[quiz.at].answer(reply);
+  if (result.correct) quiz.correct++;
+  addMsg('ai', result.reply);
+  quiz.at++;
+  if (quiz.at < quiz.questions.length) askQuiz();
+  else endQuiz();
+}
+
+function endQuiz() {
+  if (quiz.questions.length) addMsg('ai', `${quiz.questions.length}문제 중 ${quiz.correct}개 맞혔어요. 이제 이 기록을 같이 볼게요.`);
+  $('msg').placeholder = '내 이야기로 답하기';
   profile.step = 'conversation';
   openSession(true);
 }
