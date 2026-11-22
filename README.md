@@ -99,46 +99,77 @@ npm run sample         # 가상 사용자 데이터 다시 만들기
 
 Herz가 지표를 고르고, 대화를 설계하고, 점수를 매길 때 기댄 연구예요. 화면과 프롬프트에 쓰는 숫자는 원문에서 확인한 것만 써요. 항목 끝의 `S04-01` 같은 ID는 [`research/`](research/README.md)의 출처 카드 번호예요. 카드에는 원문 인용과 확인 범위가 적혀 있어요.
 
-### 생활 기록과 마음
+<details>
+<summary><b>생활 기록과 마음</b> · 13편 · 수면, 걸음, 심박</summary>
 
-<a id="r1"></a>[1] Lyall, L. M., et al. (2018). Association of disrupted circadian rhythmicity with mood disorders, subjective wellbeing, and cognitive function: A cross-sectional study of 91 105 participants from the UK Biobank. *The Lancet Psychiatry*, 5(6), 507–514. https://doi.org/10.1016/S2215-0366(18)30139-1 `S04-01`\
-<a id="r2"></a>[2] Rykov, Y., et al. (2021). Digital biomarkers for depression screening with wearable devices: Cross-sectional study with machine learning modeling. *JMIR mHealth and uHealth*, 9(10), e24872. https://doi.org/10.2196/24872 `S04-02`\
-<a id="r3"></a>[3] Moshe, I., et al. (2021). Predicting symptoms of depression and anxiety using smartphone and wearable data. *Frontiers in Psychiatry*, 12, 625247. https://doi.org/10.3389/fpsyt.2021.625247 `S04-03`\
-<a id="r4"></a>[4] Saeb, S., et al. (2015). Mobile phone sensor correlates of depressive symptom severity in daily-life behavior: An exploratory study. *Journal of Medical Internet Research*, 17(7), e175. https://doi.org/10.2196/jmir.4273 `S04-04`\
-<a id="r5"></a>[5] Zhai, L., Zhang, H., & Zhang, D. (2015). Sleep duration and depression among adults: A meta-analysis of prospective studies. *Depression and Anxiety*, 32(9), 664–670. https://doi.org/10.1002/da.22386 `S04-07`\
-<a id="r6"></a>[6] Li, D. R., et al. (2025). Regular sleep patterns, not just duration, critical for mental health: Association of accelerometer-derived sleep regularity with incident depression and anxiety. *Psychological Medicine*, 55, e239. https://doi.org/10.1017/S0033291725101281 `S04-08`\
-<a id="r7"></a>[7] Fang, Y., et al. (2021). Day-to-day variability in sleep parameters and depression risk: A prospective cohort study of training physicians. *npj Digital Medicine*, 4(1), 28. https://doi.org/10.1038/s41746-021-00400-z `S04-09`\
-<a id="r8"></a>[8] Bizzozero-Peroni, B., et al. (2024). Daily step count and depression in adults: A systematic review and meta-analysis. *JAMA Network Open*, 7(12), e2451208. https://doi.org/10.1001/jamanetworkopen.2024.51208 `S04-11`\
-<a id="r9"></a>[9] Pearce, M., et al. (2022). Association between physical activity and risk of depression: A systematic review and meta-analysis. *JAMA Psychiatry*, 79(6), 550–559. https://doi.org/10.1001/jamapsychiatry.2022.0609 `S04-12`\
-<a id="r10"></a>[10] Chekroud, S. R., et al. (2018). Association between physical exercise and mental health in 1·2 million individuals in the USA between 2011 and 2015: A cross-sectional study. *The Lancet Psychiatry*, 5(9), 739–746. https://doi.org/10.1016/S2215-0366(18)30227-X `S04-13`\
-<a id="r11"></a>[11] Galin, S., et al. (2026). Heart rate variability as a predictor of future depressive symptoms: A systematic review and meta-analysis. *Journal of Affective Disorders*, 403, 121388. https://doi.org/10.1016/j.jad.2026.121388 `S04-17`\
-<a id="r12"></a>[12] Presby, D., et al. (2025). Inter- and intrapersonal associations between physiology and mental health: A longitudinal study using wearables and mental health surveys. *Journal of Medical Internet Research*, 27, e64955. https://doi.org/10.2196/64955 `S04-19`\
-<a id="r13"></a>[13] O'Grady, B., et al. (2024). The validity of Apple Watch Series 9 and Ultra 2 for serial measurements of heart rate variability and resting heart rate. *Sensors*, 24(19), 6220. https://doi.org/10.3390/s24196220 `S04-36`
+**수면과 하루 리듬**
 
-### 심리검사와 한국어판 검증
+- <a id="r1"></a>[1] Lyall, L. M., et al. (2018). Association of disrupted circadian rhythmicity with mood disorders, subjective wellbeing, and cognitive function: A cross-sectional study of 91 105 participants from the UK Biobank. *The Lancet Psychiatry*, 5(6), 507–514. https://doi.org/10.1016/S2215-0366(18)30139-1 `S04-01`
+- <a id="r5"></a>[5] Zhai, L., Zhang, H., & Zhang, D. (2015). Sleep duration and depression among adults: A meta-analysis of prospective studies. *Depression and Anxiety*, 32(9), 664–670. https://doi.org/10.1002/da.22386 `S04-07`
+- <a id="r6"></a>[6] Li, D. R., et al. (2025). Regular sleep patterns, not just duration, critical for mental health: Association of accelerometer-derived sleep regularity with incident depression and anxiety. *Psychological Medicine*, 55, e239. https://doi.org/10.1017/S0033291725101281 `S04-08`
+- <a id="r7"></a>[7] Fang, Y., et al. (2021). Day-to-day variability in sleep parameters and depression risk: A prospective cohort study of training physicians. *npj Digital Medicine*, 4(1), 28. https://doi.org/10.1038/s41746-021-00400-z `S04-09`
 
-<a id="r14"></a>[14] Kroenke, K., Spitzer, R. L., & Williams, J. B. W. (2001). The PHQ-9: Validity of a brief depression severity measure. *Journal of General Internal Medicine*, 16(9), 606–613. https://doi.org/10.1046/j.1525-1497.2001.016009606.x\
-<a id="r15"></a>[15] Spitzer, R. L., Kroenke, K., Williams, J. B. W., & Löwe, B. (2006). A brief measure for assessing generalized anxiety disorder: The GAD-7. *Archives of Internal Medicine*, 166(10), 1092–1097. https://doi.org/10.1001/archinte.166.10.1092\
-<a id="r16"></a>[16] Kroenke, K., Spitzer, R. L., Williams, J. B. W., & Löwe, B. (2009). An ultra-brief screening scale for anxiety and depression: The PHQ-4. *Psychosomatics*, 50(6), 613–621. https://doi.org/10.1176/appi.psy.50.6.613 `S06-04`\
-<a id="r17"></a>[17] Kim, H. W., Shin, C., Lee, S. H., & Han, C. (2021). Standardization of the Korean version of the Patient Health Questionnaire-4 (PHQ-4). *Clinical Psychopharmacology and Neuroscience*, 19(1), 104–111. https://doi.org/10.9758/cpn.2021.19.1.104 `S06-05`\
-<a id="r18"></a>[18] Kim, M., et al. (2023). Validation of the Patient Health Questionnaire-9 and Patient Health Questionnaire-2 in the general Korean population. *Psychiatry Investigation*, 20(9), 853–860. https://doi.org/10.30773/pi.2023.0100 `S06-06`\
-<a id="r19"></a>[19] Shin, C., Ko, Y. H., An, H., Yoon, H. K., & Han, C. (2020). Normative data and psychometric properties of the Patient Health Questionnaire-9 in a nationally representative Korean population. *BMC Psychiatry*, 20, 194. https://doi.org/10.1186/s12888-020-02613-0 `S03-09`\
-<a id="r20"></a>[20] Ahn, J. K., Kim, Y., & Choi, K. H. (2019). The psychometric properties and clinical utility of the Korean version of GAD-7 and GAD-2. *Frontiers in Psychiatry*, 10, 127. https://doi.org/10.3389/fpsyt.2019.00127 `S06-07`\
-<a id="r21"></a>[21] Gosling, S. D., Rentfrow, P. J., & Swann, W. B., Jr. (2003). A very brief measure of the Big-Five personality domains. *Journal of Research in Personality*, 37(6), 504–528. https://doi.org/10.1016/S0092-6566(03)00046-1\
-<a id="r22"></a>[22] Diener, E., Emmons, R. A., Larsen, R. J., & Griffin, S. (1985). The Satisfaction With Life Scale. *Journal of Personality Assessment*, 49(1), 71–75. https://doi.org/10.1207/s15327752jpa4901_13\
-<a id="r23"></a>[23] Diener, E., et al. (2010). New well-being measures: Short scales to assess flourishing and positive and negative feelings. *Social Indicators Research*, 97(2), 143–156. https://doi.org/10.1007/s11205-009-9493-y\
-<a id="r24"></a>[24] Steger, M. F., Frazier, P., Oishi, S., & Kaler, M. (2006). The Meaning in Life Questionnaire: Assessing the presence of and search for meaning in life. *Journal of Counseling Psychology*, 53(1), 80–93. https://doi.org/10.1037/0022-0167.53.1.80\
-<a id="r25"></a>[25] Kristensen, T. S., Borritz, M., Villadsen, E., & Christensen, K. B. (2005). The Copenhagen Burnout Inventory: A new tool for the assessment of burnout. *Work & Stress*, 19(3), 192–207. https://doi.org/10.1080/02678370500297720\
-<a id="r26"></a>[26] Jeon, G. S., You, S. J., Kim, M. G., Kim, Y. M., & Cho, S. I. (2019). Psychometric properties of the Korean version of the Copenhagen Burnout Inventory in Korean homecare workers for older adults. *PLOS ONE*, 14(8), e0221323. https://doi.org/10.1371/journal.pone.0221323
+**센서 종합 예측**
 
-### 일상 주제 카드
+- <a id="r2"></a>[2] Rykov, Y., et al. (2021). Digital biomarkers for depression screening with wearable devices: Cross-sectional study with machine learning modeling. *JMIR mHealth and uHealth*, 9(10), e24872. https://doi.org/10.2196/24872 `S04-02`
+- <a id="r3"></a>[3] Moshe, I., et al. (2021). Predicting symptoms of depression and anxiety using smartphone and wearable data. *Frontiers in Psychiatry*, 12, 625247. https://doi.org/10.3389/fpsyt.2021.625247 `S04-03`
+- <a id="r4"></a>[4] Saeb, S., et al. (2015). Mobile phone sensor correlates of depressive symptom severity in daily-life behavior: An exploratory study. *Journal of Medical Internet Research*, 17(7), e175. https://doi.org/10.2196/jmir.4273 `S04-04`
 
-<a id="r27"></a>[27] Kim, H., et al. (2020). Assessing procrastination in Korean: A study of the translation and validation of the Pure Procrastination Scale and a reexamination of the Irrational Procrastination Scale in a student and community sample. *Cogent Psychology*, 7(1), 1809844. https://doi.org/10.1080/23311908.2020.1809844\
-<a id="r28"></a>[28] 박명진, 양난미 (2017). 대학생 거부민감성척도 개발 및 타당화. *한국심리학회지: 상담 및 심리치료*, 29(1), 103–127. https://doi.org/10.23844/kjcp.2017.02.29.1.103\
-<a id="r29"></a>[29] 이근배, 조현춘 (2008). 한국판 분노반추척도의 타당화 연구. *정서·행동장애연구*, 24(1), 1–22. https://www.kci.go.kr/kciportal/landing/article.kci?arti_id=ART001241138\
-<a id="r30"></a>[30] Grant, A. M., & Gino, F. (2010). A little thanks goes a long way: Explaining why gratitude expressions motivate prosocial behavior. *Journal of Personality and Social Psychology*, 98(6), 946–955. https://doi.org/10.1037/a0017935\
-<a id="r31"></a>[31] Sonnentag, S., & Bayer, U.-V. (2005). Switching off mentally: Predictors and consequences of psychological detachment from work during off-job time. *Journal of Occupational Health Psychology*, 10(4), 393–414. https://doi.org/10.1037/1076-8998.10.4.393\
-<a id="r32"></a>[32] Katsimpokis, D., Hawkins, G. E., & van Maanen, L. (2020). Not all speed-accuracy trade-off manipulations have the same psychological effect. *Computational Brain & Behavior*, 3(3), 252–268. https://doi.org/10.1007/s42113-020-00074-y
+**걸음과 신체 활동**
+
+- <a id="r8"></a>[8] Bizzozero-Peroni, B., et al. (2024). Daily step count and depression in adults: A systematic review and meta-analysis. *JAMA Network Open*, 7(12), e2451208. https://doi.org/10.1001/jamanetworkopen.2024.51208 `S04-11`
+- <a id="r9"></a>[9] Pearce, M., et al. (2022). Association between physical activity and risk of depression: A systematic review and meta-analysis. *JAMA Psychiatry*, 79(6), 550–559. https://doi.org/10.1001/jamapsychiatry.2022.0609 `S04-12`
+- <a id="r10"></a>[10] Chekroud, S. R., et al. (2018). Association between physical exercise and mental health in 1·2 million individuals in the USA between 2011 and 2015: A cross-sectional study. *The Lancet Psychiatry*, 5(9), 739–746. https://doi.org/10.1016/S2215-0366(18)30227-X `S04-13`
+
+**심박과 HRV**
+
+- <a id="r11"></a>[11] Galin, S., et al. (2026). Heart rate variability as a predictor of future depressive symptoms: A systematic review and meta-analysis. *Journal of Affective Disorders*, 403, 121388. https://doi.org/10.1016/j.jad.2026.121388 `S04-17`
+- <a id="r12"></a>[12] Presby, D., et al. (2025). Inter- and intrapersonal associations between physiology and mental health: A longitudinal study using wearables and mental health surveys. *Journal of Medical Internet Research*, 27, e64955. https://doi.org/10.2196/64955 `S04-19`
+- <a id="r13"></a>[13] O'Grady, B., et al. (2024). The validity of Apple Watch Series 9 and Ultra 2 for serial measurements of heart rate variability and resting heart rate. *Sensors*, 24(19), 6220. https://doi.org/10.3390/s24196220 `S04-36`
+
+</details>
+
+<details>
+<summary><b>심리검사와 한국어판 검증</b> · 13편 · PHQ, GAD, TIPI, SWLS, MLQ, CBI</summary>
+
+**우울과 불안 (PHQ, GAD)**
+
+- <a id="r14"></a>[14] Kroenke, K., Spitzer, R. L., & Williams, J. B. W. (2001). The PHQ-9: Validity of a brief depression severity measure. *Journal of General Internal Medicine*, 16(9), 606–613. https://doi.org/10.1046/j.1525-1497.2001.016009606.x
+- <a id="r15"></a>[15] Spitzer, R. L., Kroenke, K., Williams, J. B. W., & Löwe, B. (2006). A brief measure for assessing generalized anxiety disorder: The GAD-7. *Archives of Internal Medicine*, 166(10), 1092–1097. https://doi.org/10.1001/archinte.166.10.1092
+- <a id="r16"></a>[16] Kroenke, K., Spitzer, R. L., Williams, J. B. W., & Löwe, B. (2009). An ultra-brief screening scale for anxiety and depression: The PHQ-4. *Psychosomatics*, 50(6), 613–621. https://doi.org/10.1176/appi.psy.50.6.613 `S06-04`
+- <a id="r17"></a>[17] Kim, H. W., Shin, C., Lee, S. H., & Han, C. (2021). Standardization of the Korean version of the Patient Health Questionnaire-4 (PHQ-4). *Clinical Psychopharmacology and Neuroscience*, 19(1), 104–111. https://doi.org/10.9758/cpn.2021.19.1.104 `S06-05`
+- <a id="r18"></a>[18] Kim, M., et al. (2023). Validation of the Patient Health Questionnaire-9 and Patient Health Questionnaire-2 in the general Korean population. *Psychiatry Investigation*, 20(9), 853–860. https://doi.org/10.30773/pi.2023.0100 `S06-06`
+- <a id="r19"></a>[19] Shin, C., Ko, Y. H., An, H., Yoon, H. K., & Han, C. (2020). Normative data and psychometric properties of the Patient Health Questionnaire-9 in a nationally representative Korean population. *BMC Psychiatry*, 20, 194. https://doi.org/10.1186/s12888-020-02613-0 `S03-09`
+- <a id="r20"></a>[20] Ahn, J. K., Kim, Y., & Choi, K. H. (2019). The psychometric properties and clinical utility of the Korean version of GAD-7 and GAD-2. *Frontiers in Psychiatry*, 10, 127. https://doi.org/10.3389/fpsyt.2019.00127 `S06-07`
+
+**성격 (TIPI)**
+
+- <a id="r21"></a>[21] Gosling, S. D., Rentfrow, P. J., & Swann, W. B., Jr. (2003). A very brief measure of the Big-Five personality domains. *Journal of Research in Personality*, 37(6), 504–528. https://doi.org/10.1016/S0092-6566(03)00046-1
+
+**삶의 만족과 의미 (SWLS, Flourishing, SPANE, MLQ)**
+
+- <a id="r22"></a>[22] Diener, E., Emmons, R. A., Larsen, R. J., & Griffin, S. (1985). The Satisfaction With Life Scale. *Journal of Personality Assessment*, 49(1), 71–75. https://doi.org/10.1207/s15327752jpa4901_13
+- <a id="r23"></a>[23] Diener, E., et al. (2010). New well-being measures: Short scales to assess flourishing and positive and negative feelings. *Social Indicators Research*, 97(2), 143–156. https://doi.org/10.1007/s11205-009-9493-y
+- <a id="r24"></a>[24] Steger, M. F., Frazier, P., Oishi, S., & Kaler, M. (2006). The Meaning in Life Questionnaire: Assessing the presence of and search for meaning in life. *Journal of Counseling Psychology*, 53(1), 80–93. https://doi.org/10.1037/0022-0167.53.1.80
+
+**번아웃 (CBI)**
+
+- <a id="r25"></a>[25] Kristensen, T. S., Borritz, M., Villadsen, E., & Christensen, K. B. (2005). The Copenhagen Burnout Inventory: A new tool for the assessment of burnout. *Work & Stress*, 19(3), 192–207. https://doi.org/10.1080/02678370500297720
+- <a id="r26"></a>[26] Jeon, G. S., You, S. J., Kim, M. G., Kim, Y. M., & Cho, S. I. (2019). Psychometric properties of the Korean version of the Copenhagen Burnout Inventory in Korean homecare workers for older adults. *PLOS ONE*, 14(8), e0221323. https://doi.org/10.1371/journal.pone.0221323
+
+</details>
+
+<details>
+<summary><b>일상 주제 카드</b> · 6편 · 미루기, 거절 민감, 분노 반추, 감사, 퇴근 후 분리, 서두름</summary>
+
+- <a id="r27"></a>[27] Kim, H., et al. (2020). Assessing procrastination in Korean: A study of the translation and validation of the Pure Procrastination Scale and a reexamination of the Irrational Procrastination Scale in a student and community sample. *Cogent Psychology*, 7(1), 1809844. https://doi.org/10.1080/23311908.2020.1809844
+- <a id="r28"></a>[28] 박명진, 양난미 (2017). 대학생 거부민감성척도 개발 및 타당화. *한국심리학회지: 상담 및 심리치료*, 29(1), 103–127. https://doi.org/10.23844/kjcp.2017.02.29.1.103
+- <a id="r29"></a>[29] 이근배, 조현춘 (2008). 한국판 분노반추척도의 타당화 연구. *정서·행동장애연구*, 24(1), 1–22. https://www.kci.go.kr/kciportal/landing/article.kci?arti_id=ART001241138
+- <a id="r30"></a>[30] Grant, A. M., & Gino, F. (2010). A little thanks goes a long way: Explaining why gratitude expressions motivate prosocial behavior. *Journal of Personality and Social Psychology*, 98(6), 946–955. https://doi.org/10.1037/a0017935
+- <a id="r31"></a>[31] Sonnentag, S., & Bayer, U.-V. (2005). Switching off mentally: Predictors and consequences of psychological detachment from work during off-job time. *Journal of Occupational Health Psychology*, 10(4), 393–414. https://doi.org/10.1037/1076-8998.10.4.393
+- <a id="r32"></a>[32] Katsimpokis, D., Hawkins, G. E., & van Maanen, L. (2020). Not all speed-accuracy trade-off manipulations have the same psychological effect. *Computational Brain & Behavior*, 3(3), 252–268. https://doi.org/10.1007/s42113-020-00074-y
+
+</details>
 
 ### 팀 조사 보고서
 
