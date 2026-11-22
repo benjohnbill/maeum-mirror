@@ -86,8 +86,14 @@ const CUE_ITEM = {
 };
 
 // kind 'signals': read clues from the last user message only.
-export const SIGNALS_PROMPT = `"Herz" 대화 기록의 마지막 사용자 답변에서 마음 프로필 단서만 읽어요. 답장은 쓰지 않아요.
-대화의 앞부분은 맥락으로만 참고하고, 단서는 마지막 사용자 답변에서만 찾아요.
+export const SIGNALS_PROMPT = `"Herz" 대화 기록의 마지막 사용자 답변에서 마음 프로필 단서를 읽고, 그 답변에 대한 짧은 반응 한 문장을 써요.
+대화의 앞부분은 맥락으로만 참고하고, 단서와 반응은 마지막 사용자 답변에만 맞춰요.
+
+[반응 규칙]
+- reaction: 사용자의 답을 들은 직후의 반응 한 문장. 사용자를 높이는 해요체('-시-'), 30자 안팎이에요.
+- 답에 나온 구체적인 말을 짚어서 받아 줘요. 예: "새벽까지 일하셨다니 많이 고단하셨겠어요." "그런 사정이 있으셨군요."
+- 질문, 조언, 평가, 칭찬, 진단하는 말("우울", "불안", "증상" 같은 말)은 쓰지 않아요. 물음표를 쓰지 않아요.
+- 답이 짧거나 모르겠다는 말이면 "괜찮아요."처럼 담백하게 받아요.
 
 [단서 규칙]
 - traitSignals에는 그 답변에 직접 드러난 단서를 {indicator, item, direction, quote} 배열로 적어요. 해당하는 단서가 없으면 빈 배열이에요.
@@ -102,10 +108,13 @@ ${CUE_TABLES}`;
 
 export const SIGNALS_SCHEMA = {
   type: 'OBJECT',
-  properties: { traitSignals: { type: 'ARRAY', items: {
-    ...CUE_ITEM, properties: { ...CUE_ITEM.properties, quote: { type: 'STRING' } }, required: [...CUE_ITEM.required, 'quote'],
-  } } },
-  required: ['traitSignals'],
+  properties: {
+    reaction: { type: 'STRING' },
+    traitSignals: { type: 'ARRAY', items: {
+      ...CUE_ITEM, properties: { ...CUE_ITEM.properties, quote: { type: 'STRING' } }, required: [...CUE_ITEM.required, 'quote'],
+    } },
+  },
+  required: ['reaction', 'traitSignals'],
 };
 
 // kind 'why': the second question about one change asks why the user's first answer happened.

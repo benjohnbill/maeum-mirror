@@ -21,14 +21,31 @@ if (existsSync(envFile)) {
 // Extra keys are tried when one key's quota runs out (429).
 const KEYS = ['GEMINI_API_KEY', 'GEMINI_API_KEY_1', 'GEMINI_API_KEY_2'].map((k) => process.env[k]).filter(Boolean);
 const KEY = KEYS[0];
-const MODEL = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+// Measured 2026-11-23 04:20 on all 3 keys: gemini-3-flash-preview 200 in ~2.7s; 3.5-flash-lite and
+// flash-lite-latest 200 in ~1.5s; 3.5-flash and 3.6-flash 429 (quota); 2.5 models 404 on keys 1-2.
+const MODEL = process.env.GEMINI_MODEL || 'gemini-3-flash-preview';
 const TIMEOUT = +process.env.GEMINI_TIMEOUT_MS || 45000;
 // Tried in order when a model is overloaded (503) or rate-limited (429).
-const MODELS = [MODEL, ...(process.env.GEMINI_FALLBACK || 'gemini-2.5-flash-lite,gemini-2.5-flash').split(',').map((m) => m.trim())].filter((m, i, a) => m && a.indexOf(m) === i);
+const MODELS = [MODEL, ...(process.env.GEMINI_FALLBACK || 'gemini-3.5-flash-lite,gemini-flash-lite-latest,gemini-3.1-flash-lite,gemini-3.5-flash,gemini-2.5-flash').split(',').map((m) => m.trim())].filter((m, i, a) => m && a.indexOf(m) === i);
 // Clue reading runs mid-conversation. Measured 2026-11-23: gemini-3.5-flash 34s, gemini-2.5-flash-lite about 1.1s (3 runs).
-const SIGNALS_MODELS = [process.env.GEMINI_SIGNALS_MODEL || 'gemini-2.5-flash-lite', ...MODELS].filter((m, i, a) => a.indexOf(m) === i);
+const SIGNALS_MODELS = [process.env.GEMINI_SIGNALS_MODEL || 'gemini-3.5-flash-lite', ...MODELS].filter((m, i, a) => a.indexOf(m) === i);
 const PORT = +process.env.PORT || 8787;
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.xml': 'application/xml', '.svg': 'image/svg+xml', '.png': 'image/png', '.webp': 'image/webp', '.ico': 'image/x-icon' };
+
+// Routes are (model, key) pairs. A route that worked is tried first next time, and a route
+// that hit quota (429) or no access (404) rests, so a judge's turn goes straight to a model that answers.
+const resting = new Map(); // "model|key" -> time it may be tried again
+const REST_MS = { 404: Infinity, 429: 10 * 60_000 };
+let lastGood = null;
+
+function routes(models) {
+  const all = models.flatMap((model) => KEYS.map((key, ki) => ({ model, key, ki })));
+  const now = Date.now();
+  const open = all.filter((r) => !(resting.get(`${r.model}|${r.ki}`) > now));
+  const usable = open.length ? open : all; // everything resting: try anyway rather than fail
+  const good = lastGood && usable.find((r) => r.model === lastGood.model && r.ki === lastGood.ki && models.includes(r.model));
+  return good ? [good, ...usable.filter((r) => r !== good)] : usable;
+}
 
 async function gemini(system, history, schema, temperature = 0.7, models = MODELS) {
   const contents = history.length
@@ -45,28 +62,31 @@ async function gemini(system, history, schema, temperature = 0.7, models = MODEL
     },
   });
   let last;
-  for (const model of models) {
-    for (const [ki, key] of KEYS.entries()) {
-      const t0 = Date.now();
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
-        body: bodyFor(model),
-        signal: AbortSignal.timeout(TIMEOUT),
-      }).catch((e) => ({ ok: false, status: 0, text: async () => String(e) }));
-      const secs = ((Date.now() - t0) / 1000).toFixed(1);
-      if (res.ok) {
-        const out = await res.json();
-        const text = out.candidates?.[0]?.content?.parts?.filter((p) => !p.thought).map((p) => p.text).join('') || '';
-        console.log(`${new Date().toLocaleTimeString('ko-KR')} ${model} key${ki} ${secs}s`);
-        return { ...JSON.parse(text), model };
-      }
-      last = `Gemini ${model} key${ki} ${res.status} after ${secs}s: ${(await res.text()).replace(/\s+/g, ' ').slice(0, 120)}`;
-      console.error(last);
-      if (![0, 404, 429, 500, 503].includes(res.status)) throw new Error(last);
-      // Quota (429) and model access (404) depend on the key; a timeout or overload is about the model.
-      if (res.status !== 429 && res.status !== 404) break;
+  const skip = new Set(); // models that timed out or are overloaded in this call
+  for (const { model, key, ki } of routes(models)) {
+    if (skip.has(model)) continue;
+    const t0 = Date.now();
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
+      body: bodyFor(model),
+      signal: AbortSignal.timeout(TIMEOUT),
+    }).catch((e) => ({ ok: false, status: 0, text: async () => String(e) }));
+    const secs = ((Date.now() - t0) / 1000).toFixed(1);
+    if (res.ok) {
+      const out = await res.json();
+      const text = out.candidates?.[0]?.content?.parts?.filter((p) => !p.thought).map((p) => p.text).join('') || '';
+      console.log(`${new Date().toLocaleTimeString('ko-KR')} ${model} key${ki} ${secs}s`);
+      lastGood = { model, ki };
+      return { ...JSON.parse(text), model };
     }
+    last = `Gemini ${model} key${ki} ${res.status} after ${secs}s: ${(await res.text()).replace(/\s+/g, ' ').slice(0, 120)}`;
+    console.error(last);
+    if (![0, 400, 404, 429, 500, 503].includes(res.status)) throw new Error(last);
+    // Quota (429) and model access (404) depend on the key; a timeout, overload or a setting the
+    // model rejects (400) is about the model.
+    if (REST_MS[res.status]) resting.set(`${model}|${ki}`, Date.now() + REST_MS[res.status]);
+    else skip.add(model);
   }
   throw new Error(last);
 }
@@ -92,7 +112,13 @@ async function handleChat(req, res) {
       if (!KEY || last?.role !== 'user') out = mockSignals();
       else {
         const read = await gemini(SIGNALS_PROMPT, clean, SIGNALS_SCHEMA, 0.2, SIGNALS_MODELS);
-        out = { signals: groundedCues(read.traitSignals, last.text).map(cueWire), model: read.model };
+        // The reaction is shown as is: one plain sentence, no question, short.
+        const reaction = typeof read.reaction === 'string' ? read.reaction.trim() : '';
+        out = {
+          signals: groundedCues(read.traitSignals, last.text).map(cueWire),
+          reaction: reaction && !reaction.includes('?') && reaction.length <= 60 ? reaction : '',
+          model: read.model,
+        };
       }
     } else if (kind === 'why') {
       // Stage 2's second question: why the user's first answer happened. Cues that name no

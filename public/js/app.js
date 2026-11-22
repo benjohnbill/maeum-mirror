@@ -750,12 +750,12 @@ async function answerOpening(text) {
   state.history.push({ role: 'user', text });
   busy(true);
   const typing = thinking('답을 읽고 있어요');
-  const { cues, source } = await readFreeText(text);
+  const { cues, source, reaction } = await readFreeText(text);
   typing.remove();
   busy(false);
   const signals = cueSignals(cues, text, null);
   if (signals.length) recordSignals(state.estimates, text, signals, source);
-  addMsg('ai', '좋아요. 그럼 기록으로 한번 확인해 볼게요.');
+  addMsg('ai', `${reaction || '좋아요.'} 그럼 기록으로 한번 확인해 볼게요.`);
   startQuiz();
 }
 
@@ -877,20 +877,23 @@ function askTalk(text) {
 // Returns cues { indicator, item, dir, quote }. A slow or failed AI read falls back to the device.
 // Free text: Gemini reads it against the cue table when the server has a key. Without an
 // answer from it, the device classifier reads it, then the question's own reason table.
+// Also returns the AI's one-line reaction to the answer ('' when the AI did not answer).
 async function readFreeText(text, reasons) {
+  let reaction = '';
   if (state.mode === 'gemini') {
     try {
       const out = await api('signals', state, { timeout: 15000 });
+      if (typeof out.reaction === 'string') reaction = out.reaction;
       const cues = Array.isArray(out.signals) ? groundedCues(out.signals, text) : [];
-      if (cues.length) return { cues, source: 'AI 대화 해석' };
+      if (cues.length) return { cues, source: 'AI 대화 해석', reaction };
     } catch {
       // Fall through to the device.
     }
   }
   const local = localCues(text);
-  if (local.length) return { cues: local, source: '기기 내 문장 분류' };
+  if (local.length) return { cues: local, source: '기기 내 문장 분류', reaction };
   const reason = closestReason(text, reasons);
-  return reason ? { cues: reason.cues, why: reason.why, source: '이유 표 대조' } : { cues: [], source: '기기 내 문장 분류' };
+  return reason ? { cues: reason.cues, why: reason.why, source: '이유 표 대조', reaction } : { cues: [], source: '기기 내 문장 분류', reaction };
 }
 
 // Q2: why about the first answer. Gemini writes it when the server has a key; the scripted
@@ -923,12 +926,13 @@ async function answerTalk(text) {
   let cues = [];
   let source = '선택한 이유';
   let why;
+  let reaction = '';
   if (picked) {
     cues = picked.cues;
   } else if (!skipped) {
     busy(true);
     const typing = thinking('답을 읽고 있어요');
-    ({ cues, source, why } = await readFreeText(text, asked.choices));
+    ({ cues, source, why, reaction } = await readFreeText(text, asked.choices));
     typing.remove();
     busy(false);
   }
@@ -943,14 +947,14 @@ async function answerTalk(text) {
       turn.why = await whyFor(turn, picked?.why ?? why ?? whyKeyFor(cues));
       busy(false);
       talk.asked++;
-      askTalk((talk.at ? '그랬군요. ' : '그런 일이 있었군요. ') + turn.why.text);
+      askTalk(`${reaction || (talk.at ? '그랬군요.' : '그런 일이 있었군요.')} ${turn.why.text}`);
       return;
     }
   } else {
     turn.second = skipped ? '' : text;
   }
   talk.at++;
-  const ack = skipped ? '괜찮아요.' : signals.length ? '말씀해 주셔서 고마워요.' : '그런 사정이 있었군요.';
+  const ack = skipped ? '괜찮아요.' : reaction || (signals.length ? '말씀해 주셔서 고마워요.' : '그런 사정이 있었군요.');
   if (talk.at < talk.changes.length && talk.asked < MAX_TALK_QUESTIONS) {
     askChange(ack + ' 하나 더 볼게요. ');
     return;
