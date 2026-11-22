@@ -1,7 +1,7 @@
 import { el, resultCard, resultDetails } from './report-elements.js';
 import { appendProfileReport, estimateModel } from './everyday-cards.js';
 import { everydayTopics } from './everyday-topics.js';
-import { newEstimates, recordTraitReply, recordSignals, groundedSignals, estimateFor, cueSignals, localCues, groundedCues } from './trait-estimates.js';
+import { newEstimates, recordTraitReply, recordSignals, groundedSignals, estimateFor, cueSignals, localCues, groundedCues, closestReason } from './trait-estimates.js';
 import { parseHealthFile } from './parse.js';
 import { computeSummary, hhmm } from './metrics.js';
 import { SYSTEM_PROMPT } from './prompt.js';
@@ -862,39 +862,46 @@ function askChange(prefix = '') {
   talk.current = { change, question, why: null, first: '', firstCues: [], second: '' };
   talk.asked++;
   setFocus(change.record || 'none', { scroll: false });
-  askTalk(prefix + question.text, question.choices);
+  askTalk(prefix + question.text);
 }
 
 // Q1 offers its reasons as buttons; Q2 asks for the user's own words. Both offer 잘 모르겠어요.
-function askTalk(text, choices = []) {
+// Q1 and Q2 have no reason buttons: the user answers in their own words or taps 잘 모르겠어요.
+function askTalk(text) {
   state.history.push({ role: 'model', text });
-  addMsg('ai', text, replyChoices(choices.map((choice) => choice.text), TALK_UNKNOWN));
-  $('msg').placeholder = choices.length ? '고르거나 내 말로 답하기' : '내 말로 답하기';
+  addMsg('ai', text, replyChoices([], TALK_UNKNOWN));
+  $('msg').placeholder = '내 말로 답하기';
 }
 
 // Free text: Gemini reads it when the server has a key, the demo on the device.
 // Returns cues { indicator, item, dir, quote }. A slow or failed AI read falls back to the device.
-async function readFreeText(text) {
+// Free text: Gemini reads it against the cue table when the server has a key. Without an
+// answer from it, the device classifier reads it, then the question's own reason table.
+async function readFreeText(text, reasons) {
   if (state.mode === 'gemini') {
     try {
-      const out = await api('signals', state, { timeout: 8000 });
-      if (Array.isArray(out.signals)) return { cues: groundedCues(out.signals, text), source: 'AI 대화 해석' };
+      const out = await api('signals', state, { timeout: 15000 });
+      const cues = Array.isArray(out.signals) ? groundedCues(out.signals, text) : [];
+      if (cues.length) return { cues, source: 'AI 대화 해석' };
     } catch {
-      // Fall through to the on-device classifier.
+      // Fall through to the device.
     }
   }
-  return { cues: localCues(text), source: '기기 내 문장 분류' };
+  const local = localCues(text);
+  if (local.length) return { cues: local, source: '기기 내 문장 분류' };
+  const reason = closestReason(text, reasons);
+  return reason ? { cues: reason.cues, why: reason.why, source: '이유 표 대조' } : { cues: [], source: '기기 내 문장 분류' };
 }
 
 // Q2: why about the first answer. Gemini writes it when the server has a key; the scripted
-// WHY bank answers in the demo, and when the AI is slow (8 s) or returns too little.
+// WHY bank answers in the demo, and when the AI is slow (15 s) or returns too little.
 async function whyFor(turn, key) {
   const scripted = whyQuestion(key, state.talk.at);
   if (state.mode !== 'gemini') return scripted;
   const typing = thinking('다음 질문을 고르고 있어요');
   try {
     const context = { summary: state.summary, history: [{ role: 'model', text: turn.question.text }, { role: 'user', text: turn.first }] };
-    const out = await api('why', context, { timeout: 8000, extra: { change: turn.change.label } });
+    const out = await api('why', context, { timeout: 15000, extra: { change: turn.change.label } });
     const choices = (out.choices || []).map((choice) => ({ text: choice.text, cues: groundedCues(choice.cues) }));
     if (typeof out.question === 'string' && choices.length >= 2) return { text: out.question, choices };
   } catch {
@@ -915,12 +922,13 @@ async function answerTalk(text) {
   state.history.push({ role: 'user', text });
   let cues = [];
   let source = '선택한 이유';
+  let why;
   if (picked) {
     cues = picked.cues;
   } else if (!skipped) {
     busy(true);
     const typing = thinking('답을 읽고 있어요');
-    ({ cues, source } = await readFreeText(text));
+    ({ cues, source, why } = await readFreeText(text, asked.choices));
     typing.remove();
     busy(false);
   }
@@ -932,7 +940,7 @@ async function answerTalk(text) {
     talk.log.push(turn);
     if (!skipped && talk.asked < MAX_TALK_QUESTIONS) {
       busy(true);
-      turn.why = await whyFor(turn, picked ? picked.why : whyKeyFor(cues));
+      turn.why = await whyFor(turn, picked?.why ?? why ?? whyKeyFor(cues));
       busy(false);
       talk.asked++;
       askTalk((talk.at ? '그랬군요. ' : '그런 일이 있었군요. ') + turn.why.text);

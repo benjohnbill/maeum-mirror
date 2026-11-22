@@ -267,6 +267,23 @@ export function groundedCues(cues, text = null) {
 export const cueWire = ({ indicator, item, dir, quote }) => ({ indicator, item, direction: dir > 0 ? '+' : '-', ...(quote ? { quote } : {}) });
 
 // Free text read on the device: the offline classifier's clues as cues with their own quotes.
+// The scripted reason closest to a free-text answer, or null when no reason clearly wins.
+// Words are compared by their first two letters, and the closing predicate (잤어요, 있었어요)
+// is dropped when other words remain, so endings do not decide the match.
+const stems = (text) => {
+  const words = text.normalize('NFC').match(/[가-힣a-z0-9]{2,}/giu) || [];
+  return new Set((words.length > 1 ? words.slice(0, -1) : words).map((word) => word.slice(0, 2)));
+};
+export function closestReason(text, reasons = []) {
+  const mine = stems(text);
+  const sets = reasons.map((reason) => stems(reason.text));
+  // A stem shared by k reasons counts 1/k, so a common word (많아) cannot decide alone; a tie is no answer.
+  const weight = (stem) => 1 / sets.filter((set) => set.has(stem)).length;
+  const scores = sets.map((set) => [...mine].filter((stem) => set.has(stem)).reduce((sum, stem) => sum + weight(stem), 0));
+  const top = Math.max(0, ...scores);
+  return top && scores.filter((score) => score === top).length === 1 ? reasons[scores.indexOf(top)] : null;
+}
+
 export function localCues(text) {
   return localTraitSignals(text).filter((signal) => signal.item)
     .map(({ indicator, item, delta, quote }) => ({ indicator, item, dir: Math.sign(delta), quote }));
