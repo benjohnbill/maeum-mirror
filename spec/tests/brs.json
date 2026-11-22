@@ -1,0 +1,78 @@
+{
+  "id": "brs",
+  "name": "BRS",
+  "title_ko": "단축형 회복탄력성 척도",
+  "measures": "힘든 일을 겪은 뒤 회복하는 평소 경향",
+  "recall": "특정 회상 기간 없음. 평소의 자신을 기준으로 응답",
+  "korean_form_status": "version_and_permission_pending",
+  "sources": [
+    "S06-15",
+    "S06-16",
+    "S06-17",
+    "S06-18"
+  ],
+  "form_locator": "영문 원척도 S06-15. 한국어 실사용 양식 S06-17, 인쇄면 13쪽 A-2 문 4. S06-16 검증판과 같은 문구인지는 미확인.",
+  "response_levels": [
+    {
+      "value": 1,
+      "label": "강한 비동의"
+    },
+    {
+      "value": 2,
+      "label": "비동의"
+    },
+    {
+      "value": 3,
+      "label": "중립"
+    },
+    {
+      "value": 4,
+      "label": "동의"
+    },
+    {
+      "value": 5,
+      "label": "강한 동의"
+    }
+  ],
+  "items": [
+    {
+      "id": "brs.1",
+      "topic": "어려운 시기 이후 회복 속도"
+    },
+    {
+      "id": "brs.2",
+      "topic": "스트레스 사건을 견뎌내기 어려움"
+    },
+    {
+      "id": "brs.3",
+      "topic": "스트레스 사건 이후 회복에 걸리는 시간이 짧음"
+    },
+    {
+      "id": "brs.4",
+      "topic": "나쁜 일이 생긴 뒤 다시 일어서기 어려움"
+    },
+    {
+      "id": "brs.5",
+      "topic": "어려운 시기를 비교적 수월하게 넘김"
+    },
+    {
+      "id": "brs.6",
+      "topic": "좌절을 겪은 뒤 회복에 오래 걸림"
+    }
+  ],
+  "scoring": {
+    "method": "mean",
+    "range": [
+      1,
+      5
+    ],
+    "reverse_items": [
+      "brs.2",
+      "brs.4",
+      "brs.6"
+    ],
+    "require_all": true
+  },
+  "bands": [],
+  "summary": "평소 힘든 일을 겪은 뒤 회복하는 경향을 스스로 평가한 평균은 {score}/5점이에요. 값이 클수록 대체로 회복이 수월하다고 답한 거예요."
+}

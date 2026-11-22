@@ -49,3 +49,7 @@ Purpose: ground the 마음 시간표 demo (problem, conversation design, numbers
 
 ### 05-report-form: the "professional" report grammar (done in the main session)
 - Structure notes from a commercial temperament test report, mapped to mobile cards. No personal data.
+
+### 06-screeners: 짧은 심리검사와 응답에 따른 확장
+
+[7개 검사 비교·문항·채점·해석](06-screeners/REPORT.md) · [원출처와 한국어판 이용 조건](06-screeners/sources.md) · [검사별 JSON](../spec/tests/)

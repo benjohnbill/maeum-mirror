@@ -1,0 +1,52 @@
+{
+  "id": "gad2",
+  "name": "GAD-2",
+  "title_ko": "불안 2문항",
+  "measures": "긴장감과 걱정 조절의 어려움",
+  "recall": "지난 2주",
+  "korean_form_status": "form_available",
+  "sources": [
+    "S06-01",
+    "S06-03",
+    "S06-07"
+  ],
+  "sections": [
+    {
+      "source": "gad7",
+      "items": [
+        "gad7.1",
+        "gad7.2"
+      ]
+    }
+  ],
+  "scoring": {
+    "method": "sum",
+    "range": [
+      0,
+      6
+    ],
+    "reverse_items": [],
+    "require_all": true
+  },
+  "bands": [
+    {
+      "min": 0,
+      "max": 2,
+      "label": "추가 선별 제안 기준 미만"
+    },
+    {
+      "min": 3,
+      "max": 6,
+      "label": "추가 선별 제안 범위"
+    }
+  ],
+  "offers": [
+    {
+      "score": "total",
+      "at_least": 3,
+      "offer": "gad7",
+      "only_unanswered": true
+    }
+  ],
+  "summary": "지난 2주간 불안 두 문항에 답한 점수는 {score}/6점이에요."
+}
