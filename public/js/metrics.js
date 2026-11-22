@@ -48,6 +48,8 @@ const hhmm = (minAfterMidnight) => {
   const m = ((Math.round(minAfterMidnight) % DAY) + DAY) % DAY;
   return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
 };
+// Onset as minutes after the night's own midnight (23:30 -> -30, 01:10 -> 70).
+const onsetOf = (n, k) => n.onset - keyToMin(k) - DAY;
 const hm = (min) => `${Math.floor(min / 60)}시간 ${Math.round(min % 60)}분`;
 
 export function computeSummary(data, through) {
@@ -68,8 +70,6 @@ export function computeSummary(data, through) {
     return { base, recent };
   };
 
-  // Onset as minutes after the night's own midnight (23:30 -> -30, 01:10 -> 70).
-  const onsetOf = (n, k) => n.onset - keyToMin(k) - DAY;
   const sleepDur = windowed(sleepNights, (n) => n.asleep);
   const onset = windowed(sleepNights, onsetOf);
   const steps = windowed(stepDays, (v) => v);
@@ -128,4 +128,4 @@ export function computeSummary(data, through) {
   return { last, metrics, recentNights, normal, text };
 }
 
-export { hhmm, hm, nights };
+export { hhmm, hm, nights, onsetOf, shift, keyToMin, WD };

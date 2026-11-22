@@ -1,7 +1,7 @@
 import { el, resultCard, resultDetails } from './report-elements.js';
 import { appendProfileCards, estimateModel } from './everyday-cards.js';
 import { everydayTopics } from './everyday-topics.js';
-import { newEstimates, recordTraitReply, groundedSignals, estimateFor } from './trait-estimates.js';
+import { newEstimates, recordTraitReply, recordSignals, groundedSignals, estimateFor } from './trait-estimates.js';
 import { parseHealthFile } from './parse.js';
 import { computeSummary, hhmm } from './metrics.js';
 import { SYSTEM_PROMPT } from './prompt.js';
@@ -12,6 +12,7 @@ import { loadForm, scoreForm } from './screening-forms.js';
 import { screeningCommand, screeners, offlineScreeningOffer } from './screening-router.js';
 import { readPreviewHealth, setupPhoneAccess } from './phone-access.js';
 import { buildQuiz } from './rapport-quiz.js';
+import { detectChanges, firstQuestion, followUp, recordLine } from './change-talk.js';
 
 import { workoutConcern, workoutStories, caseAnswers, previewSession, previewTurn, previewResult, recordText } from './preview-report.js';
 
@@ -22,7 +23,7 @@ const SPAN = 14 * 60; // to 11:00
 const $ = (id) => document.getElementById(id);
 const phonePreview = document.documentElement.classList.contains('phone-preview');
 
-const state = { summary: null, history: [], turns: 0, busy: false, finished: false, supportRelevant: false, example: null, editing: false, traitResults: new Map(), estimates: newEstimates() };
+const state = { summary: null, history: [], turns: 0, busy: false, finished: false, supportRelevant: false, example: null, talk: null, pendingReply: null, editing: false, traitResults: new Map(), estimates: newEstimates() };
 const profile = { step: null, name: null, age: null };
 const quiz = { questions: [], at: 0, correct: 0 };
 const screening = { status: 'available', offered: [], results: new Map() };
@@ -163,7 +164,7 @@ function openSession(isSample, sampleIndex, exampleScreening) {
   state.traitResults = new Map();
   state.estimates = newEstimates();
   const s = state.summary;
-  state.example = isSample ? previewSession(s.metrics) : null;
+  state.example = isSample && !state.talk ? previewSession(s.metrics) : null;
   $('sentPanel').hidden = isSample;
   $('intro').hidden = true;
   $('introNav').hidden = true;
@@ -183,11 +184,13 @@ function openSession(isSample, sampleIndex, exampleScreening) {
   window.scrollTo(0, 0);
   updateTurns();
   if (phonePreview) {
+    const change = state.talk?.changes[0];
     const primary = state.example?.metric || s.metrics[0];
     $('sessionTable').hidden = !s.recentNights.some((night) => night.asleep != null);
     $('recordPanel').querySelector('.panel-head').hidden = $('sessionTable').hidden;
     const overview = el('div', 'phone-overview');
-    overview.append(el('h1', '', '최근 2주 ' + primary.label), el('strong', '', primary.recentText), el('p', '', '평소 ' + primary.baseText));
+    if (change) overview.append(el('h1', '', change.label), el('strong', '', change.recentText), el('p', '', recordLine(change)));
+    else overview.append(el('h1', '', '최근 2주 ' + primary.label), el('strong', '', primary.recentText), el('p', '', '평소 ' + primary.baseText));
     $('recordPanel').prepend(overview);
     const next = el('button', 'btn primary record-next', '대화 이어보기');
     next.id = 'recordNext';
@@ -213,6 +216,8 @@ function openSession(isSample, sampleIndex, exampleScreening) {
       state.turns++;
     }
     report();
+  } else if (state.talk) {
+    startTalk();
   } else {
     aiTurn();
   }
@@ -248,12 +253,13 @@ function updateTurns() {
   $('turnCount').textContent = state.finished ? '대화 끝' : `${state.turns} / ${MAX_TURNS}`;
   const onboarding = phonePreview && profile.step !== 'conversation';
   $('finishBtn').hidden = onboarding || state.finished || state.editing || (state.turns < 2 && !screening.results.size && !state.supportRelevant);
-  if (state.example) $('turnCount').hidden = true;
+  if (state.example || state.talk) $('turnCount').hidden = true;
 }
 
-async function api(kind, context = state) {
+async function api(kind, context = state, { timeout } = {}) {
   const res = await fetch('/api/chat', {
     method: 'POST',
+    signal: timeout ? AbortSignal.timeout(timeout) : undefined,
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ kind, summary: context.summary.text, history: context.history, screeningAvailable: screening.status === 'available' }),
   });
@@ -396,16 +402,18 @@ function replyChoices(choices) {
 }
 
 async function aiTurn() {
-  const lastMessage = state.history.at(-1);
-  const answer = lastMessage?.role === 'user' && state.estimates.last?.text === lastMessage.text ? state.estimates.last : null;
   busy(true);
   const typing = addMsg('ai', '데이터를 보고 있어요');
   typing.classList.add('typing');
   try {
     const out = state.example ? await exampleTurn() : await api('turn');
-    if (!state.example && answer && out.mode === 'gemini' && Array.isArray(out.traitSignals)) {
-      answer.signals = groundedSignals(answer.text, out.traitSignals);
-      answer.source = 'AI 대화 해석';
+    const reply = state.pendingReply;
+    if (reply) {
+      // The AI reads the reply when it answers; the on-device classifier covers the demo server.
+      const signals = out.mode === 'gemini' ? out.signals ?? out.traitSignals : null;
+      if (Array.isArray(signals)) recordSignals(state.estimates, reply, groundedSignals(reply, signals), 'AI 대화 해석');
+      else recordTraitReply(state.estimates, reply);
+      state.pendingReply = null;
     }
     typing.remove();
     state.history.push({ role: 'model', text: out.reply });
@@ -459,6 +467,12 @@ $('composer').addEventListener('submit', (e) => {
   if (immediateDanger || isCrisis(text)) {
     leaveOffer();
     state.supportRelevant = true;
+    if (profile.step === 'talk') {
+      // Stop asking about the records; the finish button opens the report when the user is ready.
+      state.talk.stopped = true;
+      profile.step = 'conversation';
+      $('msg').placeholder = '내 이야기로 답하기';
+    }
     updateTurns();
     if (immediateDanger) showImmediateHelp();
     else addMsg('ai', '말해 주셔서 고마워요. 편한 만큼만 이야기해 주세요.');
@@ -466,6 +480,10 @@ $('composer').addEventListener('submit', (e) => {
   }
   if (phonePreview && profile.step === 'quiz') {
     answerQuiz(text);
+    return;
+  }
+  if (phonePreview && profile.step === 'talk') {
+    answerTalk(text);
     return;
   }
   if (phonePreview && profile.step !== 'conversation') {
@@ -494,14 +512,19 @@ $('composer').addEventListener('submit', (e) => {
     leaveOffer();
   }
   state.history.push({ role: 'user', text });
-  recordTraitReply(state.estimates, text, state.editing);
   if (state.editing) {
-    state.example.correction = text;
+    recordTraitReply(state.estimates, text, true);
+    (state.example || state.talk).correction = text;
     state.editing = false;
     report();
     return;
   }
-  if (state.example) state.example.answers.push(text);
+  if (state.example) {
+    recordTraitReply(state.estimates, text);
+    state.example.answers.push(text);
+  } else {
+    state.pendingReply = text;
+  }
   state.turns++;
   updateTurns();
   aiTurn();
@@ -526,13 +549,14 @@ async function report() {
   updateTurns();
   $('composer').hidden = true;
   $('chat').querySelector('.scene-replies')?.remove();
-  if (state.example) {
+  if (state.example || state.talk) {
     const container = phonePreview ? $('phoneReport') : el('li', 'case-report');
     showExampleReport(container);
     if (phonePreview) {
       $('resultButton').hidden = false;
       $('recordNext').textContent = '대화 결과 보기';
-      $('viewRecord').textContent = (state.example.metric.id === 'workout' ? '운동' : state.example.metric.label) + ' 기록 다시 보기';
+      const metric = state.example?.metric;
+      $('viewRecord').textContent = (metric ? (metric.id === 'workout' ? '운동' : metric.label) : state.talk.changes[0]?.label ?? '건강') + ' 기록 다시 보기';
       showPhonePanel('resultPanel');
       $('resultPanel').scrollTop = 0;
       $('resultTitle').focus({ preventScroll: true });
@@ -561,7 +585,7 @@ async function report() {
 function appendProfile(container, opening, records, correction = '') {
   const deck = el('div', 'result-deck');
   appendProfileCards(deck, {
-    results: state.traitResults, estimates: state.estimates, completed: screening.results, age: profile.age, demo: Boolean(state.example),
+    results: state.traitResults, estimates: state.estimates, completed: screening.results, age: profile.age, demo: Boolean(state.example || state.talk),
     takeScreening: collectScreening,
   });
   container.append(deck);
@@ -587,22 +611,44 @@ function appendProfile(container, opening, records, correction = '') {
   }
 }
 
+// The stage 2 story: which changes were discussed and what the user answered.
+function talkStory(talk) {
+  if (talk.correction) return { opening: `마지막으로 “${talk.correction}”라고 바로잡아 주셨어요.`, records: talkRecords(talk) };
+  if (!talk.changes.length) return { opening: '최근 기록은 평소와 크게 다르지 않았어요.', records: [] };
+  const lines = talk.log.map(({ change, first, second }) => {
+    if (!first) return `${change.label} 변화는 이유를 건너뛰었어요.`;
+    return `${change.label} 변화에 “${first}”라고 답했어요.` + (second ? ` 이어서 “${second}”라고 했어요.` : '');
+  });
+  return { opening: lines.join(' '), records: talkRecords(talk) };
+}
+
+function talkRecords(talk) {
+  return talk.log.map(({ change, first, second }) => ({
+    label: change.label + ' 변화', basis: recordLine(change), quotes: [first, second].filter(Boolean), metric: change.record,
+  }));
+}
+
 function showExampleReport(container) {
-  const { metric } = state.example;
-  const result = previewResult(state.example);
   container.replaceChildren();
   if (!phonePreview) {
     const title = el('h2', '', '마음 프로필');
     title.tabIndex = -1;
     container.append(title);
   }
-  const record = {
-    label: '대화를 시작한 기록',
-    basis: `${metric.label} · ${recordText(metric)}`,
-    quotes: [result.concern, ...result.context].filter(Boolean),
-  };
-  const opening = result.opening || (result.concern ? `“${result.concern}”라는 이야기에서 시작했어요.` : '');
-  appendProfile(container, opening, [record], result.correction);
+  if (state.talk) {
+    const { opening, records } = talkStory(state.talk);
+    appendProfile(container, opening, records, state.talk.correction);
+  } else {
+    const { metric } = state.example;
+    const result = previewResult(state.example);
+    const record = {
+      label: '대화를 시작한 기록',
+      basis: `${metric.label} · ${recordText(metric)}`,
+      quotes: [result.concern, ...result.context].filter(Boolean),
+    };
+    const opening = result.opening || (result.concern ? `“${result.concern}”라는 이야기에서 시작했어요.` : '');
+    appendProfile(container, opening, [record], result.correction);
+  }
   const edit = el('button', 'correct-report', '내 얘기와 달라요');
   edit.type = 'button';
   edit.onclick = () => {
@@ -719,8 +765,111 @@ function answerQuiz(reply) {
 function endQuiz() {
   if (quiz.questions.length) addMsg('ai', `${quiz.questions.length}문제 중 ${quiz.correct}개 맞혔어요. 이제 이 기록을 같이 볼게요.`);
   $('msg').placeholder = '내 이야기로 답하기';
-  profile.step = 'conversation';
+  state.talk = { changes: detectChanges(state.summary.data, state.summary.through), at: 0, asked: 0, log: [], current: null, stopped: false, correction: '' };
   openSession(true);
+}
+
+/* ---------- Stage 2: ask about the clearest changes in the user's own records ---------- */
+
+const MAX_TALK_QUESTIONS = 4;
+const TALK_SKIP = '이 이야기는 건너뛸게요.';
+
+function startTalk() {
+  const talk = state.talk;
+  profile.step = 'talk';
+  updateTurns();
+  if (!talk.changes.length) {
+    addMsg('ai', '최근 기록은 평소와 크게 다르지 않았어요. 지금까지의 이야기로 마음 프로필을 보여 드릴게요.');
+    finishTalk();
+    return;
+  }
+  const count = talk.changes.length === 1 ? '한 가지' : '두 가지';
+  addMsg('ai', `기록을 평소와 비교해 보니 달라진 게 ${count} 눈에 띄어요. 왜 그랬는지 물어볼게요.`);
+  askChange();
+}
+
+function askChange(prefix = '') {
+  const talk = state.talk;
+  const change = talk.changes[talk.at];
+  const question = firstQuestion(change, talk.at);
+  talk.current = { change, question, follow: null, first: '', firstSignals: [], second: '' };
+  talk.asked++;
+  setFocus(change.record || 'none', { scroll: false });
+  askTalk(prefix + question.text, question.choices);
+}
+
+function askTalk(text, choices) {
+  state.history.push({ role: 'model', text });
+  addMsg('ai', text, replyChoices(choices.map((choice) => choice.text)));
+  $('msg').placeholder = '고르거나 내 말로 답하기';
+}
+
+function recordTalkSignals(text, signals, source) {
+  const grounded = groundedSignals(text, signals);
+  recordSignals(state.estimates, text, grounded, source);
+  return grounded;
+}
+
+// Free text: the AI reads it when the server has a key; otherwise the on-device classifier.
+async function readFreeText(text) {
+  try {
+    // A slow model must not stall the conversation; the offline classifier answers instead.
+    const out = await api('signals', state, { timeout: 8000 });
+    // A first mention is never a confirmed clue (6~9 at most); only a follow-up answer reaches 10~15.
+    const capped = (out.signals || []).map((s) => ({ ...s, delta: Math.sign(s.delta) * Math.min(Math.abs(s.delta), state.talk?.current?.follow ? 15 : 9) }));
+    if (out.mode !== 'demo' && Array.isArray(out.signals)) return recordTalkSignals(text, capped, 'AI 대화 해석');
+  } catch {
+    // Fall through to the offline classifier.
+  }
+  return recordTraitReply(state.estimates, text).signals;
+}
+
+async function answerTalk(text) {
+  const talk = state.talk;
+  const turn = talk.current;
+  const asked = turn.follow || turn.question;
+  const skipped = text === TALK_SKIP;
+  const picked = asked.choices.find((choice) => choice.text === text);
+  state.history.push({ role: 'user', text });
+  let signals = [];
+  if (picked) {
+    signals = recordTalkSignals(text, picked.signals, '선택한 이유');
+  } else if (!skipped) {
+    busy(true);
+    const typing = addMsg('ai', '답을 읽고 있어요');
+    typing.classList.add('typing');
+    signals = await readFreeText(text);
+    typing.remove();
+    busy(false);
+  }
+  if (!turn.follow) {
+    turn.first = skipped ? '' : text;
+    turn.firstSignals = signals;
+    talk.log.push(turn);
+    const follow = talk.asked < MAX_TALK_QUESTIONS ? followUp(signals, picked?.follow, talk.at) : null;
+    if (follow) {
+      turn.follow = follow;
+      talk.asked++;
+      askTalk((talk.at ? '그랬군요. ' : '그런 일이 있었군요. ') + follow.text, follow.choices);
+      return;
+    }
+  } else {
+    turn.second = skipped ? '' : text;
+  }
+  talk.at++;
+  const ack = skipped ? '넘어갈게요.' : signals.length ? '말해 줘서 고마워요.' : '그런 사정이 있었군요.';
+  if (talk.at < talk.changes.length && talk.asked < MAX_TALK_QUESTIONS) {
+    askChange(ack + ' 하나 더 볼게요. ');
+    return;
+  }
+  addMsg('ai', ack + ' 들려준 이야기로 마음 프로필을 정리했어요.');
+  finishTalk();
+}
+
+function finishTalk() {
+  profile.step = 'conversation';
+  $('msg').placeholder = '내 이야기로 답하기';
+  report();
 }
 
 function showPhonePanel(panelId) {
@@ -768,7 +917,7 @@ function openPhone() {
   });
   $('viewRecord').addEventListener('click', () => {
     showPhonePanel('recordPanel');
-    setFocus(state.example.metric.id);
+    setFocus(state.example?.metric.id ?? state.talk?.changes[0]?.record ?? 'none');
     $('recordPanel').scrollTop = 0;
     $('recordsButton').focus({ preventScroll: true });
   });

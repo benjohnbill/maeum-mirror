@@ -31,7 +31,7 @@ function windowDays(through, id, random) {
   if (id === 'weekend') {
     let sat = through;
     while (weekday(sat) !== 6 || shift(sat, 1) > through) sat = shift(sat, -1);
-    return { days: [sat, shift(sat, 1)], label: `지난 주말(${md(sat)}~${md(shift(sat, 1))})`, saturday: `지난 토요일(${md(sat)})` };
+    return { days: [sat, shift(sat, 1)], label: `지난 주말(${md(sat)}~${md(shift(sat, 1))})`, saturday: `지난주 토요일(${md(sat)})` };
   }
   if (id === 'week') return { days: Array.from({ length: 7 }, (_, i) => shift(through, -i)), label: '최근 일주일' };
   if (id === 'month') {
@@ -45,7 +45,7 @@ function windowDays(through, id, random) {
 }
 
 // Daily series per category: dayKey -> one number.
-const daily = {
+export const daily = {
   sleep: (d) => new Map([...nights(d.sleep)].map(([k, n]) => [k, n.asleep / 60])),
   steps: (d) => new Map([...d.steps].map(([k, m]) => [k, Math.max(...m.values())])),
   stride: (d) => new Map([...d.stride].map(([k, v]) => [k, mean(v)])),
