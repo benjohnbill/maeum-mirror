@@ -9,8 +9,9 @@ import { isCrisis, isImmediateDanger, CRISIS_LINES } from './safety.js';
 import { readName, readAge } from './preview-profile.js';
 import { runScreening } from './phq9-sheet.js';
 import { loadForm, scoreForm } from './screening-forms.js';
-import { screeningCommand, screeners, offlineScreeningOffer } from './screening-router.js';
+import { screeningCommand, screeners, offlineScreeningOffer, testManifest } from './screening-router.js';
 import { readPreviewHealth, setupPhoneAccess } from './phone-access.js';
+import { indicators } from './indicators.js';
 import { buildQuiz } from './rapport-quiz.js';
 import { detectChanges, firstQuestion, followUp, recordLine } from './change-talk.js';
 
@@ -104,9 +105,16 @@ function showLandingExamples() {
     choice.addEventListener('change', showReplyResult);
     if (choice.checked) showReplyResult();
   }
-  for (const topic of everydayTopics) {
-    const model = estimateModel(topic, scenes[0]);
-    $('landingCases').append(resultCard({ ...model, label: topic.title }));
+  // All 24 indicators, in the registry order. A card without a clue says how to find out instead.
+  for (const row of indicators) {
+    let model = estimateModel(row, scenes[0]);
+    const test = testManifest[row.test];
+    if (model.value.main === '단서 부족' && !row.everyday) {
+      model = test?.status === 'available'
+        ? { value: { main: '검사로 확인' }, description: test.name + ' · ' + test.length + '문항으로 알아볼 수 있어요.' }
+        : { value: { main: '준비 중' }, description: '공식 한국어 문항을 확인하고 있어요.' };
+    }
+    $('landingCases').append(resultCard({ ...model, label: row.title }));
   }
 }
 
