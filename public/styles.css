@@ -161,7 +161,9 @@ body:has(#intro:not([hidden])) .bar {
 #heroResult .result-value { color: var(--accent-text); margin-top: 8px; }
 #heroResult .result-value strong { font-family: var(--font); font-size: clamp(3.75rem, 5.3vw, 5rem); letter-spacing: -.065em; }
 #heroResult .result-value b { font-size: 1.3rem; }
-#heroResult .result-scale { margin-top: 16px; border-top: 0; }
+@property --position { syntax: '<length-percentage>'; inherits: true; initial-value: 0%; }
+#heroResult .result-scale { margin-top: 16px; border-top: 0; transition: --position 650ms cubic-bezier(.22, 1, .36, 1); }
+@media (prefers-reduced-motion: reduce) { #heroResult .result-scale { transition: none; } }
 #heroResult .result-scale::before {
   content: ''; position: absolute; inset: 0 0 auto; height: 4px; border-radius: 4px;
   background: linear-gradient(to right, var(--accent-text) var(--position), #e8e1d8 var(--position));

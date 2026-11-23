@@ -75,6 +75,32 @@ function block(cls, from, to) {
   return b;
 }
 
+// When the preview answer changes, the rank counts from the old number to the new one and
+// the scale marker slides there (the --position transition lives in styles.css).
+// aria-busy holds the live region until the count settles, so only the final rank is read.
+function animateRankChange(hero, from, to, fromPosition) {
+  const number = hero.querySelector('.result-value strong');
+  const rule = hero.querySelector('.result-scale');
+  if (!number || !Number.isFinite(from) || !Number.isFinite(to) || from === to) return;
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (rule && fromPosition) {
+    const target = rule.style.getPropertyValue('--position');
+    rule.style.setProperty('--position', fromPosition);
+    rule.getBoundingClientRect();
+    rule.style.setProperty('--position', target);
+  }
+  const start = performance.now(), duration = 650;
+  hero.setAttribute('aria-busy', 'true');
+  number.textContent = from;
+  const step = (now) => {
+    const t = Math.min(1, (now - start) / duration);
+    number.textContent = Math.round(from + (to - from) * (1 - (1 - t) ** 3));
+    if (t < 1) requestAnimationFrame(step);
+    else hero.removeAttribute('aria-busy');
+  };
+  requestAnimationFrame(step);
+}
+
 function showLandingExamples() {
   const example = previewSession([{ id: 'workout' }]);
   const scenes = caseLinks.map((_, index) => {
@@ -99,7 +125,11 @@ function showLandingExamples() {
       const estimates = newEstimates();
       recordTraitReply(estimates, quote);
       const { value, scale } = estimateModel(featured, estimates);
-      $('heroResult').replaceChildren(resultCard({ label: featured.title, value, scale }));
+      const hero = $('heroResult');
+      const before = Number(hero.querySelector('.result-value strong')?.textContent);
+      const from = hero.querySelector('.result-scale')?.style.getPropertyValue('--position');
+      hero.replaceChildren(resultCard({ label: featured.title, value, scale }));
+      animateRankChange(hero, before, Number(value.main), from);
     }
     choice.addEventListener('change', showReplyResult);
     if (choice.checked) showReplyResult();
