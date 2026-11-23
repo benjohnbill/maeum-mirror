@@ -18,6 +18,7 @@
 </p>
 
 <p align="center">
+  <a href="demo-video/submitted/herz-demo.mp4">시연 영상 (1분 47초)</a> ·
   <a href="docs/submission/INTRO.md">서비스 소개서</a> ·
   <a href="docs/hackathon-2026/README.md">대한상공회의소 AI 해커톤 공고</a> ·
   <a href="research/README.md">조사 자료</a>
