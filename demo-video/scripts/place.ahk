@@ -1,4 +1,5 @@
 #Requires AutoHotkey v2.0
+#SingleInstance Force
 hwnd := WinExist("about:blank - Chrome")
 if !hwnd {
   FileAppend("no window`n", "*")
@@ -6,7 +7,7 @@ if !hwnd {
 }
 WinActivate(hwnd)
 Sleep 300
-RunWait('"C:\Program Files\glzr.io\GlazeWM\cli\glazewm.exe" command set-floating --centered=false', , "Hide")
+Run('"C:\Program Files\glzr.io\GlazeWM\cli\glazewm.exe" command set-floating --centered=false', , "Hide")
 Sleep 300
 WinMove(480, 270, 2880, 1620, hwnd)
 Sleep 500

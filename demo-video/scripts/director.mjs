@@ -210,7 +210,9 @@ if (mode === 'rec') {
   // Display 0 is 3840x2160. Crop the project to the Chrome window.
   const { readFileSync } = await import('node:fs');
   const proj = JSON.parse(readFileSync(done.projectPath, 'utf8'));
-  proj.editor.cropRegion = { x: area.wx / 3840, y: area.wy / 2160, width: area.ww / 3840, height: area.wh / 2160 };
+  // The Windows window rect includes an invisible ~7px resize border on the left, right and bottom; crop inside it.
+  const B = 10;
+  proj.editor.cropRegion = { x: (area.wx + B) / 3840, y: area.wy / 2160, width: (area.ww - 2 * B) / 3840, height: (area.wh - B) / 2160 };
   proj.editor.autoZoomEnabled = false;
   // Warm terracotta-sand backdrop that matches the product's accent; a stronger shadow keeps the light window's edge visible on it.
   proj.editor.wallpaper = 'linear-gradient(135deg, #e8d6c9 0%, #c8826a 100%)';
