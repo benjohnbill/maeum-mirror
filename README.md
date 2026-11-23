@@ -185,15 +185,17 @@ Herz가 지표를 고르고, 대화를 설계하고, 점수를 매길 때 기댄
 
 ### 팀 조사 보고서
 
-[T1] 청년의 마음과 심리검사를 찾는 이유. [`research/01-youth-mind/`](research/01-youth-mind/test-user-needs.md)\
-[T2] AI 상담과 가상 에이전트 선행 연구. [`research/02-ai-counseling/REPORT.md`](research/02-ai-counseling/REPORT.md)\
-[T3] 검사와 면담이 마음을 여는 방식. [`research/03-elicitation/REPORT.md`](research/03-elicitation/REPORT.md)\
-[T4] 웨어러블 데이터로 기분에 대해 말할 수 있는 것과 없는 것. [`research/04-body-to-mind/REPORT.md`](research/04-body-to-mind/REPORT.md)\
-[T5] 전문 리포트의 문법. [`research/05-report-form/REPORT.md`](research/05-report-form/REPORT.md)\
-[T6] 짧은 심리검사 비교와 한국어판 이용 조건. [`research/06-screeners/REPORT.md`](research/06-screeners/REPORT.md)\
-[T7] 우울, 불안, 회복탄력성 척도의 현장 사용. [`research/06-screening-practice/REPORT.md`](research/06-screening-practice/REPORT.md)\
-[T8] 걸음과 수면으로 대화를 시작하는 근거. [`research/07-walking-sleep/REPORT.md`](research/07-walking-sleep/REPORT.md)\
-[T9] 유사 서비스 15개 비교. [`research/08-similar-services/REPORT.md`](research/08-similar-services/REPORT.md)
+| 번호 | 주제 | 문서 |
+|---|---|---|
+| T1 | 청년의 마음과 심리검사를 찾는 이유 | [보고서](research/01-youth-mind/test-user-needs.md) |
+| T2 | AI 상담과 가상 에이전트 선행 연구 | [보고서](research/02-ai-counseling/REPORT.md) |
+| T3 | 검사와 면담이 마음을 여는 방식 | [보고서](research/03-elicitation/REPORT.md) |
+| T4 | 웨어러블 데이터로 기분에 대해 말할 수 있는 것과 없는 것 | [보고서](research/04-body-to-mind/REPORT.md) |
+| T5 | 전문 리포트의 문법 | [보고서](research/05-report-form/REPORT.md) |
+| T6 | 짧은 심리검사 비교와 한국어판 이용 조건 | [보고서](research/06-screeners/REPORT.md) |
+| T7 | 우울, 불안, 회복탄력성 척도의 현장 사용 | [보고서](research/06-screening-practice/REPORT.md) |
+| T8 | 걸음과 수면으로 대화를 시작하는 근거 | [보고서](research/07-walking-sleep/REPORT.md) |
+| T9 | 유사 서비스 15개 비교 | [보고서](research/08-similar-services/REPORT.md) |
 
 ## 안전 장치
 
@@ -207,12 +209,19 @@ Herz가 지표를 고르고, 대화를 설계하고, 점수를 매길 때 기댄
 
 Herz가 쓰는 서비스, 글꼴, 검사지와 그 이용 조건입니다. 모든 항목은 2026-11-23에 확인했습니다. 검사별 판본과 이용 근거는 [`research/06-screeners/sources.md`](research/06-screeners/sources.md)에 있습니다.
 
-<a id="R1"></a>[R1] Google. *Gemini API*. 모델 `gemini-3-flash-preview`, 폴백 순서는 [`lib/chat.mjs`](lib/chat.mjs). [Gemini API 추가 약관](https://ai.google.dev/gemini-api/terms). 무료 쿼터의 입력과 출력은 Google 제품 개선에 쓰일 수 있어서, 시연에는 가상 사용자 데이터만 씁니다. 용도: 대화, 단서 읽기, 요약.\
-<a id="R2"></a>[R2] Vercel Inc. *Vercel* (Hobby). [이용약관](https://vercel.com/legal/terms). Hobby 요금제는 비상업 용도입니다. 용도: 화면과 API 배포.\
-<a id="R3"></a>[R3] 길형진. *Pretendard* v1.3.9. SIL Open Font License 1.1. https://github.com/orioncactus/pretendard. 용도: 화면 글꼴.\
-<a id="R4"></a>[R4] Spitzer, Williams, Kroenke 외. *PHQ-9, PHQ-2, PHQ-4, GAD-7, GAD-2 한국어판*. 개발자 매뉴얼에 따라 복제, 번역, 표시, 배포에 허가가 필요 없습니다. https://www.phqscreeners.com. 근거 [[14]](#r14)–[[20]](#r20).\
-<a id="R5"></a>[R5] Gosling, S. D. *TIPI* 한국어판 (번역 Shang E. Ha). 목적 제한 없이 사용할 수 있습니다. https://gosling.psy.utexas.edu/scales-weve-developed/ten-item-personality-measure-tipi/. 근거 [[21]](#r21).\
-<a id="R6"></a>[R6] Diener, E. *SWLS, Flourishing Scale, SPANE* 한국어판. 비상업 사용만 허용하고 저자를 표기해야 합니다. https://eddiener.com. 근거 [[22]](#r22), [[23]](#r23).\
-<a id="R7"></a>[R7] Steger, M. F. *MLQ* 한국판. 교육, 치료, 학술 목적에 무료이고 상업 사용은 사전 서면 허락이 필요합니다. https://www.michaelfsteger.com/?page_id=13. 근거 [[24]](#r24).\
-<a id="R8"></a>[R8] National Research Centre for the Working Environment (NFA). *Copenhagen Burnout Inventory* 개인 소진 척도와 CBI-K. 출처를 밝히면 상업과 비상업 모두 무료입니다. CBI-K 논문은 CC BY 4.0입니다. 근거 [[25]](#r25), [[26]](#r26).\
-<a id="R9"></a>[R9] Herz 팀. 가상 사용자 건강 기록과 지표 아이콘. 실제 개인정보는 없습니다. 생성기: [`scripts/make-sample.mjs`](scripts/make-sample.mjs).
+<details>
+<summary><b>서비스 · 글꼴 · 검사지</b> · 9건 · 이용 조건과 용도</summary>
+
+| | 자원 | 이용 조건 | 용도 |
+|---|---|---|---|
+| <a id="R1"></a>R1 | [Gemini API](https://ai.google.dev/gemini-api/terms) · Google<br>`gemini-3-flash-preview` | 무료 쿼터의 입출력은 Google 제품 개선에 쓰일 수 있어서, 시연에는 가상 사용자 데이터만 씁니다 | 대화, 요약 |
+| <a id="R2"></a>R2 | [Vercel](https://vercel.com/legal/terms) Hobby · Vercel Inc. | 비상업 용도 | 배포 |
+| <a id="R3"></a>R3 | [Pretendard](https://github.com/orioncactus/pretendard) v1.3.9 · 길형진 | SIL Open Font License 1.1 | 글꼴 |
+| <a id="R4"></a>R4 | [PHQ-9, PHQ-2, PHQ-4, GAD-7, GAD-2 한국어판](https://www.phqscreeners.com) · Spitzer, Williams, Kroenke 외 | 개발자 매뉴얼에 따라 복제, 번역, 표시, 배포에 허가 불필요. 근거 [[14]](#r14)–[[20]](#r20) | 검사 |
+| <a id="R5"></a>R5 | [TIPI 한국어판](https://gosling.psy.utexas.edu/scales-weve-developed/ten-item-personality-measure-tipi/) · Gosling (번역 Shang E. Ha) | 목적 제한 없음. 근거 [[21]](#r21) | 검사 |
+| <a id="R6"></a>R6 | [SWLS, Flourishing Scale, SPANE 한국어판](https://eddiener.com) · Diener | 비상업 사용만 허용, 저자 표기 필요. 근거 [[22]](#r22), [[23]](#r23) | 검사 |
+| <a id="R7"></a>R7 | [MLQ 한국판](https://www.michaelfsteger.com/?page_id=13) · Steger | 교육, 치료, 학술 목적은 무료, 상업 사용은 사전 서면 허락 필요. 근거 [[24]](#r24) | 검사 |
+| <a id="R8"></a>R8 | Copenhagen Burnout Inventory 개인 소진 척도와 CBI-K · NFA | 출처를 밝히면 상업과 비상업 모두 무료. CBI-K 논문은 CC BY 4.0. 근거 [[25]](#r25), [[26]](#r26) | 검사 |
+| <a id="R9"></a>R9 | 가상 사용자 건강 기록과 지표 아이콘 · Herz 팀 | 실제 개인정보 없음. 생성기 [`scripts/make-sample.mjs`](scripts/make-sample.mjs) | 시연 |
+
+</details>
