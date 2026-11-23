@@ -258,6 +258,10 @@
 .result-scale { position: relative; display: flex; justify-content: space-between; margin: 18px 4px 0; border-top: 2px solid var(--ghost-edge); color: var(--ink-2); font-size: .75rem; }
 .result-scale span { margin-top: 4px; }
 .result-scale i { position: absolute; top: -1px; left: var(--position); width: 8px; height: 8px; border-radius: 50%; background: var(--ink); transform: translate(-50%, -50%); }
+/* Score from which the test's developers advise a talk with a professional: a tick on the bar, label above it. */
+.result-scale:has(.scale-mark) { margin-top: 34px; }
+.result-scale .scale-mark { position: absolute; left: var(--mark); bottom: 100%; transform: translateX(-50%); padding-bottom: 6px; font-weight: 600; font-size: .7rem; color: var(--accent-text); white-space: nowrap; }
+.result-scale .scale-mark::after { content: ''; position: absolute; left: 50%; bottom: -5px; width: 2px; height: 10px; background: var(--accent-text); transform: translateX(-50%); }
 .result-card .card-evidence { border-bottom: 0; border-top: 1px solid var(--ghost-edge); }
 .result-card .card-evidence summary { font-size: .87rem; }
 .card-evidence a { display: inline-block; margin: 0 0 12px; color: var(--ink-2); text-underline-offset: 3px; }

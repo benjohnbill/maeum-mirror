@@ -21,6 +21,11 @@ function appendInterpretation(container, description, scale) {
     rule.setAttribute('aria-hidden', 'true');
     rule.style.setProperty('--position', (current - min) / (max - min) * 100 + '%');
     rule.append(el('i'), el('span', '', min + unit), el('span', '', max + unit));
+    if (scale.mark) {
+      const mark = el('b', 'scale-mark', scale.mark.label + ' ' + scale.mark.at + unit);
+      mark.style.setProperty('--mark', (scale.mark.at - min) / (max - min) * 100 + '%');
+      rule.append(mark);
+    }
     container.append(rule, el('p', 'scale-caption', caption));
   }
 }

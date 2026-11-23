@@ -25,7 +25,7 @@ export function testResult(row, completed) {
   const score = key ? test.subscores[key] : test.score;
   const [min, max] = key ? test.subscoreRanges[key] : [test.min ?? 0, test.max];
   const instrument = key && key !== row.subscore ? testName(test.id) + ' 중 ' + testName(key) : testName(test.id);
-  const measured = { test, related, instrument, score, min, max, method: (key ? test.subscoreMethods?.[key] : test.method) || 'sum', band: key ? null : test.band, rank: null };
+  const measured = { test, related, instrument, score, min, max, method: (key ? test.subscoreMethods?.[key] : test.method) || 'sum', band: key ? null : test.band, key: key ?? null, rank: null };
   if (test.id === 'phq9' && !key) {
     if (Number.isFinite(test.populationPercentile)) measured.rank = rankFromPercentile(test.populationPercentile);
     Object.assign(measured, { group: '국내 성인', source: test.source, label: test.sourceLabel });

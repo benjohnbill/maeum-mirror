@@ -115,6 +115,31 @@ function scoreLine(result) {
   return line;
 }
 
+// Forms whose every answer is a 2-week frequency (0 전혀 … 3 거의 매일). The total reads back as
+// "how often" in the words of the answers the user picked, and the bar marks the score from which
+// the developers advise a talk with a professional (GAD-7 and PHQ-9: 10; GAD-2 and PHQ-2: 3).
+const frequencyForms = {
+  gad7: { items: 7, symptom: '불안', refer: 10 },
+  gad2: { items: 2, symptom: '불안', refer: 3 },
+  phq9: { items: 9, symptom: '우울', refer: 10 },
+  phq2: { items: 2, symptom: '우울', refer: 3 },
+};
+
+function frequencyLine(form, score) {
+  const average = score / form.items;
+  const subject = '지난 2주 동안 ' + form.symptom + ' 증상이 ';
+  if (average < 0.5) return subject + '거의 없었어요.';
+  if (average < 1.5) return subject + '‘며칠’ 정도 있었어요.';
+  if (average < 2.5) return '지난 2주 중 절반 이상의 날에 ' + form.symptom + ' 증상이 있었어요.';
+  return subject + '거의 매일 있었어요.';
+}
+
+function referCaption(form, score) {
+  return score >= form.refer
+    ? '상담 권장선 ' + form.refer + '점 이상이에요. 전문가와 이야기해 보길 권해요.'
+    : '상담 권장선 ' + form.refer + '점까지 ' + (form.refer - score) + '점 남았어요.';
+}
+
 function screeningModel(measured, row) {
   const { test, related, instrument, rank, group, source, label, band } = measured;
   const items = related.map(result => el('p', '', scoreLine(result)));
@@ -124,10 +149,15 @@ function screeningModel(measured, row) {
   // Every card carries the same parts: number, bar, one caption line. The bar spans the form's own range.
   const { score, min, max, method } = measured;
   const unit = method === 'mean' ? '' : '점';
+  const form = frequencyForms[measured.key ?? test.id];
   let metric = { value: scoreValue(measured),
     scale: { min, max, current: score, unit, caption: band || (row?.high ? '높을수록 ' + row.high + '이에요.' : '') } };
+  if (form) {
+    metric.description = frequencyLine(form, score);
+    metric.scale = { ...metric.scale, caption: referCaption(form, score), mark: { at: form.refer, label: '상담 권장선' } };
+  }
   if (rank != null) {
-    metric = rankMetric(rank, group + ' 100명 기준 환산 · 검사 점수가 높은 순');
+    metric = { ...rankMetric(rank, group + ' 100명 기준 환산 · 검사 점수가 높은 순'), description: metric.description };
     items.push(el('p', '', '조사 분포에서 같은 점수를 받은 사람들의 중간 위치를 100명 기준 등수로 환산했어요.'), sourceLink(label, source));
   } else if (group) {
     items.push(el('p', '', '이 연령에 맞는 비교 자료가 없어 검사 원점수를 표시해요.'));
