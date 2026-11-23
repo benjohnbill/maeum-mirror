@@ -30,16 +30,17 @@ https://github.com/user-attachments/assets/2e2ce0d7-8af7-4850-b894-41cc2e3c983c
 
 Apple 건강 기록에서 최근 2주와 평소의 나를 비교하고, 달라진 부분을 대화로 짚어 봐요.
 
-1. **기록 읽기**: Apple 건강 `export.xml`을 올리거나 샘플 사용자를 골라요. 파일은 브라우저 안에서만 읽어요.
-2. **비교**: 수면 [[1]](#r1) [[5]](#r5)–[[7]](#r7), 걸음과 운동 [[8]](#r8)–[[10]](#r10), 안정 시 심박과 심박 변이도 [[11]](#r11)–[[13]](#r13)를 평소(15~90일 전)와 최근 14일로 나눠 봐요. 웨어러블만으로는 우울을 가려내기 어려워서 [[2]](#r2), 판정이 아니라 대화의 실마리로만 써요.
-3. **대화**: 가벼운 퀴즈로 시작해, 달라진 지표마다 이유를 묻고 그 답의 이유를 한 번 더 물어요.
-4. **검사와 리포트**: 점수는 검증된 검사지 11종으로만 매겨요 [[14]](#r14)–[[26]](#r26). 대화와 검사 결과는 마음 프로필 리포트로 묶어요.
-
 <p align="center">
-  <img src="docs/readme/architecture.png" alt="Herz MVP 서비스 아키텍처: 브라우저에서 건강 기록을 파싱하고, Vercel 서버리스 함수가 대화와 지표 요약만 Gemini API로 보내요. DB는 없어요." width="100%">
+  <img src="docs/presentation/happy-path/slide-happy-path.png" alt="Herz 사용 흐름 11단계: 시작, 건강 접근 허용, 퀴즈 질문, 정답 공개, 변화 발견, 이유 묻기, 단서 포착, 리포트, 근거 보기, 전문 검사, 검사 결과" width="100%">
 </p>
 
-화면과 API는 Vercel 하나로 배포하고, DB와 로그인은 없어요. 건강 기록 원본은 서버로 가지 않고, 대화와 지표 요약만 `/api/chat`을 거쳐 Gemini API로 가요. 그림 원본은 [`docs/readme/architecture.html`](docs/readme/architecture.html)에 있어요.
+- **연결 · 래포 퀴즈 (1–4)**: `export.xml`은 브라우저 안에서만 읽고, 가벼운 퀴즈로 말문을 열어요.
+- **변화를 함께 해석 (5–7)**: 달라진 지표마다 이유를 묻고, 그 답의 이유를 한 번 더 물어요.
+- **리포트 · 전문 검사 (8–11)**: 점수는 검증된 검사지로만 매겨요.
+
+건강 기록 원본은 서버로 가지 않아요. DB와 로그인도 없어요.
+
+> 지표와 검사지를 고른 근거는 [근거와 연구](#근거와-연구)에 있어요.
 
 ## 실행
 
@@ -58,6 +59,12 @@ npm run sample         # 가상 사용자 데이터 다시 만들기
 배포 방법과 설정 이유는 [`docs/submission/DEPLOY.md`](docs/submission/DEPLOY.md)에 있어요. GitHub에 푸시해도 배포되지 않아요. 배포는 Vercel CLI로 해요.
 
 ## 구조
+
+<p align="center">
+  <img src="docs/readme/architecture.png" alt="Herz MVP 서비스 아키텍처: 브라우저에서 건강 기록을 파싱하고, Vercel 서버리스 함수가 대화와 지표 요약만 Gemini API로 보내요. DB는 없어요." width="100%">
+</p>
+
+화면과 API는 Vercel 하나로 배포해요. 대화와 지표 요약만 `/api/chat`을 거쳐 Gemini API로 가요. 그림 원본은 [`docs/readme/architecture.html`](docs/readme/architecture.html)에 있어요.
 
 ```text
 .
