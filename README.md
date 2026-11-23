@@ -28,26 +28,26 @@ https://github.com/user-attachments/assets/2e2ce0d7-8af7-4850-b894-41cc2e3c983c
 
 ## 무엇을 하나요
 
-Apple 건강 기록에서 최근 2주와 평소의 나를 비교하고, 달라진 부분을 대화로 짚어 봐요.
+Apple 건강 기록에서 최근 2주와 평소의 나를 비교하고, 달라진 부분을 대화로 짚어 봅니다.
 
 <p align="center">
   <img src="docs/presentation/happy-path/slide-happy-path.png" alt="Herz 사용 흐름 11단계: 시작, 건강 접근 허용, 퀴즈 질문, 정답 공개, 변화 발견, 이유 묻기, 단서 포착, 리포트, 근거 보기, 전문 검사, 검사 결과" width="100%">
 </p>
 
-- **연결 · 래포 퀴즈 (1–4)**: `export.xml`은 브라우저 안에서만 읽고, 가벼운 퀴즈로 말문을 열어요.
-- **변화를 함께 해석 (5–7)**: 달라진 지표마다 이유를 묻고, 그 답의 이유를 한 번 더 물어요.
-- **리포트 · 전문 검사 (8–11)**: 점수는 검증된 검사지로만 매겨요.
+- **연결 · 래포 퀴즈 (1–4)**: `export.xml`은 브라우저 안에서만 읽고, 가벼운 퀴즈로 말문을 엽니다.
+- **변화를 함께 해석 (5–7)**: 달라진 지표마다 이유를 묻고, 그 답의 이유를 한 번 더 묻습니다.
+- **리포트 · 전문 검사 (8–11)**: 점수는 검증된 검사지로만 매깁니다.
 
-건강 기록 원본은 서버로 가지 않아요. DB와 로그인도 없어요.
+건강 기록 원본은 서버로 가지 않습니다. DB와 로그인도 없습니다.
 
-> 지표와 검사지를 고른 근거는 [근거와 연구](#근거와-연구)에 있어요.
+> 지표와 검사지를 고른 근거는 [근거와 연구](#근거와-연구)에 있습니다.
 
 ## 실행
 
-Node.js 18 이상이 필요해요. 빌드 단계는 없어요.
+Node.js 18 이상이 필요합니다. 빌드 단계는 없습니다.
 
 ```bash
-cp .env.example .env   # GEMINI_API_KEY를 채워요. 비워 두면 정해진 대본으로 응답하는 데모 모드
+cp .env.example .env   # GEMINI_API_KEY를 채웁니다. 비워 두면 정해진 대본으로 응답하는 데모 모드
 npm start              # http://localhost:8787
 ```
 
@@ -56,32 +56,32 @@ npm test               # lint와 node --test test/
 npm run sample         # 가상 사용자 데이터 다시 만들기
 ```
 
-배포 방법과 설정 이유는 [`docs/submission/DEPLOY.md`](docs/submission/DEPLOY.md)에 있어요. GitHub에 푸시해도 배포되지 않아요. 배포는 Vercel CLI로 해요.
+배포 방법과 설정 이유는 [`docs/submission/DEPLOY.md`](docs/submission/DEPLOY.md)에 있습니다. GitHub에 푸시해도 배포되지 않습니다. 배포는 Vercel CLI로 합니다.
 
 ## 구조
 
 <p align="center">
-  <img src="docs/readme/architecture.png" alt="Herz MVP 서비스 아키텍처: 브라우저에서 건강 기록을 파싱하고, Vercel 서버리스 함수가 대화와 지표 요약만 Gemini API로 보내요. DB는 없어요." width="100%">
+  <img src="docs/readme/architecture.png" alt="Herz MVP 서비스 아키텍처: 브라우저에서 건강 기록을 파싱하고, Vercel 서버리스 함수가 대화와 지표 요약만 Gemini API로 보냅니다. DB는 없습니다." width="100%">
 </p>
 
-화면과 API는 Vercel 하나로 배포해요. 대화와 지표 요약만 `/api/chat`을 거쳐 Gemini API로 가요. 그림 원본은 [`docs/readme/architecture.html`](docs/readme/architecture.html)에 있어요.
+화면과 API는 Vercel 하나로 배포합니다. 대화와 지표 요약만 `/api/chat`을 거쳐 Gemini API로 갑니다. 그림 원본은 [`docs/readme/architecture.html`](docs/readme/architecture.html)에 있습니다.
 
 ```text
 .
-├── public/                 정적 화면. Vercel이 그대로 서빙해요
+├── public/                 정적 화면. Vercel이 그대로 서빙합니다
 │   ├── index.html
 │   ├── js/
-│   │   ├── parse.js        export.xml을 브라우저 안에서 스트리밍으로 읽어요
-│   │   ├── metrics.js      평소와 최근 14일을 비교해 요약 숫자를 만들어요
+│   │   ├── parse.js        export.xml을 브라우저 안에서 스트리밍으로 읽습니다
+│   │   ├── metrics.js      평소와 최근 14일을 비교해 요약 숫자를 만듭니다
 │   │   ├── change-talk.js  달라진 지표마다 이유를 두 번 묻는 2단계 대화
 │   │   ├── prompt.js       AI에게 가는 고정 지시문과 응답 형식
-│   │   ├── safety.js       위기 신호와 금지 표현을 고정 규칙으로 처리해요
+│   │   ├── safety.js       위기 신호와 금지 표현을 고정 규칙으로 처리합니다
 │   │   └── ...
 │   ├── spec/metrics.js     지표별 근거 강도, 연구 숫자, 하지 않을 말
 │   ├── tests/              검사지 JSON과 공개 여부 index.json
 │   └── sample/             가상 사용자 샘플
 ├── api/                    Vercel 서버리스 함수 (chat.js, status.js)
-├── lib/chat.mjs            Gemini 호출과 모델 폴백. api/와 server.mjs가 같이 써요
+├── lib/chat.mjs            Gemini 호출과 모델 폴백. api/와 server.mjs가 같이 씁니다
 ├── server.mjs              로컬 서버. 정적 파일 서빙과 /api 중계
 ├── spec/                   대화와 리포트 규칙, 검사 원문 정리
 ├── test/                   node --test 테스트
@@ -109,7 +109,7 @@ npm run sample         # 가상 사용자 데이터 다시 만들기
 
 ## 근거와 연구
 
-Herz가 지표를 고르고, 대화를 설계하고, 점수를 매길 때 기댄 연구예요. 화면과 프롬프트에 쓰는 숫자는 원문에서 확인한 것만 써요. 항목 끝의 `S04-01` 같은 ID는 [`research/`](research/README.md)의 출처 카드 번호예요. 카드에는 원문 인용과 확인 범위가 적혀 있어요.
+Herz가 지표를 고르고, 대화를 설계하고, 점수를 매길 때 기댄 연구입니다. 화면과 프롬프트에 쓰는 숫자는 원문에서 확인한 것만 씁니다. 항목 끝의 `S04-01` 같은 ID는 [`research/`](research/README.md)의 출처 카드 번호입니다. 카드에는 원문 인용과 확인 범위가 적혀 있습니다.
 
 <details>
 <summary><b>생활 기록과 마음</b> · 13편 · 수면, 걸음, 심박</summary>
@@ -197,22 +197,22 @@ Herz가 지표를 고르고, 대화를 설계하고, 점수를 매길 때 기댄
 
 ## 안전 장치
 
-- 위기 신호는 AI가 아니라 고정 규칙이 처리해요. 자해 신호가 보이면 109(자살예방상담)와 1577-0199(정신건강위기상담)를 안내해요. [`public/js/safety.js`](public/js/safety.js)
-- PHQ-9 9번 문항에 1점 이상이면 AI를 부르지 않고 위기 안내를 띄워요.
-- AI 답에 금지 표현(칼로리, 약 용량, 진단명 등)이 있으면 고정 문구로 바꿔요.
-- AI는 지표 변화량 숫자를 직접 쓰지 않아요. 단서 항목과 방향만 돌려주고, 크기는 코드가 정해요.
-- 이름, 나이, 성별을 받지 않아요. 시연 데이터는 모두 가상 사용자예요.
+- 위기 신호는 AI가 아니라 고정 규칙이 처리합니다. 자해 신호가 보이면 109(자살예방상담)와 1577-0199(정신건강위기상담)를 안내합니다. [`public/js/safety.js`](public/js/safety.js)
+- PHQ-9 9번 문항에 1점 이상이면 AI를 부르지 않고 위기 안내를 띄웁니다.
+- AI 답에 금지 표현(칼로리, 약 용량, 진단명 등)이 있으면 고정 문구로 바꿉니다.
+- AI는 지표 변화량 숫자를 직접 쓰지 않습니다. 단서 항목과 방향만 돌려주고, 크기는 코드가 정합니다.
+- 이름, 나이, 성별을 받지 않습니다. 시연 데이터는 모두 가상 사용자입니다.
 
 ## 외부 자원과 출처
 
-Herz가 쓰는 서비스, 글꼴, 검사지와 그 이용 조건이에요. 모든 항목은 2026-11-23에 확인했어요. 검사별 판본과 이용 근거는 [`research/06-screeners/sources.md`](research/06-screeners/sources.md)에 있어요.
+Herz가 쓰는 서비스, 글꼴, 검사지와 그 이용 조건입니다. 모든 항목은 2026-11-23에 확인했습니다. 검사별 판본과 이용 근거는 [`research/06-screeners/sources.md`](research/06-screeners/sources.md)에 있습니다.
 
-<a id="R1"></a>[R1] Google. *Gemini API*. 모델 `gemini-3-flash-preview`, 폴백 순서는 [`lib/chat.mjs`](lib/chat.mjs). [Gemini API 추가 약관](https://ai.google.dev/gemini-api/terms). 무료 쿼터의 입력과 출력은 Google 제품 개선에 쓰일 수 있어서, 시연에는 가상 사용자 데이터만 써요. 용도: 대화, 단서 읽기, 요약.\
-<a id="R2"></a>[R2] Vercel Inc. *Vercel* (Hobby). [이용약관](https://vercel.com/legal/terms). Hobby 요금제는 비상업 용도예요. 용도: 화면과 API 배포.\
+<a id="R1"></a>[R1] Google. *Gemini API*. 모델 `gemini-3-flash-preview`, 폴백 순서는 [`lib/chat.mjs`](lib/chat.mjs). [Gemini API 추가 약관](https://ai.google.dev/gemini-api/terms). 무료 쿼터의 입력과 출력은 Google 제품 개선에 쓰일 수 있어서, 시연에는 가상 사용자 데이터만 씁니다. 용도: 대화, 단서 읽기, 요약.\
+<a id="R2"></a>[R2] Vercel Inc. *Vercel* (Hobby). [이용약관](https://vercel.com/legal/terms). Hobby 요금제는 비상업 용도입니다. 용도: 화면과 API 배포.\
 <a id="R3"></a>[R3] 길형진. *Pretendard* v1.3.9. SIL Open Font License 1.1. https://github.com/orioncactus/pretendard. 용도: 화면 글꼴.\
-<a id="R4"></a>[R4] Spitzer, Williams, Kroenke 외. *PHQ-9, PHQ-2, PHQ-4, GAD-7, GAD-2 한국어판*. 개발자 매뉴얼에 따라 복제, 번역, 표시, 배포에 허가가 필요 없어요. https://www.phqscreeners.com. 근거 [[14]](#r14)–[[20]](#r20).\
-<a id="R5"></a>[R5] Gosling, S. D. *TIPI* 한국어판 (번역 Shang E. Ha). 목적 제한 없이 사용할 수 있어요. https://gosling.psy.utexas.edu/scales-weve-developed/ten-item-personality-measure-tipi/. 근거 [[21]](#r21).\
-<a id="R6"></a>[R6] Diener, E. *SWLS, Flourishing Scale, SPANE* 한국어판. 비상업 사용만 허용하고 저자를 표기해야 해요. https://eddiener.com. 근거 [[22]](#r22), [[23]](#r23).\
-<a id="R7"></a>[R7] Steger, M. F. *MLQ* 한국판. 교육, 치료, 학술 목적에 무료이고 상업 사용은 사전 서면 허락이 필요해요. https://www.michaelfsteger.com/?page_id=13. 근거 [[24]](#r24).\
-<a id="R8"></a>[R8] National Research Centre for the Working Environment (NFA). *Copenhagen Burnout Inventory* 개인 소진 척도와 CBI-K. 출처를 밝히면 상업과 비상업 모두 무료예요. CBI-K 논문은 CC BY 4.0이에요. 근거 [[25]](#r25), [[26]](#r26).\
-<a id="R9"></a>[R9] Herz 팀. 가상 사용자 건강 기록과 지표 아이콘. 실제 개인정보는 없어요. 생성기: [`scripts/make-sample.mjs`](scripts/make-sample.mjs).
+<a id="R4"></a>[R4] Spitzer, Williams, Kroenke 외. *PHQ-9, PHQ-2, PHQ-4, GAD-7, GAD-2 한국어판*. 개발자 매뉴얼에 따라 복제, 번역, 표시, 배포에 허가가 필요 없습니다. https://www.phqscreeners.com. 근거 [[14]](#r14)–[[20]](#r20).\
+<a id="R5"></a>[R5] Gosling, S. D. *TIPI* 한국어판 (번역 Shang E. Ha). 목적 제한 없이 사용할 수 있습니다. https://gosling.psy.utexas.edu/scales-weve-developed/ten-item-personality-measure-tipi/. 근거 [[21]](#r21).\
+<a id="R6"></a>[R6] Diener, E. *SWLS, Flourishing Scale, SPANE* 한국어판. 비상업 사용만 허용하고 저자를 표기해야 합니다. https://eddiener.com. 근거 [[22]](#r22), [[23]](#r23).\
+<a id="R7"></a>[R7] Steger, M. F. *MLQ* 한국판. 교육, 치료, 학술 목적에 무료이고 상업 사용은 사전 서면 허락이 필요합니다. https://www.michaelfsteger.com/?page_id=13. 근거 [[24]](#r24).\
+<a id="R8"></a>[R8] National Research Centre for the Working Environment (NFA). *Copenhagen Burnout Inventory* 개인 소진 척도와 CBI-K. 출처를 밝히면 상업과 비상업 모두 무료입니다. CBI-K 논문은 CC BY 4.0입니다. 근거 [[25]](#r25), [[26]](#r26).\
+<a id="R9"></a>[R9] Herz 팀. 가상 사용자 건강 기록과 지표 아이콘. 실제 개인정보는 없습니다. 생성기: [`scripts/make-sample.mjs`](scripts/make-sample.mjs).
