@@ -460,3 +460,17 @@ summary:active, .phone-nav button:active, .basis-record:active, .trait-link:acti
   .note summary::before, .source-row summary::after, .profile-result-summary::after,
   details::details-content { transition: none; }
 }
+
+/* MVP notice: a thin accent line draws under the "sample records" phrase once it is shown.
+   background-size (not ::after) so the line follows the phrase when it wraps onto two lines. */
+.mark-line {
+  background: linear-gradient(var(--accent), var(--accent)) no-repeat 0 100% / 0% 1.5px;
+  padding-bottom: 1px;
+}
+details[open] .mark-line { animation: mark-draw 700ms cubic-bezier(.65, 0, .35, 1) 150ms forwards; }
+/* Waits for the persona card to finish rising (phone-flow.css: 300ms delay + 440ms). */
+.persona-overlay .mark-line { animation: mark-draw 700ms cubic-bezier(.65, 0, .35, 1) 760ms forwards; }
+@keyframes mark-draw { to { background-size: 100% 1.5px; } }
+@media (prefers-reduced-motion: reduce) {
+  details[open] .mark-line, .persona-overlay .mark-line { animation: none; background-size: 100% 1.5px; }
+}
