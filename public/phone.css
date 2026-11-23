@@ -167,17 +167,19 @@
   position: absolute; top: 38px; left: 10px; right: 10px; z-index: 20;
   display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 1px 10px;
   padding: 11px 14px; border: 0; border-radius: 20px;
-  background: color-mix(in srgb, var(--surface) 88%, transparent); backdrop-filter: blur(18px);
+  background: color-mix(in srgb, var(--surface) 96%, transparent); backdrop-filter: blur(18px);
   box-shadow: 0 10px 30px rgb(0 0 0 / 20%); color: var(--ink); font: inherit; text-align: left; cursor: pointer;
   animation: notice-in 520ms cubic-bezier(.32, .72, 0, 1) both;
 }
 .phone-notice img { grid-row: span 2; width: 34px; height: 34px; padding: 5px; border-radius: 9px; background: #fff; }
 .phone-notice strong { font-size: .78rem; }
 .phone-notice span { font-size: .95rem; }
-.phone-notice.leaving { animation: notice-out 260ms ease-in both; }
+.phone-notice:focus-visible { outline: 2px solid color-mix(in srgb, var(--accent-text) 45%, transparent); outline-offset: 2px; }
+.phone-notice.leaving { animation: notice-out 220ms ease-in both; }
 .phone-result.sheet-in { animation: sheet-in 450ms cubic-bezier(.32, .72, 0, 1) both; }
-@keyframes notice-in { from { transform: translateY(-150%); } }
-@keyframes notice-out { to { transform: translateY(-150%); opacity: 0; } }
+/* Short moves only: a long slide crosses the status bar, because the screen clips at its own top edge. */
+@keyframes notice-in { from { opacity: 0; transform: translateY(-16px) scale(.96); } }
+@keyframes notice-out { to { opacity: 0; transform: translateY(-10px) scale(.96); } }
 @keyframes sheet-in { from { transform: translateY(100%); } }
 @media (prefers-reduced-motion: reduce) {
   .report-progress li, .phone-notice, .phone-notice.leaving, .phone-result.sheet-in { animation: none; }

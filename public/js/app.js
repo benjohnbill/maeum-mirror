@@ -635,7 +635,7 @@ async function reportBeat() {
   notice.focus({ preventScroll: true });
   await new Promise((resolve) => notice.addEventListener('click', resolve, { once: true }));
   notice.classList.add('leaving');
-  setTimeout(() => notice.remove(), 300);
+  setTimeout(() => notice.remove(), 240);
 }
 
 async function report() {
