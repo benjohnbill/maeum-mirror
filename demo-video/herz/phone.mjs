@@ -1,10 +1,10 @@
-// Drives the landing segment: real OS cursor and keys through input.ahk, page reads through CDP,
-// recording through the Openscreen CLI. Usage: node director.mjs dry|rec
+// Drives the phone segment: real OS cursor and keys through input.ahk, page reads through CDP,
+// recording through the Openscreen CLI. Usage: node phone.mjs dry|rec
 import { spawn } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 import { createInterface } from 'node:readline';
 
-const DIR = 'C:\\Users\\benjohnbill\\AppData\\Local\\Temp\\herz-demo';
+const DIR = 'C:\\Users\\benjohnbill\\Videos\\herz-demo';
 const AHK = 'C:\\Program Files\\AutoHotkey\\v2\\AutoHotkey64.exe';
 const OPENSCREEN = 'C:\\Users\\benjohnbill\\AppData\\Local\\Programs\\Openscreen\\Openscreen.exe';
 const WIN = 'about:blank - Chrome';

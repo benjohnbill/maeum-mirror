@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Fresh Chrome profile on the main monitor, floated out of GlazeWM, 2880x1620.
-W=/mnt/c/Users/benjohnbill/AppData/Local/Temp/herz-demo
+W=${DEMO_DIR:-/mnt/c/Users/benjohnbill/Videos/herz-demo}
 curl -s -X PUT http://127.0.0.1:9333/json/close >/dev/null 2>&1
 cmd.exe /c "curl -s http://127.0.0.1:9333/json/version" >/dev/null 2>&1 && { echo "closing old"; cd /mnt/c && "/mnt/c/Program Files/nodejs/node.exe" -e "fetch('http://127.0.0.1:9333/json/version').then(r=>r.json()).then(v=>{const ws=new WebSocket(v.webSocketDebuggerUrl);ws.onopen=()=>{ws.send(JSON.stringify({id:1,method:'Browser.close'}));setTimeout(()=>process.exit(0),500)}})"; sleep 2; }
 rm -rf $W/profile; mkdir -p $W/profile/Default

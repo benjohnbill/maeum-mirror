@@ -94,6 +94,8 @@ npm run sample         # 가상 사용자 데이터 다시 만들기
 | [`testbed/DEMO-CHECKLIST.md`](testbed/DEMO-CHECKLIST.md) | 페르소나 실험대의 시연 점검표 |
 | [`docs/submission/INTRO.md`](docs/submission/INTRO.md) | 서비스 소개서 계획 |
 | [`docs/hackathon-2026/`](docs/hackathon-2026/) | 공식 공고와 첨부 PDF |
+| [`docs/presentation/`](docs/presentation/) | 제출한 발표 deck과 슬라이드 이미지 |
+| [`demo-video/`](demo-video/PLAYBOOK.md) | 제출한 시연 영상, 촬영 스크립트, 만드는 방법 |
 
 ## 근거와 연구
 

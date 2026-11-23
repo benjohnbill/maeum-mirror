@@ -1,6 +1,6 @@
 """Burn the four phone-scene captions onto phone.mp4 -> phone-cap.mp4.
 
-Usage: python3 captions.py [DIR]   (DIR defaults to the herz-demo work folder)
+Usage: python3 captions.py [DIR]   (DIR defaults to the media folder C:/Users/benjohnbill/Videos/herz-demo)
 
 Scene borders come from phone.marks.json (recording time) and are mapped to video time
 through the project's trims and speed regions:
@@ -14,7 +14,7 @@ import subprocess
 import sys
 import tempfile
 
-DIR = sys.argv[1] if len(sys.argv) > 1 else '/mnt/c/Users/benjohnbill/AppData/Local/Temp/herz-demo'
+DIR = sys.argv[1] if len(sys.argv) > 1 else '/mnt/c/Users/benjohnbill/Videos/herz-demo'
 FONT = '/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc'   # Noto Sans CJK (Hangul is the same in every face)
 CAPTIONS = [
     ('01', ['사용자의 건강 데이터를 연동합니다']),

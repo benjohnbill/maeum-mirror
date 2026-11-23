@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<style>
+:root{--red:#C2421B;--redbg:#FCEBE4;--redtx:#7E2A12;--ink:#141414;--mute:#9C9C9C;--line:#C9C9C9;--band:#F5F4F2}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:880px;height:410px;background:#fff;font-family:"NanumSquare Neo","NanumBarunGothic",sans-serif;color:var(--ink)}
+.wrap{display:flex;gap:26px;height:410px;padding:4px 6px 4px 2px}
+.arch{flex:1;display:flex;flex-direction:column;gap:6px}
+.head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:2px}
+.head h2{font-size:14px;font-weight:800;letter-spacing:-.2px}
+.head h2 span{color:var(--red)}
+.legend{display:flex;gap:12px;font-size:10px;color:#555;align-items:center}
+.legend i{display:inline-block;width:14px;height:10px;border-radius:3px;vertical-align:-1px;margin-right:4px}
+.legend .b{background:var(--redbg);border:1.2px solid var(--red)}
+.legend .u{border:1.2px dashed var(--line)}
+.row{flex:1;display:flex;align-items:center;background:var(--band);border-radius:9px;padding:0 10px 0 0;overflow:hidden}
+.lab{width:92px;align-self:stretch;display:flex;flex-direction:column;justify-content:center;padding-left:12px;border-left:4px solid var(--red);margin-right:8px}
+.lab b{font-size:12px;font-weight:800;letter-spacing:-.3px}
+.lab small{font-size:8.5px;color:#888;margin-top:2px;letter-spacing:.2px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;flex:1}
+.c{font-size:11px;padding:0 9px;height:25px;display:inline-flex;align-items:center;line-height:1;border-radius:6px;white-space:nowrap;letter-spacing:-.3px;font-weight:700}
+.c.b{background:var(--redbg);border:1.2px solid var(--red);color:var(--redtx)}
+.c.u{background:#fff;border:1.2px dashed var(--line);color:var(--mute);font-weight:400}
+.c.b::before{content:"✓ ";color:var(--red)}
+.proto{width:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
+.phone{width:176px;height:372px;border-radius:30px;background:#111;padding:7px;box-shadow:0 6px 18px rgba(0,0,0,.18)}
+.screen{width:162px;height:358px;border-radius:24px;overflow:hidden;position:relative;background:#faf9f7}
+.screen img{position:absolute;width:calc(2880px * .2763);left:calc(-1152px * .2763);top:calc(-380px * .2763)}
+.tag{position:absolute;top:2px;left:50%;transform:translateX(-50%);background:var(--red);color:#fff;font-size:10px;font-weight:800;padding:4px 10px;border-radius:20px;white-space:nowrap;z-index:2}
+.cap{font-size:9.5px;color:#666;margin-top:6px;text-align:center;line-height:1.35}
+</style></head><body>
+<div class="wrap">
+  <div class="arch">
+    <div class="head">
+      <h2>Herz 전체 구조 중 <span>지금 만든 부분</span></h2>
+      <div class="legend"><span><i class="b"></i>구현됨</span><span><i class="u"></i>미구현</span></div>
+    </div>
+    <div class="row"><div class="lab"><b>화면</b><small>APP</small></div><div class="chips">
+      <span class="c b">폰 화면 웹 데모</span><span class="c b">리포트·근거 보기</span><span class="c u">iOS 앱</span><span class="c u">워치 앱</span><span class="c u">알림</span></div></div>
+    <div class="row"><div class="lab"><b>AI 에이전트</b><small>AGENT</small></div><div class="chips">
+      <span class="c b">래포 퀴즈</span><span class="c b">2단계 대화 (Gemini)</span><span class="c b">위기 안전 규칙</span><span class="c u">먼저 말 걸기</span><span class="c u">맞춤 행동 제안</span></div></div>
+    <div class="row"><div class="lab"><b>분석</b><small>ANALYSIS</small></div><div class="chips">
+      <span class="c b">평소 vs 최근 2주</span><span class="c b">지표 단서 추출</span><span class="c u">몇 달 단위 추적</span><span class="c u">개인 기준선 학습</span></div></div>
+    <div class="row"><div class="lab"><b>데이터 수집</b><small>DATA</small></div><div class="chips">
+      <span class="c b">걸음·수면·심박·HRV·햇빛</span><span class="c u">자동 동기화</span><span class="c u">위치</span><span class="c u">수분 섭취</span><span class="c u">폰 사용시간</span></div></div>
+    <div class="row"><div class="lab"><b>서버 · DB</b><small>BACKEND</small></div><div class="chips">
+      <span class="c b">AI 호출 중계</span><span class="c u">계정·로그인</span><span class="c u">기록 저장 DB</span><span class="c u">암호화 보관</span></div></div>
+    <div class="row"><div class="lab"><b>전문 연결</b><small>CARE</small></div><div class="chips">
+      <span class="c b">선별 검사 PHQ-9·GAD-7·ISI</span><span class="c u">상담 기관 연결</span></div></div>
+  </div>
+  <div class="proto">
+    <div class="phone"><div class="screen"><img src="proto.png"></div></div>
+    <div class="cap"><b style="color:var(--ink)">현재 프로토타입</b><br>건강 기록의 변화를 묻는 2단계 대화</div>
+  </div>
+</div>
+</body></html>
