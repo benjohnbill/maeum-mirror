@@ -128,8 +128,11 @@ const frequencyForms = {
 function frequencyLine(form, score) {
   const average = score / form.items;
   const subject = '지난 2주 동안 ' + form.symptom + ' 증상이 ';
+  // At the referral line an average of "며칠" would read as reassurance under a caption that
+  // advises a talk with a professional, so the line says the level instead.
+  if (average < 1.5 && score >= form.refer) return subject + '상담을 권하는 수준이었어요.';
   if (average < 0.5) return subject + '거의 없었어요.';
-  if (average < 1.5) return subject + '‘며칠’ 정도 있었어요.';
+  if (average < 1.5) return subject + '며칠 정도 있었어요.';
   if (average < 2.5) return '지난 2주 중 절반 이상의 날에 ' + form.symptom + ' 증상이 있었어요.';
   return subject + '거의 매일 있었어요.';
 }
