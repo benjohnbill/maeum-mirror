@@ -107,11 +107,26 @@ export function setupPhoneAccess(onConnected) {
       return;
     }
     const legend = $('personaChoices').querySelector('legend');
-    $('personaChoices').replaceChildren(legend, ...personas.map(({ id, name, age, line }) => {
+    // Each marked phrase becomes its own span; CSS underlines them in order once the person is picked.
+    const lineWithMarks = (line, marks = []) => {
+      const span = document.createElement('span');
+      let rest = line;
+      marks.forEach((mark, i) => {
+        const at = rest.indexOf(mark);
+        if (at < 0) return;
+        const key = Object.assign(document.createElement('span'), { className: 'persona-key', textContent: mark });
+        key.style.setProperty('--i', i);
+        span.append(rest.slice(0, at), key);
+        rest = rest.slice(at + mark.length);
+      });
+      span.append(rest);
+      return span;
+    };
+    $('personaChoices').replaceChildren(legend, ...personas.map(({ id, name, age, line, marks }) => {
       const label = document.createElement('label');
       const input = Object.assign(document.createElement('input'), { type: 'radio', name: 'persona', value: id, checked: id === persona });
       const title = Object.assign(document.createElement('strong'), { textContent: `${name} · ${age}세` });
-      label.append(input, title, Object.assign(document.createElement('span'), { textContent: line }));
+      label.append(input, title, lineWithMarks(line, marks));
       return label;
     }));
     $('personaStart').disabled = !persona;

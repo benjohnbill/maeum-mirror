@@ -83,7 +83,11 @@
 .persona-choices label:has(:checked) { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
 .persona-choices input { grid-row: span 2; margin: 0; accent-color: var(--ink); }
 .persona-choices strong { font-size: .95rem; }
-.persona-choices span { color: var(--ink-2); font-size: .85rem; line-height: 1.45; word-break: keep-all; }
+.persona-choices label > span { color: var(--ink-2); font-size: .85rem; line-height: 1.45; word-break: keep-all; }
+/* The picked person's key changes draw their underline one after another (keyframes: mark-draw in styles.css). */
+.persona-key { background: linear-gradient(var(--accent), var(--accent)) no-repeat 0 100% / 0% 1.5px; padding-bottom: 1px; }
+.persona-choices label:has(:checked) .persona-key { color: var(--ink); animation: mark-draw 600ms cubic-bezier(.65, 0, .35, 1) calc(var(--i, 0) * 350ms) forwards; }
+@media (prefers-reduced-motion: reduce) { .persona-choices label:has(:checked) .persona-key { animation: none; background-size: 100% 1.5px; } }
 #personaStart { width: 100%; }
 /* Layout reference: Pokémon Sleep's Korean iPhone Health Access screenshots (steps 4–5). */
 .access-sheet {
