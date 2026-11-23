@@ -151,3 +151,34 @@
   .phone-screen .composer textarea { height: 46px; min-height: 44px; }
   .phone-home { margin: 3px 0; }
 }
+
+/* End of the talk → report: progress tally, phone notification, report sheet rising. */
+.phone-screen .msg.report-progress { padding: 10px 13px; background: var(--ground); border-radius: 4px 14px 14px; }
+.phone-screen .msg.report-progress p { padding: 0; background: none; }
+.report-progress ul { display: grid; gap: 7px; margin: 10px 0 2px; padding: 0; list-style: none; color: var(--ink-2); font-size: .9rem; }
+.report-progress li { display: flex; align-items: center; gap: 8px; animation: rise 380ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.report-progress li::before {
+  content: ''; display: grid; place-items: center; box-sizing: border-box; width: 16px; height: 16px; border: 1.5px solid currentColor; border-radius: 50%;
+  color: inherit; font-size: .65rem; font-weight: 800; transition: background-color 200ms ease-out, border-color 200ms ease-out;
+}
+.report-progress li.done { color: var(--ink); }
+.report-progress li.done::before { content: '✓'; border-color: var(--accent-text); background: var(--accent-text); color: var(--surface); }
+.phone-notice {
+  position: absolute; top: 38px; left: 10px; right: 10px; z-index: 20;
+  display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 1px 10px;
+  padding: 11px 14px; border: 0; border-radius: 20px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent); backdrop-filter: blur(18px);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 20%); color: var(--ink); font: inherit; text-align: left; cursor: pointer;
+  animation: notice-in 520ms cubic-bezier(.32, .72, 0, 1) both;
+}
+.phone-notice img { grid-row: span 2; width: 34px; height: 34px; padding: 5px; border-radius: 9px; background: #fff; }
+.phone-notice strong { font-size: .78rem; }
+.phone-notice span { font-size: .95rem; }
+.phone-notice.leaving { animation: notice-out 260ms ease-in both; }
+.phone-result.sheet-in { animation: sheet-in 450ms cubic-bezier(.32, .72, 0, 1) both; }
+@keyframes notice-in { from { transform: translateY(-150%); } }
+@keyframes notice-out { to { transform: translateY(-150%); opacity: 0; } }
+@keyframes sheet-in { from { transform: translateY(100%); } }
+@media (prefers-reduced-motion: reduce) {
+  .report-progress li, .phone-notice, .phone-notice.leaving, .phone-result.sheet-in { animation: none; }
+}

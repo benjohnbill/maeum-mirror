@@ -605,6 +605,39 @@ $('finishBtn').addEventListener('click', () => { if (!state.busy) report(); });
 
 const METRIC_LABEL = { sleep: '수면 시간', onset: '잠드는 시각', regularity: '수면 규칙성', steps: '걸음 수', rhr: '안정 시 심박', hrv: '심박변이도', workout: '운동' };
 
+const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// The end of the talk gets its own beat before the report: the last message stays readable,
+// a short tally shows what the report is made of, and a phone notification hands the user
+// into the report on tap.
+async function reportBeat() {
+  await pause(800);
+  const card = el('li', 'msg ai report-progress');
+  card.setAttribute('role', 'status');
+  const steps = el('ul');
+  card.append(el('p', '', '리포트를 만들고 있어요'), steps);
+  $('chat').append(card);
+  for (const label of ['대화 단서 모으기', '24가지 지표에 반영', '등수 계산']) {
+    const step = el('li', '', label);
+    steps.append(step);
+    revealChatItem(card);
+    await pause(650);
+    step.classList.add('done');
+  }
+  await pause(400);
+  const notice = el('button', 'phone-notice');
+  notice.type = 'button';
+  const icon = el('img');
+  icon.src = 'favicon.svg';
+  icon.alt = '';
+  notice.append(icon, el('strong', '', 'Herz'), el('span', '', '리포트가 준비됐어요. 탭해서 볼까요?'));
+  document.querySelector('.phone-screen').append(notice);
+  notice.focus({ preventScroll: true });
+  await new Promise((resolve) => notice.addEventListener('click', resolve, { once: true }));
+  notice.classList.add('leaving');
+  setTimeout(() => notice.remove(), 300);
+}
+
 async function report() {
   leaveOffer();
   state.finished = true;
@@ -615,6 +648,11 @@ async function report() {
     const container = phonePreview ? $('phoneReport') : el('li', 'case-report');
     showExampleReport(container);
     if (phonePreview) {
+      busy(true);
+      await reportBeat();
+      busy(false);
+      $('resultPanel').classList.add('sheet-in');
+      $('resultPanel').addEventListener('animationend', () => $('resultPanel').classList.remove('sheet-in'), { once: true });
       $('resultButton').hidden = false;
       $('recordNext').textContent = '대화 결과 보기';
       const metric = state.example?.metric;
