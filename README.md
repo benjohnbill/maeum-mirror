@@ -17,6 +17,8 @@
   <a href="https://maeum-mirror.vercel.app/?view=phone"><img src="https://img.shields.io/badge/%E2%96%B6%20%EB%8D%B0%EB%AA%A8%20%EC%97%B4%EA%B8%B0-e0322b?style=for-the-badge" alt="데모 열기" height="40"></a>
 </p>
 
+https://github.com/user-attachments/assets/2e2ce0d7-8af7-4850-b894-41cc2e3c983c
+
 <p align="center">
   <a href="demo-video/submitted/herz-demo.mp4">시연 영상 (1분 47초)</a> ·
   <a href="docs/submission/INTRO.md">서비스 소개서</a> ·
