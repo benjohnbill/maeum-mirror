@@ -1,6 +1,6 @@
 # Deploy decisions (Lane D)
 
-Status: settled 2026-11-22 (user via hub). First production deploy 2026-11-23.
+Status: settled 2026-11-22 (team decision). First production deploy 2026-11-23.
 
 ## Live
 - Production URL: https://maeum-mirror.vercel.app (public, no login).
@@ -35,7 +35,7 @@ Status: settled 2026-11-22 (user via hub). First production deploy 2026-11-23.
 - `gemini()` in `lib/chat.mjs` is byte-identical to the old `server.mjs` body.
 - Local smoke 2026-11-22: `/api/status`, bad JSON → 502, bad summary → 502, `/` → 200,
   one real opener turn → 200 from `gemini-3.5-flash`.
-- Pending: lane A replay before/after the extraction (hub informed lane A).
+- Pending: lane A replay before/after the extraction.
 
 ## 14:00 release smoke (draft)
 1. Open the deployed URL in a fresh browser; load the synthetic user.

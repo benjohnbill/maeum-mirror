@@ -2,7 +2,7 @@
 
 `public/js/prompt.js:44` says to open with "the metric with the largest change". Taken literally on the
 sample user, that is workouts (−100 %), which the 2026-11-22 real run called the wrong opener. We
-decided (user said, via the hub, 2026-11-22) that the opener Oracle is code that applies the prompt
+decided (team decision, 2026-11-22) that the opener Oracle is code that applies the prompt
 literally: among metrics not marked `(작은 변화)` and not HRV, the largest relative change; it passes
 when turn 0 `focus` equals that metric and `reply` holds a number. Each Persona also carries an
 Expected opener written by a person (lane B). When the two differ, the Symptom goes to the Spec

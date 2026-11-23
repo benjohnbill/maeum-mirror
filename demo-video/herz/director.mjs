@@ -4,9 +4,10 @@ import { spawn } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 import { createInterface } from 'node:readline';
 
-const DIR = 'C:\\Users\\benjohnbill\\Videos\\herz-demo';
+const WIN_USER = process.env.USERNAME || process.env.USER;
+const DIR = process.env.DEMO_DIR_WIN || `C:\\Users\\${WIN_USER}\\Videos\\herz-demo`;
 const AHK = 'C:\\Program Files\\AutoHotkey\\v2\\AutoHotkey64.exe';
-const OPENSCREEN = 'C:\\Users\\benjohnbill\\AppData\\Local\\Programs\\Openscreen\\Openscreen.exe';
+const OPENSCREEN = `C:\\Users\\${WIN_USER}\\AppData\\Local\\Programs\\Openscreen\\Openscreen.exe`;
 const WIN = 'about:blank - Chrome';
 const URL_TEXT = 'maeum-mirror.vercel.app';
 const mode = process.argv[2] || 'dry';

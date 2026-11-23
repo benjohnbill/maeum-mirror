@@ -1,6 +1,6 @@
 # The user simulator is Claude Sonnet, called through `claude -p`
 
-Status: accepted, 2026-11-22 (lane A; user approved via hub relay).
+Status: accepted, 2026-11-22 (lane A; team approved).
 
 In a Rollout, the simulated user's lines come from Claude Sonnet (`claude -p --model sonnet`, no tools, no user settings), not from a Gemini model. The simulator prompt is a versioned file in `testbed/runner/simulator/`. Each simulator line reports which PHQ items it disclosed; a disclosure of a `never` item marks the run as a Withhold leak and excludes it.
 

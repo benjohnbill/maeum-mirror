@@ -10,4 +10,4 @@ Run them after the uncommitted motion work in `public/phone-flow.css` and `publi
 
 Not planned (decided 2026-11-23):
 - Phone step entrance (`.phone-step` with `@starting-style`): covers only signup to connect, one change per demo.
-- Hero preview value slide (`public/js/app.js:101`): needs the card updated in place instead of `replaceChildren`; the landing JS is being changed in another session.
+- Hero preview value slide (`public/js/app.js:101`): needs the card updated in place instead of `replaceChildren`; the landing JS was being changed in parallel.

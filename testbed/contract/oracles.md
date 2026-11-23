@@ -1,6 +1,6 @@
 # Symptom Oracles and Cause buckets (v0, lane C, 2026-11-22)
 
-Rough first version (user said, via the hub: speed before rigor). Each Oracle gives material for a
+Rough first version (team decision: speed before rigor). Each Oracle gives material for a
 person to judge. The user and a teammate make the final call by using the product.
 Tier 1 = code in `oracles.mjs` (zero model calls). Tier 2 = a named LLM rater, only on tier 1 output.
 

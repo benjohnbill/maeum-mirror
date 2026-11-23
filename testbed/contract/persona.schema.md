@@ -35,7 +35,7 @@ item 9. Pilot personas carry no self-harm signal.
 
 ## Hard rules
 
-- No real personal data (D11: `PRODUCT.md:33`, `docs/handoff/HANDOFF.md:32`). Every persona is synthetic.
+- No real personal data (D11: `PRODUCT.md:38`). Every persona is synthetic.
 - No verbatim community text, and nothing from `research/*/private/`, in any field (J18).
   `provenance` carries IDs; `surface_style` is written by hand.
 - The product never sees `persona.json`. Only the simulator prompt and the scorer read it.

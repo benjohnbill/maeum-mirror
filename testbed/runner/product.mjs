@@ -9,7 +9,7 @@ import { KEYS } from './env.mjs';
 export const repo = fileURLToPath(new URL('../../', import.meta.url));
 export const DEFAULT_CHAIN = ['gemini-2.5-flash-lite', 'gemini-2.5-flash']; // server.mjs:25 default
 
-// arm: 'head' = deploy settings (default chain, 45 s, hub decision 2026-11-22);
+// arm: 'head' = deploy settings (default chain, 45 s, team decision 2026-11-22);
 //      'model:<id>' = one-model chain for model comparisons.
 export function productSettings(arm) {
   if (arm.startsWith('model:')) {

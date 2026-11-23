@@ -14,7 +14,7 @@ Herz 해커톤 시연 영상(2026-11-23 제출)을 만든 방법과, 다음 프�
 촬영본, 음악 원본, 중간 산출물, 데모용 Chrome profile은 git 밖의 미디어 폴더에 있어요.
 
 ```text
-C:\Users\benjohnbill\Videos\herz-demo      (WSL: /mnt/c/Users/benjohnbill/Videos/herz-demo)
+C:\Users\<you>\Videos\herz-demo      (WSL: /mnt/c/Users/<you>/Videos/herz-demo)
   landing-B.mp4, phone.mp4          촬영본
   *.openscreen, *.marks.json        Openscreen 프로젝트와 장면 경계 시각
   tranquil-pulse.mp3, lofi-full.wav 음악 원본
@@ -36,7 +36,7 @@ kit/sync.sh → kit/start.sh → node herz/director.mjs rec → node herz/phone.
 
 1. **스크립트 복사.** Windows `node.exe`와 AutoHotkey는 repo가 아니라 미디어 폴더에서 스크립트를 읽어요. repo에서 고친 뒤에는 꼭 복사하고, 미디어 폴더의 복사본은 고치지 않아요.
    ```bash
-   demo-video/kit/sync.sh /mnt/c/Users/benjohnbill/Videos/herz-demo demo-video/herz
+   demo-video/kit/sync.sh /mnt/c/Users/<you>/Videos/herz-demo demo-video/herz
    ```
 2. **Chrome 띄우기.** `start.sh`는 로그인된 profile을 그대로 두고 Chrome을 다시 띄워요. `launch.sh`는 profile을 지우고 새로 만들어요. 둘 다 CDP 포트 9333을 열고, `place.ahk`로 창을 GlazeWM 밖에 2880×1620으로 띄워요. 다른 미디어 폴더를 쓰려면 `DEMO_DIR`을 지정해요.
 3. **촬영.** 각 장면 스크립트는 `dry`(연습)와 `rec`(녹화) 모드가 있어요. 커서와 키는 `input.ahk`가 실제 OS 입력으로 보내고, 페이지 상태는 CDP로 읽고, 녹화는 Openscreen CLI가 해요. 장면 경계 시각은 `*.marks.json`에 남아요.

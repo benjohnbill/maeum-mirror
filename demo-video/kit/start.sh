@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Restart the demo Chrome WITHOUT wiping the profile (the user is signed in).
 # Light theme, no bookmarks bar, no search suggestions, no history of earlier takes.
-W=${DEMO_DIR:-/mnt/c/Users/benjohnbill/Videos/herz-demo}
+W=${DEMO_DIR:-/mnt/c/Users/$USER/Videos/herz-demo}
 cd /mnt/c
 "/mnt/c/Program Files/nodejs/node.exe" -e "fetch('http://127.0.0.1:9333/json/version').then(r=>r.json()).then(v=>{const ws=new WebSocket(v.webSocketDebuggerUrl);ws.onopen=()=>{ws.send(JSON.stringify({id:1,method:'Browser.close'}));setTimeout(()=>process.exit(0),500)}}).catch(()=>process.exit(0))" 2>/dev/null
 sleep 3
